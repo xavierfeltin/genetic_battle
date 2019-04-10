@@ -7,7 +7,7 @@ export class Missile extends GameObject {
     constructor(id: number, parent: number) {
         super(id);
         this.speed = this.maxShipSpeed;
-        this.radius = 20;
+        this.radius = 5;
         this.launchedBy = parent;
     }
 }

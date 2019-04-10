@@ -25,7 +25,7 @@ export class TestBot extends IBot {
         else {fovAction = 2;}
 
         return {
-            moveAction: 2, //move,
+            moveAction: move, //move,
             fireAction: this.getId() === 0 ? fire : fire, //fire,
             changeFov: fovAction
         };

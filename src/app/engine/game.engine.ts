@@ -33,7 +33,7 @@ export class GameEngine {
 
   public run() {
     this.ships.push(new ShipRender(0, 'rgba(255,0,0,0.8)', 0, 0, 0, [0, 300, 0, 800]));
-    this.ships.push(new ShipRender(1, 'rgba(0,150,0.6)', 300, 0, 180, [500, 800, 0, 800]));
+    this.ships.push(new ShipRender(1, 'rgba(0,150,0.6)', 800, 0, 180, [500, 800, 0, 800]));
 
     this.bots.push(new TestBot(0));
     this.bots.push(new TestBot(1));
@@ -238,12 +238,14 @@ export class GameEngine {
 
         // Move the pod normally until collision time
         for (let i = 0; i < nShips; i++) {
-          ships[i].move(1.0 - collisionTime);
+          //ships[i].move(1.0 - collisionTime);
+          ships[i].move(collisionTime - t);
         }
 
         for (let i = 0; i < nMissiles; i++) {
           if (!missiles[i].isToDelete()) {
-            missiles[i].move(1.0 - collisionTime);
+            //missiles[i].move(1.0 - collisionTime);
+            missiles[i].move(collisionTime - t);
           }
         }
 

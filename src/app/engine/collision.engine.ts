@@ -94,7 +94,7 @@ export class Collision {
         // If the distance between other unit and this line is less than the sum of the radii, there might be a collision
         if (distanceUnitClosestProjection < radiiSquared) {
             // The pod speed on the line (norm)
-            const speedDistance = vx * vx + vy * vy;
+            const speedDistance = Math.sqrt(vx * vx + vy * vy);
 
             // Project the pod on the line to find the point of impact
             const distanceIntersectionUnits = Math.sqrt(radiiSquared - distanceUnitClosestProjection);
