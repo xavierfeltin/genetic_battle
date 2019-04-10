@@ -11,11 +11,11 @@ export class Ship extends GameObject {
     constructor(id: number) {
         super(id);
         this.speed = this.maxShipSpeed;
-        this.radius = 50;
+        this.radius = 20;
     }
 
     public getFOV(): number { return this.fov; }
-    
+
     public setFOV(angle: number) {
         this.fov = angle;
     }

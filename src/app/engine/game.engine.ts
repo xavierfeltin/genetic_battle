@@ -20,17 +20,17 @@ export class GameEngine {
   private bots: IBot[] = [];
 
   constructor(private readonly idCanvas: string) {
-    this.canvas = <HTMLCanvasElement>document.getElementById(idCanvas);
+    this.canvas = document.getElementById(idCanvas) as HTMLCanvasElement;
     this.ctx = this.canvas.getContext('2d');
     this.ctx.fillStyle = 'rgba(0, 0, 0, 0.9)';
 
     this.fps = 30;
     this.then = Date.now();
-    this.interval = 1000 / this.fps; 
+    this.interval = 1000 / this.fps;
     this.delta = 0;
     this.now = 0;
   }
-  
+
   public run() {
     this.ships.push(new ShipRender(0, 'rgba(255,0,0,0.8)', 0, 0, 0, [0, 300, 0, 800]));
     this.ships.push(new ShipRender(1, 'rgba(0,150,0.6)', 300, 0, 180, [500, 800, 0, 800]));
@@ -51,13 +51,13 @@ export class GameEngine {
 
   public animate() {
     window.requestAnimationFrame(() => this.animate());
-    
+
     this.now = Date.now();
     this.delta = this.now - this.then;
-    
+
     if (this.delta > this.interval) {
       // update time stuffs
-      
+
       // From: http://codetheory.in/controlling-the-frame-rate-with-requestanimationframe/
       // Just `then = now` is not enough.
       // Lets say we set fps at 10 which means
@@ -71,36 +71,38 @@ export class GameEngine {
       // by subtracting delta (112) % interval (100).
       // Hope that makes sense.
       this.then = this.now - (this.delta % this.interval);
-      
-      //update game state
+      const t0 = performance.now();
+
+      // update game state
       for(const bot of this.bots) {
         const action = bot.getAction();
-        let ship = this.ships[bot.getId()]; 
-        let shipModel = ship.getModel(); 
+        const ship = this.ships[bot.getId()];
+        const shipModel = ship.getModel();
         shipModel.applyAction(action);
 
-        if(action.fireAction === 1) {
-          const startX = shipModel.x_pos + shipModel.x_velo;
-          const startY = shipModel.y_pos + shipModel.y_velo;
+        if (action.fireAction === 1) {
+          const startX = shipModel.x_pos; //+ shipModel.x_velo;
+          const startY = shipModel.y_pos; //+ shipModel.y_velo;
           const startOrientation = shipModel.orientation;
 
-          let missile = new MissileRender(this.missiles.length, shipModel.id, startX, startY, startOrientation, [-50, 850, -50, 850]);
+          const missile = new MissileRender(this.missiles.length, shipModel.id, startX, startY, startOrientation, [-50, 850, -50, 850]);
           this.missiles.push(missile);
         }
 
-        //shipModel.move();
+        // shipModel.move();
       }
 
-      let shipsModel = this.ships.map(ship => ship.getModel());
-      let missilesModel = this.missiles.map(missile => missile.getModel());
+      const shipsModel = this.ships.map(ship => ship.getModel());
+      const missilesModel = this.missiles.map(missile => missile.getModel());
+
       this.solveTurn(shipsModel, missilesModel);
 
-      let keep = [];
-      for(let missile of this.missiles) {
-        let missileModel = missile.getModel(); 
-        //missileModel.move();
-        if(!missileModel.isOutBorder() && !missileModel.isToDelete()) {
-          keep.push(missile); 
+      const keep = [];
+      for (const missile of this.missiles) {
+        const missileModel = missile.getModel();
+        // missileModel.move();
+        if (!missileModel.isOutBorder() && !missileModel.isToDelete()) {
+          keep.push(missile);
         }
       }
       this.missiles = keep;
@@ -111,10 +113,13 @@ export class GameEngine {
       this.drawPlayAreas();
       this.drawShips();
       this.drawMissiles();
+
+      const t1 = performance.now();
+      console.log('Solveturn: ' + (t1 - t0) + ' ms');
     }
   }
 
-  //Return an array with number of missiles which has touched ship A and ship B
+  // Return an array with number of missiles which has touched ship A and ship B
   private solveTurn(ships: Ship[], missiles: Missile[]): number[] {
     let t  = 0.0;
     const nShips = ships.length;
@@ -127,21 +132,20 @@ export class GameEngine {
     while (t < 1.0) {
       let firstCollision = null;
       let newCollision = null;
-      
-      //Check for all the collisions occuring during the turn
-      for(let i = 0; i < nMissiles; i++) {
-        let missile = missiles[i];
-        
+
+      // Check for all the collisions occuring during the turn
+      for (let i = 0; i < nMissiles; i++) {
+        const missile = missiles[i];
+
         for (let j = 0; j < nShips; j++) {
           let ship = ships[j];
-          
+
           if (missile.isToDelete()) {
             continue;
           }
-          else if (ship.id == missile.launchedBy) {
+          else if (ship.id === missile.launchedBy) {
             continue;
           }
-
 
           //Collision is not possible if ships are going in opposite directions
           let collision: Collision = null;
@@ -164,7 +168,7 @@ export class GameEngine {
             else {
               newCollision = collision;
 
-              //If the collision happens earlier than the current one we keep it
+              // If the collision happens earlier than the current one we keep it
               if ((newCollision.collTime + t) < 1.0 && (firstCollision == null || newCollision.collTime < firstCollision.collTime)) {
                 firstCollision = newCollision;
               }
@@ -172,17 +176,17 @@ export class GameEngine {
           }
         }
 
-        for (let j = i+1; j < nMissiles; j++) {
-          let otherMissile = missiles[j];
-          
+        for (let j = i + 1; j < nMissiles; j++) {
+          const otherMissile = missiles[j];
+
           if (otherMissile.isToDelete()) {
             continue;
           }
-          else if (otherMissile.launchedBy == missile.launchedBy) {
+          else if (otherMissile.launchedBy === missile.launchedBy) {
             continue;
           }
 
-          //Collision is not possible if otherMissiles are going in opposite directions
+          // Collision is not possible if otherMissiles are going in opposite directions
           let collision: Collision = null;
           if ((otherMissile.x_pos < missile.x_pos && otherMissile.x_velo < 0.0 && missile.x_velo > 0.0)
                   || (missile.x_pos < otherMissile.x_pos && missile.x_velo < 0.0 && otherMissile.x_velo > 0.0)
@@ -203,7 +207,7 @@ export class GameEngine {
             else {
               newCollision = collision;
 
-              //If the collision happens earlier than the current one we keep it
+              // If the collision happens earlier than the current one we keep it
               if ((newCollision.collTime + t) < 1.0 && (firstCollision == null || newCollision.collTime < firstCollision.collTime)) {
                 firstCollision = newCollision;
               }
@@ -211,45 +215,49 @@ export class GameEngine {
           }
         }
       }
-        
+
       if (firstCollision == null) {
-        //No collision so the pod is following its path until the end of the turn
-        for(let i = 0; i < nShips; i++) {
+        // No collision so the pod is following its path until the end of the turn
+        for (let i = 0; i < nShips; i++) {
           ships[i].move(1.0 - t);
-        } 
-        
-        for(let i = 0; i < nMissiles; i++) {
-          missiles[i].move(1.0 - t);
         }
 
-        t = 1.0; //end of the turn
+        for (let i = 0; i < nMissiles; i++) {
+          if (!missiles[i].isToDelete()) {
+            missiles[i].move(1.0 - t);
+          }
+        }
+
+        t = 1.0; // end of the turn
       }
       else {
         let collisionTime = firstCollision.collTime;
-        if (collisionTime == 0.0) {
-            collisionTime = 0.1 ; //avoid infinity loop
+        if (collisionTime === 0.0) {
+            collisionTime = 0.0 ; // avoid infinity loop
         }
 
-        //Move the pod normally until collision time
+        // Move the pod normally until collision time
         for (let i = 0; i < nShips; i++) {
           ships[i].move(1.0 - collisionTime);
         }
 
         for (let i = 0; i < nMissiles; i++) {
-          missiles[i].move(1.0 - collisionTime);
+          if (!missiles[i].isToDelete()) {
+            missiles[i].move(1.0 - collisionTime);
+          }
         }
 
-        //Solve the collision
-        //ObjA is a missile
+        // Solve the collision
+        // ObjA is a missile
         firstCollision.objA.toDelete = true;
 
         if (firstCollision.objB instanceof Missile) {
           firstCollision.objB.toDelete = true;
         }
         else {
-          //TODO: ship is moving back under impact
-          //firstCollision.objB.bounce(firstCollision.objA)
-          if(firstCollision.objB.id == 0) {
+          // TODO: ship is moving back under impact
+          // firstCollision.objB.bounce(firstCollision.objA)
+          if (firstCollision.objB.id === 0) {
             nbTouchShipA ++;
           }
           else {
@@ -260,20 +268,20 @@ export class GameEngine {
         t += collisionTime;
         previousCollision = firstCollision;
       }
-    }  
+    }
 
     return [nbTouchShipA, nbTouchShipB];
   }
 
 
   private drawShips() {
-    for(const ship of this.ships) {
+    for (const ship of this.ships) {
       ship.draw(this.canvas, this.ctx);
     }
   }
 
   private drawMissiles() {
-    for(const missile of this.missiles) {
+    for (const missile of this.missiles) {
       missile.draw(this.canvas, this.ctx);
     }
   }
