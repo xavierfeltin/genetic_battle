@@ -22,7 +22,8 @@ export class ShipRender {
     }
 
     public getModel(): Ship { return this.ship; }
-
+    public getColor(): string { return this.color; }
+    
     public update(posX: number, posY: number, orientation: number, fov: number) {
         this.ship.setPosition(posX, posY);
         this.ship.setOrientation(orientation);

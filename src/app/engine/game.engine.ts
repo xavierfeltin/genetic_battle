@@ -18,6 +18,7 @@ export class GameEngine {
   private ships: ShipRender[] = [];
   private missiles: MissileRender[] = [];
   private bots: IBot[] = [];
+  private scores: number[] = [0, 0];
 
   constructor(private readonly idCanvas: string) {
     this.canvas = document.getElementById(idCanvas) as HTMLCanvasElement;
@@ -71,7 +72,7 @@ export class GameEngine {
       // by subtracting delta (112) % interval (100).
       // Hope that makes sense.
       this.then = this.now - (this.delta % this.interval);
-      const t0 = performance.now();
+      //const t0 = performance.now();
 
       // update game state
       for(const bot of this.bots) {
@@ -95,7 +96,9 @@ export class GameEngine {
       const shipsModel = this.ships.map(ship => ship.getModel());
       const missilesModel = this.missiles.map(missile => missile.getModel());
 
-      this.solveTurn(shipsModel, missilesModel);
+      const injuries = this.solveTurn(shipsModel, missilesModel);
+      this.scores[0] += injuries[0];
+      this.scores[1] += injuries[1];
 
       const keep = [];
       for (const missile of this.missiles) {
@@ -113,9 +116,10 @@ export class GameEngine {
       this.drawPlayAreas();
       this.drawShips();
       this.drawMissiles();
+      this.drawScores();
 
-      const t1 = performance.now();
-      console.log('Solveturn: ' + (t1 - t0) + ' ms');
+      //const t1 = performance.now();
+      //console.log('Solveturn: ' + (t1 - t0) + ' ms');
     }
   }
 
@@ -272,7 +276,7 @@ export class GameEngine {
       }
     }
 
-    return [nbTouchShipA, nbTouchShipB];
+    return [nbTouchShipB, nbTouchShipA];
   }
 
 
@@ -299,5 +303,14 @@ export class GameEngine {
     this.ctx.moveTo(500, 0);
     this.ctx.lineTo(500, this.canvas.height);
     this.ctx.stroke();
+  }
+
+  private drawScores() {
+    this.ctx.save();
+    this.ctx.fillStyle = 'rgba(200, 200, 200, 0.6)';
+    this.ctx.font = '30px Arial';
+    this.ctx.textAlign = 'center';
+    this.ctx.fillText(this.scores[0].toString() + ' - ' + this.scores[1].toString(), 400, 30);
+    this.ctx.restore();
   }
 }
