@@ -5,6 +5,7 @@ import { Collision } from './collision.engine';
 import { Ship } from '../models/ship.model';
 import { Missile } from '../models/missile.model';
 import { MissileRender } from './missile.engine';
+import { Game } from '../models/game.model';
 
 export class GameEngine {
   private readonly canvas: HTMLCanvasElement;
@@ -18,6 +19,7 @@ export class GameEngine {
   private ships: ShipRender[] = [];
   private missiles: MissileRender[] = [];
   private bots: IBot[] = [];
+  private game: Game;
   private scores: number[] = [0, 0];
 
   constructor(private readonly idCanvas: string) {
@@ -30,9 +32,12 @@ export class GameEngine {
     this.interval = 1000 / this.fps;
     this.delta = 0;
     this.now = 0;
+
+    this.game = new Game();
   }
 
   public run() {
+    this.game.start();
     this.ships.push(new ShipRender(0, 'rgba(255,0,0,0.8)', 0, 0, 0, [0, 300, 0, 800]));
     this.ships.push(new ShipRender(1, 'rgba(0,150,0.6)', 800, 0, 180, [500, 800, 0, 800]));
 
@@ -40,14 +45,6 @@ export class GameEngine {
     this.bots.push(new TestBot(1));
 
     window.requestAnimationFrame(() => this.animate());
-  }
-
-  public updateShip(id: number, x: number, y: number, orientation: number, fov: number) {
-    this.ships[id].update(x, y, orientation, fov);
-  }
-
-  public updateMisile(id: number, x: number, y: number, orientation: number) {
-    this.missiles[id].update(x, y, orientation);
   }
 
   public animate() {
@@ -74,14 +71,30 @@ export class GameEngine {
       this.then = this.now - (this.delta % this.interval);
       //const t0 = performance.now();
 
-      // update game state
-      for(const bot of this.bots) {
-        const action = bot.getAction();
-        const ship = this.ships[bot.getId()];
-        const shipModel = ship.getModel();
-        shipModel.applyAction(action);
+        if (!this.game.isOver()) {
+          this.playGame();
+          this.renderGame();
+        }
+        else {
+          this.game.start();
+        }
+          
+      //const t1 = performance.now();
+      //console.log('Solveturn: ' + (t1 - t0) + ' ms');
+    }
+  }
 
-        if (action.fireAction === 1) {
+  public playGame() {
+    // Solve bots actions
+    for(const bot of this.bots) {
+      const action = bot.getAction();
+      const ship = this.ships[bot.getId()];
+      const shipModel = ship.getModel();
+      shipModel.applyAction(action);
+
+      if (action.fireAction === 1) {
+        const hasFired = shipModel.fire();
+        if (hasFired) {
           const startX = shipModel.x_pos; //+ shipModel.x_velo;
           const startY = shipModel.y_pos; //+ shipModel.y_velo;
           const startOrientation = shipModel.orientation;
@@ -89,38 +102,49 @@ export class GameEngine {
           const missile = new MissileRender(this.missiles.length, shipModel.id, startX, startY, startOrientation, [-50, 850, -50, 850]);
           this.missiles.push(missile);
         }
-
-        // shipModel.move();
       }
-
-      const shipsModel = this.ships.map(ship => ship.getModel());
-      const missilesModel = this.missiles.map(missile => missile.getModel());
-
-      const injuries = this.solveTurn(shipsModel, missilesModel);
-      this.scores[0] += injuries[0];
-      this.scores[1] += injuries[1];
-
-      const keep = [];
-      for (const missile of this.missiles) {
-        const missileModel = missile.getModel();
-        // missileModel.move();
-        if (!missileModel.isOutBorder() && !missileModel.isToDelete()) {
-          keep.push(missile);
-        }
-      }
-      this.missiles = keep;
-
-      // Draw the frame after time interval is expired
-      this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
-      this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
-      this.drawPlayAreas();
-      this.drawShips();
-      this.drawMissiles();
-      this.drawScores();
-
-      //const t1 = performance.now();
-      //console.log('Solveturn: ' + (t1 - t0) + ' ms');
     }
+
+    // Update game state
+    const shipsModel = this.ships.map(ship => ship.getModel());
+    const missilesModel = this.missiles.map(missile => missile.getModel());
+
+    const injuries = this.solveTurn(shipsModel, missilesModel);
+    this.game.setScore(injuries);
+
+    // Destroy exploded missiles
+    const keep = [];
+    for (const missile of this.missiles) {
+      const missileModel = missile.getModel();
+      if (!missileModel.isOutBorder() && !missileModel.isToDelete()) {
+        keep.push(missile);
+      }
+    }
+    this.missiles = keep;
+
+    // Manage fire rate
+    for (let ship of this.ships) {
+      const shipModel = ship.getModel();
+      shipModel.reduceCoolDown();
+    }
+  }
+
+  private renderGame() {
+    // Draw the frame after time interval is expired
+    this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+    this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+    this.drawPlayAreas();
+    this.drawShips();
+    this.drawMissiles();
+    this.drawScores();
+  }
+
+  public updateShip(id: number, x: number, y: number, orientation: number, fov: number) {
+    this.ships[id].update(x, y, orientation, fov);
+  }
+
+  public updateMisile(id: number, x: number, y: number, orientation: number) {
+    this.missiles[id].update(x, y, orientation);
   }
 
   // Return an array with number of missiles which has touched ship A and ship B

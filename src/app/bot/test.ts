@@ -15,13 +15,13 @@ export class TestBot extends IBot {
 
         rand = Math.random();
         let fire: number;
-        if(rand < 0.95) {fire = 0;}
+        if(rand < 0) {fire = 0;}
         else {fire = 1;}
 
         rand = Math.random();
         let fovAction: number;
-        if (rand < 0.33) {fovAction = 0;}
-        else if (rand < 0.66) {fovAction = 1;}
+        if (rand < 0.4) {fovAction = 0;}
+        else if (rand < 0.6) {fovAction = 1;}
         else {fovAction = 2;}
 
         return {
