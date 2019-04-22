@@ -9,20 +9,24 @@ export class Ship extends GameObject {
     public static readonly EXTEND_FOV: number = 0;
     public static readonly REDUCE_FOV: number = 1;
     public static readonly KEEP_FOV: number = 2;
-
+    public static readonly MAX_LIFE: number = 100;
+    public static readonly MAX_FOV: number = 120;
+    public static readonly MIN_FOV: number = 10;
+    
     private readonly MAX_SPEED: number = 5;
-    private readonly MAX_FOV: number = 120;
-    private readonly MIN_FOV: number = 10;
     private readonly FIRE_RATE: number = 15;
+    
 
     private fov: number; //in radians
     private coolDown: number;
+    private life: number;
 
     constructor(id: number) {
         super(id);
         this.speed = this.MAX_SPEED;
         this.radius = 20;
         this.coolDown = 0;
+        this.life = Ship.MAX_LIFE;
     }
 
     public getFOV(): number { return this.fov; }
@@ -51,6 +55,10 @@ export class Ship extends GameObject {
         else {
             return false;
         }
+    }
+
+    public getLife(): number {
+        return this.life;
     }
 
     public applyAction(action: GameAction) {
@@ -100,11 +108,11 @@ export class Ship extends GameObject {
     }
 
     private improveFOV() {
-        this.fov = Math.min(this.fov + 1, this.MAX_FOV);
+        this.fov = Math.min(this.fov + 1, Ship.MAX_FOV);
     }
 
     private reduceFOV() {
-        this.fov = Math.max(this.fov - 1, this.MIN_FOV);
+        this.fov = Math.max(this.fov - 1, Ship.MIN_FOV);
     }
 
     private keepFOV(){

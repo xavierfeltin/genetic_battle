@@ -6,6 +6,7 @@ import { Ship } from '../models/ship.model';
 import { Missile } from '../models/missile.model';
 import { MissileRender } from './missile.engine';
 import { Game } from '../models/game.model';
+import { HealthRender } from './health.engine';
 
 export class GameEngine {
   private readonly canvas: HTMLCanvasElement;
@@ -15,15 +16,20 @@ export class GameEngine {
   private then: number;
   private interval: number;
   private delta: number;
+  private width: number;
+  private height: number;
 
   private ships: ShipRender[] = [];
   private missiles: MissileRender[] = [];
+  private health: HealthRender[] = [];
   private bots: IBot[] = [];
   private game: Game;
   private scores: number[] = [0, 0];
 
   constructor(private readonly idCanvas: string) {
     this.canvas = document.getElementById(idCanvas) as HTMLCanvasElement;
+    this.width = this.canvas.width;
+    this.height = this.canvas.height;
     this.ctx = this.canvas.getContext('2d');
     this.ctx.fillStyle = 'rgba(0, 0, 0, 0.9)';
 
@@ -43,6 +49,10 @@ export class GameEngine {
 
     this.bots.push(new TestBot(0));
     this.bots.push(new TestBot(1));
+
+    for (let i = 0; i < 40; i++) {
+      this.health.push(new HealthRender(i, Math.floor(Math.random() * this.width), Math.floor(Math.random() * this.height)));
+    }
 
     window.requestAnimationFrame(() => this.animate());
   }
@@ -136,6 +146,7 @@ export class GameEngine {
     this.drawPlayAreas();
     this.drawShips();
     this.drawMissiles();
+    this.drawHealth();
     this.drawScores();
   }
 
@@ -306,13 +317,19 @@ export class GameEngine {
 
   private drawShips() {
     for (const ship of this.ships) {
-      ship.draw(this.canvas, this.ctx);
+      ship.draw(this.ctx);
     }
   }
 
   private drawMissiles() {
     for (const missile of this.missiles) {
-      missile.draw(this.canvas, this.ctx);
+      missile.draw(this.ctx);
+    }
+  }
+
+  private drawHealth() {
+    for (const health of this.health) {
+      health.draw(this.ctx);
     }
   }
 
