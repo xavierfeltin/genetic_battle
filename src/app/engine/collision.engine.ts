@@ -41,8 +41,7 @@ export class Collision {
             // Point is already on the line (ab)
             closestPointX = xOther;
             closestPointY = yOther;
-        }
-        else {
+        } else {
             // Compute orthogonal projection of current point on the line (ab)
             closestPointX = (da * c1 - db * c2) / det;
             closestPointY = (da * c2 + db * c1) / det;

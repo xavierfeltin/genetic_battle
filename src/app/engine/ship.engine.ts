@@ -3,12 +3,12 @@ import { Ship } from './../models/ship.model';
 export class ShipRender {
     public readonly sprite: HTMLImageElement = new Image();
     private readonly lengthField: number = 600;
-    private readonly color: string = "";
+    private readonly color: string = '';
     private readonly maxLengthFOV = 50;
     private readonly minLengthFOV = 200;
 
-    public w: number = 30;
-    public h: number = 30;
+    public w = 30;
+    public h = 30;
 
     private ship: Ship;
 
@@ -19,14 +19,14 @@ export class ShipRender {
         this.ship = new Ship(id);
         this.ship.setBorders(borders);
         this.ship.setBoundingBox(this.w, this.h);
-        this.ship.setPosition(startX - this.w/2, startY - this.h/2);
+        this.ship.setPosition(startX - this.w / 2, startY - this.h / 2);
         this.ship.setOrientation(startOrientation);
         this.ship.setFOV(45);
     }
 
     public getModel(): Ship { return this.ship; }
     public getColor(): string { return this.color; }
-    
+
     public update(posX: number, posY: number, orientation: number, fov: number) {
         this.ship.setPosition(posX, posY);
         this.ship.setOrientation(orientation);
@@ -34,13 +34,13 @@ export class ShipRender {
     }
 
     public draw(ctx: CanvasRenderingContext2D) {
-        let transX = (this.w) / 2;
-        let transY = (this.h) / 2;
+        const transX = (this.w) / 2;
+        const transY = (this.h) / 2;
 
         ctx.save(); // save current state
         this.drawFieldOfView(ctx);
         this.drawLife(ctx);
-        ctx.translate(this.ship.x_pos - this.w/2, this.ship.y_pos - this.h/2); //move to desired point
+        ctx.translate(this.ship.x_pos - this.w / 2, this.ship.y_pos - this.h / 2); //move to desired point
         ctx.translate(transX, transY);
         ctx.rotate(this.ship.orientation * Math.PI / 180); // rotate
         ctx.drawImage(this.sprite, -transX, -transY, this.w, this.h); // draws a chain link or dagger
@@ -52,24 +52,24 @@ export class ShipRender {
         const yOrigin = this.ship.y_pos;
         const nbMaxSections = 10;
         const angleGap = 10;
-        const angleLife = (360 - (nbMaxSections * angleGap)) / nbMaxSections; //N-1 separations of 5px 
+        const angleLife = (360 - (nbMaxSections * angleGap)) / nbMaxSections; // N-1 separations of 5px
         const radAngle = angleLife * Math.PI / 180;
         const radGap = angleGap * Math.PI / 180;
-        const life = 100; //this.ship.getLife();
+        const life = 100; // this.ship.getLife();
         const nbLifeSections = Math.ceil((life / Ship.MAX_LIFE) * nbMaxSections);
 
-        const gradient = this.interpolateColor([255,0,0], [0,255,0] , life/Ship.MAX_LIFE);
-        const color = 'rgba(' + gradient[0] + ', ' + gradient[1] + ', ' + gradient[2] + ')'; 
+        const gradient = this.interpolateColor([255, 0, 0], [0, 255, 0] , life / Ship.MAX_LIFE);
+        const color = 'rgba(' + gradient[0] + ', ' + gradient[1] + ', ' + gradient[2] + ')';
 
         let currentAngle = (this.ship.orientation + 180) * Math.PI / 180; // position life gauge behind the ship
-        for(let i = 0; i < nbLifeSections; i++) {
+        for (let i = 0; i < nbLifeSections; i++) {
             ctx.beginPath();
             ctx.lineWidth = 3;
             ctx.arc(xOrigin, yOrigin, 20, currentAngle, currentAngle + radAngle);
             ctx.strokeStyle = color;
             ctx.stroke();
-        
-            currentAngle += radAngle + radGap; 
+
+            currentAngle += radAngle + radGap;
         }
     }
 

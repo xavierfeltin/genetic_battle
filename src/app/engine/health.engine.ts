@@ -2,14 +2,15 @@ import { Health } from '../models/health.model';
 
 export class HealthRender {
     public readonly sprite: HTMLImageElement = new Image();
-    public w: number = 20;
-    public h: number = 20;
+    public w = 20;
+    public h = 20;
 
     private health: Health;
 
     constructor(id: number, x: number, y: number) {
         this.sprite.src = this.imageGreen64;
         this.health = new Health(id);
+        this.health.setPosition(x, y);
     }
 
     public getModel(): Health { return this.health; }

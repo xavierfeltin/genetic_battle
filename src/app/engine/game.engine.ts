@@ -7,6 +7,8 @@ import { Missile } from '../models/missile.model';
 import { MissileRender } from './missile.engine';
 import { Game } from '../models/game.model';
 import { HealthRender } from './health.engine';
+import { Health } from '../models/health.model';
+import { GameObject } from '../models/game-object.model';
 
 export class GameEngine {
   private readonly canvas: HTMLCanvasElement;
@@ -88,7 +90,7 @@ export class GameEngine {
         else {
           this.game.start();
         }
-          
+
       //const t1 = performance.now();
       //console.log('Solveturn: ' + (t1 - t0) + ' ms');
     }
@@ -105,8 +107,8 @@ export class GameEngine {
       if (action.fireAction === 1) {
         const hasFired = shipModel.fire();
         if (hasFired) {
-          const startX = shipModel.x_pos; //+ shipModel.x_velo;
-          const startY = shipModel.y_pos; //+ shipModel.y_velo;
+          const startX = shipModel.x_pos; // + shipModel.x_velo;
+          const startY = shipModel.y_pos; // + shipModel.y_velo;
           const startOrientation = shipModel.orientation;
 
           const missile = new MissileRender(this.missiles.length, shipModel.id, startX, startY, startOrientation, [-50, 850, -50, 850]);
@@ -118,12 +120,13 @@ export class GameEngine {
     // Update game state
     const shipsModel = this.ships.map(ship => ship.getModel());
     const missilesModel = this.missiles.map(missile => missile.getModel());
+    const healthsModel = this.health.map(health => health.getModel());
 
-    const injuries = this.solveTurn(shipsModel, missilesModel);
+    const injuries = this.solveTurn(shipsModel, missilesModel, healthsModel);
     this.game.setScore(injuries);
 
     // Destroy exploded missiles
-    const keep = [];
+    let keep = [];
     for (const missile of this.missiles) {
       const missileModel = missile.getModel();
       if (!missileModel.isOutBorder() && !missileModel.isToDelete()) {
@@ -132,8 +135,17 @@ export class GameEngine {
     }
     this.missiles = keep;
 
+    keep = [];
+    for (const health of this.health) {
+      const healthModel = health.getModel();
+      if (!healthModel.isToDelete()) {
+        keep.push(health);
+      }
+    }
+    this.health = keep;
+
     // Manage fire rate
-    for (let ship of this.ships) {
+    for (const ship of this.ships) {
       const shipModel = ship.getModel();
       shipModel.reduceCoolDown();
     }
@@ -158,8 +170,251 @@ export class GameEngine {
     this.missiles[id].update(x, y, orientation);
   }
 
+  private detectCollision(objA: GameObject, objB: GameObject, previousCollision: Collision,
+                          firstCollision: Collision, newCollision: Collision, t: number): Collision[] {
+    // Collision is not possible if ships are going in opposite directions
+    let collision: Collision = null;
+
+    if ((objA.x_pos < objB.x_pos && objA.x_velo < 0.0 && objB.x_velo > 0.0)
+            || (objB.x_pos < objA.x_pos && objB.x_velo < 0.0 && objA.x_velo > 0.0)
+            || (objA.y_pos < objB.y_pos && objA.y_velo < 0.0 && objB.y_velo > 0.0)
+            || (objB.y_pos < objA.y_pos && objB.y_velo < 0.0 && objA.y_velo > 0.0)) {
+      collision = null;
+    } else {
+      collision = Collision.getCollsion(objB, objA);
+    }
+
+    if (collision != null) {
+      if ((previousCollision != null)
+              && ((collision.objA == previousCollision.objA && collision.objB == previousCollision.objB && collision.collTime == previousCollision.collTime)
+                || (collision.objB == previousCollision.objA && collision.objA == previousCollision.objB && collision.collTime == previousCollision.collTime))) {
+          newCollision = null;
+      } else {
+        newCollision = collision;
+
+        // If the collision happens earlier than the current one we keep it
+        if ((newCollision.collTime + t) < 1.0 && (firstCollision == null || newCollision.collTime < firstCollision.collTime)) {
+          firstCollision = newCollision;
+        }
+      }
+    }
+
+    return [previousCollision, firstCollision, newCollision];
+  }
+
   // Return an array with number of missiles which has touched ship A and ship B
-  private solveTurn(ships: Ship[], missiles: Missile[]): number[] {
+  private solveTurn(ships: Ship[], missiles: Missile[], healths: Health[]): number[] {
+    let t  = 0.0;
+    const nShips = ships.length;
+    const nMissiles = missiles.length;
+    const nHealth = healths.length;
+
+    let previousCollision = null;
+    let nbTouchShipA = 0;
+    let nbTouchShipB = 0;
+
+    while (t < 1.0) {
+      let firstCollision = null;
+      let newCollision = null;
+
+      // Check for all the collisions occuring during the turn between Missiles - Ships and Missiles - Missiles
+      for (let i = 0; i < nMissiles; i++) {
+        const missile = missiles[i];
+
+        for (let j = 0; j < nShips; j++) {
+          const ship = ships[j];
+
+          if (missile.isToDelete()) {
+            continue;
+          } else if (ship.id === missile.launchedBy) {
+            continue;
+          }
+
+          //Collision is not possible if ships are going in opposite directions
+          const collisions = this.detectCollision(ship, missile, previousCollision, firstCollision, newCollision, t);
+          previousCollision = collisions[0];
+          firstCollision = collisions[1];
+          newCollision = collisions[2];
+
+          /*
+          let collision: Collision = null;
+          if ((ship.x_pos < missile.x_pos && ship.x_velo < 0.0 && missile.x_velo > 0.0)
+                  || (missile.x_pos < ship.x_pos && missile.x_velo < 0.0 && ship.x_velo > 0.0)
+                  || (ship.y_pos < missile.y_pos && ship.y_velo < 0.0 && missile.y_velo > 0.0)
+                  || (missile.y_pos < ship.y_pos && missile.y_velo < 0.0 && ship.y_velo > 0.0)) {
+              collision = null;
+          } else {
+            collision = Collision.getCollsion(missile, ship);
+          }
+
+          if (collision != null) {
+            if ((previousCollision != null)
+                    && ((collision.objA == previousCollision.objA && collision.objB == previousCollision.objB && collision.collTime == previousCollision.collTime)
+                      || (collision.objB == previousCollision.objB && collision.objA == previousCollision.objA && collision.collTime == previousCollision.collTime))) {
+                newCollision = null;
+            } else {
+              newCollision = collision;
+
+              // If the collision happens earlier than the current one we keep it
+              if ((newCollision.collTime + t) < 1.0 && (firstCollision == null || newCollision.collTime < firstCollision.collTime)) {
+                firstCollision = newCollision;
+              }
+            }
+          }
+          */
+        }
+
+        for (let j = i + 1; j < nMissiles; j++) {
+          const otherMissile = missiles[j];
+
+          if (otherMissile.isToDelete()) {
+            continue;
+          } else if (otherMissile.launchedBy === missile.launchedBy) {
+            continue;
+          }
+
+          // Collision is not possible if otherMissiles are going in opposite directions
+          const collisions = this.detectCollision(otherMissile, missile, previousCollision, firstCollision, newCollision, t);
+          previousCollision = collisions[0];
+          firstCollision = collisions[1];
+          newCollision = collisions[2];
+          /*
+          let collision: Collision = null;
+          if ((otherMissile.x_pos < missile.x_pos && otherMissile.x_velo < 0.0 && missile.x_velo > 0.0)
+                  || (missile.x_pos < otherMissile.x_pos && missile.x_velo < 0.0 && otherMissile.x_velo > 0.0)
+                  || (otherMissile.y_pos < missile.y_pos && otherMissile.y_velo < 0.0 && missile.y_velo > 0.0)
+                  || (missile.y_pos < otherMissile.y_pos && missile.y_velo < 0.0 && otherMissile.y_velo > 0.0)) {
+              collision = null;
+          } else {
+            collision = Collision.getCollsion(missile, otherMissile);
+          }
+
+          if (collision != null) {
+            if ((previousCollision != null)
+                    && ((collision.objA == previousCollision.objA && collision.objB == previousCollision.objB && collision.collTime == previousCollision.collTime)
+                      || (collision.objB == previousCollision.objB && collision.objA == previousCollision.objA && collision.collTime == previousCollision.collTime))) {
+                newCollision = null;
+            } else {
+              newCollision = collision;
+
+              // If the collision happens earlier than the current one we keep it
+              if ((newCollision.collTime + t) < 1.0 && (firstCollision == null || newCollision.collTime < firstCollision.collTime)) {
+                firstCollision = newCollision;
+              }
+            }
+          }
+          */
+        }
+      }
+
+      // Check for all the collisions occuring during the turn between Missiles - Ships and Missiles - Missiles
+      for (let i = 0; i < nHealth; i++) {
+        const health = healths[i];
+
+        for (let j = 0; j < nShips; j++) {
+          const ship = ships[j];
+
+          if (health.isToDelete()) {
+            continue;
+          }
+
+          // Collision is not possible if ships are going in opposite directions
+          const collisions = this.detectCollision(ship, health, previousCollision, firstCollision, newCollision, t);
+          previousCollision = collisions[0];
+          firstCollision = collisions[1];
+          newCollision = collisions[2];
+
+          /*
+          let collision: Collision = null;
+          if ((ship.x_pos < health.x_pos && ship.x_velo < 0.0 && health.x_velo > 0.0)
+                  || (health.x_pos < ship.x_pos && health.x_velo < 0.0 && ship.x_velo > 0.0)
+                  || (ship.y_pos < health.y_pos && ship.y_velo < 0.0 && health.y_velo > 0.0)
+                  || (health.y_pos < ship.y_pos && health.y_velo < 0.0 && ship.y_velo > 0.0)) {
+              collision = null;
+          } else {
+            collision = Collision.getCollsion(health, ship);
+          }
+
+          if (collision != null) {
+            if ((previousCollision != null)
+                    && ((collision.objA == previousCollision.objA && collision.objB == previousCollision.objB && collision.collTime == previousCollision.collTime)
+                      || (collision.objB == previousCollision.objB && collision.objA == previousCollision.objA && collision.collTime == previousCollision.collTime))) {
+                newCollision = null;
+            } else {
+              newCollision = collision;
+
+              // If the collision happens earlier than the current one we keep it
+              if ((newCollision.collTime + t) < 1.0 && (firstCollision == null || newCollision.collTime < firstCollision.collTime)) {
+                firstCollision = newCollision;
+              }
+            }
+          }
+          */
+        }
+      }
+
+      if (firstCollision == null) {
+        // No collision so the pod is following its path until the end of the turn
+        for (let i = 0; i < nShips; i++) {
+          ships[i].move(1.0 - t);
+        }
+
+        for (let i = 0; i < nMissiles; i++) {
+          if (!missiles[i].isToDelete()) {
+            missiles[i].move(1.0 - t);
+          }
+        }
+
+        t = 1.0; // end of the turn
+      } else {
+        let collisionTime = firstCollision.collTime;
+        if (collisionTime === 0.0) {
+            collisionTime = 0.0 ; // avoid infinity loop
+        }
+
+        // Move the pod normally until collision time
+        for (let i = 0; i < nShips; i++) {
+          ships[i].move(collisionTime - t);
+        }
+
+        for (let i = 0; i < nMissiles; i++) {
+          if (!missiles[i].isToDelete()) {
+            missiles[i].move(collisionTime - t);
+          }
+        }
+
+        // Solve the collision
+        if (firstCollision.objA instanceof Missile) {
+          // Missiles are destroyed when they hit
+          firstCollision.objA.toDelete = true;
+
+          if (firstCollision.objB instanceof Missile) {
+            firstCollision.objB.toDelete = true;
+          } else {
+            // TODO: ship is losing health
+            if (firstCollision.objB.id === 0) {
+              nbTouchShipA ++;
+            } else {
+              nbTouchShipB ++;
+            }
+          }
+        } else if (firstCollision.objA instanceof Health) {
+          // Health pack are destroyed when taken
+          firstCollision.objA.toDelete = true;
+
+          // TODO: ship is gaining health
+        }
+
+        t += collisionTime;
+        previousCollision = firstCollision;
+      }
+    }
+
+    return [nbTouchShipB, nbTouchShipA];
+  }
+
+  /* SAVE
+  private solveTurn(ships: Ship[], missiles: Missile[], healths: Health[]): number[] {
     let t  = 0.0;
     const nShips = ships.length;
     const nMissiles = missiles.length;
@@ -181,8 +436,7 @@ export class GameEngine {
 
           if (missile.isToDelete()) {
             continue;
-          }
-          else if (ship.id === missile.launchedBy) {
+          } else if (ship.id === missile.launchedBy) {
             continue;
           }
 
@@ -193,18 +447,16 @@ export class GameEngine {
                   || (ship.y_pos < missile.y_pos && ship.y_velo < 0.0 && missile.y_velo > 0.0)
                   || (missile.y_pos < ship.y_pos && missile.y_velo < 0.0 && ship.y_velo > 0.0)) {
               collision = null;
-          }
-          else {
+          } else {
             collision = Collision.getCollsion(missile, ship);
           }
 
           if (collision != null) {
             if ((previousCollision != null)
                     && ((collision.objA == previousCollision.objA && collision.objB == previousCollision.objB && collision.collTime == previousCollision.collTime)
-                      || (collision.objB == previousCollision.oobjBjA && collision.objA == previousCollision.b && collision.collTime == previousCollision.collTime))) {
+                      || (collision.objB == previousCollision.objB && collision.objA == previousCollision.b && collision.collTime == previousCollision.collTime))) {
                 newCollision = null;
-            }
-            else {
+            } else {
               newCollision = collision;
 
               // If the collision happens earlier than the current one we keep it
@@ -220,8 +472,7 @@ export class GameEngine {
 
           if (otherMissile.isToDelete()) {
             continue;
-          }
-          else if (otherMissile.launchedBy === missile.launchedBy) {
+          } else if (otherMissile.launchedBy === missile.launchedBy) {
             continue;
           }
 
@@ -232,18 +483,16 @@ export class GameEngine {
                   || (otherMissile.y_pos < missile.y_pos && otherMissile.y_velo < 0.0 && missile.y_velo > 0.0)
                   || (missile.y_pos < otherMissile.y_pos && missile.y_velo < 0.0 && otherMissile.y_velo > 0.0)) {
               collision = null;
-          }
-          else {
+          } else {
             collision = Collision.getCollsion(missile, otherMissile);
           }
 
           if (collision != null) {
             if ((previousCollision != null)
                     && ((collision.objA == previousCollision.objA && collision.objB == previousCollision.objB && collision.collTime == previousCollision.collTime)
-                      || (collision.objB == previousCollision.oobjBjA && collision.objA == previousCollision.b && collision.collTime == previousCollision.collTime))) {
+                      || (collision.objB == previousCollision.objB && collision.objA == previousCollision.b && collision.collTime == previousCollision.collTime))) {
                 newCollision = null;
-            }
-            else {
+            } else {
               newCollision = collision;
 
               // If the collision happens earlier than the current one we keep it
@@ -268,8 +517,7 @@ export class GameEngine {
         }
 
         t = 1.0; // end of the turn
-      }
-      else {
+      } else {
         let collisionTime = firstCollision.collTime;
         if (collisionTime === 0.0) {
             collisionTime = 0.0 ; // avoid infinity loop
@@ -294,14 +542,12 @@ export class GameEngine {
 
         if (firstCollision.objB instanceof Missile) {
           firstCollision.objB.toDelete = true;
-        }
-        else {
+        } else {
           // TODO: ship is moving back under impact
           // firstCollision.objB.bounce(firstCollision.objA)
           if (firstCollision.objB.id === 0) {
             nbTouchShipA ++;
-          }
-          else {
+          } else {
             nbTouchShipB ++;
           }
         }
@@ -313,6 +559,7 @@ export class GameEngine {
 
     return [nbTouchShipB, nbTouchShipA];
   }
+  */
 
 
   private drawShips() {
