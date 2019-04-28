@@ -1,30 +1,33 @@
+import { GameObject } from "../models/game-object.model";
+import { Vect2D } from "../models/vect2D.model";
+
 export class PhysicsEngine {
     
-    public static getVeloFromAngle(angle: number, speed: number): number[] {
+    public static getVeloFromAngle(angle: number, speed: number): Vect2D {
         let rad = angle * Math.PI / 180
         let vx = Math.cos(rad) * speed;
         let vy = Math.sin(rad) * speed;
-        return [vx, vy];
+        return new Vect2D(vx, vy);
     }
 
-    public static move(x: number, y: number, vx: number, vy: number, width: number, height: number, borders: number[], t: number): number[] {
-        let w = width / 2;
-        let h = height / 2;
+    public static move(object: GameObject, borders: number[], t: number) {
+        let w = object.width / 2;
+        let h = object.height / 2;
+
+        let newPos = new Vect2D(
+            object.pos.x + (object.velo.x * t), 
+            object.pos.y + (object.velo.y * t));
         
-        let newX = x + vx * t;
-        if (newX - w < borders[0]) {newX = borders[0] + w;}
-        else if (newX + w > borders[1]) {newX = borders[1] - w;}
+        if (newPos.x - w < borders[0]) {newPos.x = borders[0] + w;}
+        else if (newPos.x + w > borders[1]) {newPos.x = borders[1] - w;}
 
-        let newY = y + vy * t;
-        if (newY - h < borders[2]) {newY = borders[2] + h;}
-        else if (newY + h > borders[3]) {newY = borders[3] - h;}
+        if (newPos.y - h < borders[2]) {newPos.y = borders[2] + h;}
+        else if (newPos.y + h > borders[3]) {newPos.y = borders[3] - h;}
 
-        //console.log(newX + ', ' + newY);
+        if (Number.isNaN(newPos.x)) {
+            debugger;
+        }
 
-        return [newX, newY];
-    }
-
-    public static getHeading(x: number, y: number): number {
-        return Math.atan2(y, x) * 180 / Math.PI;
+        object.setPosition(newPos);
     }
 }

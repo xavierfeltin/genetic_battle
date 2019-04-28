@@ -1,8 +1,8 @@
 import { Ship } from './../models/ship.model';
+import { Vect2D } from '../models/vect2D.model';
 
 export class ShipRender {
     public readonly sprite: HTMLImageElement = new Image();
-    private readonly lengthField: number = 600;
     private readonly color: string = '';
     private readonly maxLengthFOV = 50;
     private readonly minLengthFOV = 200;
@@ -12,26 +12,28 @@ export class ShipRender {
 
     private ship: Ship;
 
-    constructor(id: number, c: string, startX: number, startY: number, startOrientation: number, borders: number[]) {
+    constructor(id: number, c: string, pos: Vect2D, startOrientation: number, borders: number[]) {
         this.sprite.src = this.image64;
         this.color = c;
 
         this.ship = new Ship(id);
         this.ship.setBorders(borders);
         this.ship.setBoundingBox(this.w, this.h);
-        this.ship.setPosition(startX - this.w / 2, startY - this.h / 2);
+        this.ship.setPosition(new Vect2D(pos.x - this.w / 2, pos.y - this.h / 2));
         this.ship.setOrientation(startOrientation);
-        this.ship.setFOV(45);
     }
 
     public getModel(): Ship { return this.ship; }
+    public setModel(s: Ship) { this.ship= s; }
     public getColor(): string { return this.color; }
 
-    public update(posX: number, posY: number, orientation: number, fov: number) {
-        this.ship.setPosition(posX, posY);
+    /*
+    public update(pos: Vect2D, orientation: number, fov: number) {
+        this.ship.setPosition(pos);
         this.ship.setOrientation(orientation);
         this.ship.setFOV(fov);
     }
+    */
 
     public draw(ctx: CanvasRenderingContext2D) {
         const transX = (this.w) / 2;
@@ -40,7 +42,7 @@ export class ShipRender {
         ctx.save(); // save current state
         this.drawFieldOfView(ctx);
         this.drawLife(ctx);
-        ctx.translate(this.ship.x_pos - this.w / 2, this.ship.y_pos - this.h / 2); //move to desired point
+        ctx.translate(this.ship.pos.x - this.w / 2, this.ship.pos.y - this.h / 2); //move to desired point
         ctx.translate(transX, transY);
         ctx.rotate(this.ship.orientation * Math.PI / 180); // rotate
         ctx.drawImage(this.sprite, -transX, -transY, this.w, this.h); // draws a chain link or dagger
@@ -48,14 +50,12 @@ export class ShipRender {
     }
 
     public drawLife(ctx: CanvasRenderingContext2D) {
-        const xOrigin = this.ship.x_pos;
-        const yOrigin = this.ship.y_pos;
         const nbMaxSections = 10;
         const angleGap = 10;
         const angleLife = (360 - (nbMaxSections * angleGap)) / nbMaxSections; // N-1 separations of 5px
         const radAngle = angleLife * Math.PI / 180;
         const radGap = angleGap * Math.PI / 180;
-        const life = 100; // this.ship.getLife();
+        const life = this.ship.getLife();
         const nbLifeSections = Math.ceil((life / Ship.MAX_LIFE) * nbMaxSections);
 
         const gradient = this.interpolateColor([255, 0, 0], [0, 255, 0] , life / Ship.MAX_LIFE);
@@ -65,7 +65,7 @@ export class ShipRender {
         for (let i = 0; i < nbLifeSections; i++) {
             ctx.beginPath();
             ctx.lineWidth = 3;
-            ctx.arc(xOrigin, yOrigin, 20, currentAngle, currentAngle + radAngle);
+            ctx.arc(this.ship.pos.x, this.ship.pos.y, 20, currentAngle, currentAngle + radAngle);
             ctx.strokeStyle = color;
             ctx.stroke();
 
@@ -74,14 +74,12 @@ export class ShipRender {
     }
 
     private drawFieldOfView(ctx: CanvasRenderingContext2D) {
-        const xOrigin = this.ship.x_pos;
-        const yOrigin = this.ship.y_pos;
+        const xOrigin = this.ship.pos.x;
+        const yOrigin = this.ship.pos.y;
         const fov = this.ship.getFOV();
+        const lengthFOV = this.ship.getFOVLen();
         const angleMin = -fov/2 + this.ship.orientation;
         const angleMax = fov/2 + this.ship.orientation;
-
-        const slope = (this.maxLengthFOV - this.minLengthFOV) / (Ship.MAX_FOV - Ship.MIN_FOV);
-        const lengthFOV = this.minLengthFOV + slope * (fov - Ship.MIN_FOV);
 
         ctx.beginPath();
         ctx.moveTo(xOrigin, yOrigin);
