@@ -1,4 +1,4 @@
-import { MyMath } from "../tools/math.tools";
+import { MyMath } from '../tools/math.tools';
 
 export class ADN {
     private static readonly MUTATION_RATE = 0.01;
@@ -26,13 +26,12 @@ export class ADN {
     }
 
     public mutate(): ADN {
-        let result = new ADN(this.genes.length, this.minimums, this.maximums);
+        const result = new ADN(this.genes.length, this.minimums, this.maximums);
 
         for (let i = 0; i < this.genes.length; i++) {
             if (Math.random() < ADN.MUTATION_RATE) {
-                this.genes[i] += MyMath.random(-0.1, 0.1); 
-            }
-            else {
+                this.genes[i] += MyMath.random(-0.1, 0.1);
+            } else {
                 result.genes[i] = this.genes[i];
             }
         }

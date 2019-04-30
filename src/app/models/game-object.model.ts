@@ -2,15 +2,15 @@ import {PhysicsEngine} from './../engine/physics.engine';
 import { Vect2D } from './vect2D.model';
 
 export class GameObject {
-    private readonly maxSpeed: number = 8;
     protected static readonly MAX_FORCE = 0.3;
-    
+
+    private readonly maxSpeed: number = 8;
     protected energy: number;
 
     public id: number;
     public toDelete: boolean;
     public radius: number;
-    
+
     // acceleration
     public acc: Vect2D;
     public velo: Vect2D;
@@ -20,18 +20,18 @@ export class GameObject {
 
     protected useSteering: boolean;
 
-    //speed
+    // speed
     public speed: number;
 
-    //collision box
+    // collision box
     public width: number;
     public height: number;
 
-    //boundaries
-    public x_min: number;
-    public x_max: number;
-    public y_min: number;
-    public y_max: number;
+    // boundaries
+    public xMin: number;
+    public xMax: number;
+    public yMin: number;
+    public yMax: number;
 
     constructor(identifier: number) {
         this.id = identifier;
@@ -43,17 +43,17 @@ export class GameObject {
         this.pos = new Vect2D(0, 0);
         this.heading = new Vect2D(0, 0);
         this.orientation = 0;
-        
+
         this.speed = this.maxSpeed;
         this.useSteering = false;
 
         this.width = 0;
         this.height = 0;
 
-        this.x_min = 0;
-        this.x_max = 0;
-        this.y_min = 0;
-        this.y_max = 0; 
+        this.xMin = 0;
+        this.xMax = 0;
+        this.yMin = 0;
+        this.yMax = 0;
     }
 
     public getEnergy() {
@@ -63,15 +63,15 @@ export class GameObject {
     public move(t: number) {
         // TODO : velo is coming from steering behavior
         // const velo = PhysicsEngine.getVeloFromAngle(this.orientation, this.speed);
-        // this.x_velo = velo[0]; 
+        // this.x_velo = velo[0];
         // this.y_velo = velo[1];
 
         // If no steering need to provide a velocity vector
         if (!this.useSteering) {
             this.velo.setV(PhysicsEngine.getVeloFromAngle(this.orientation, this.speed));
         }
-        
-        const borders = [this.x_min, this.x_max, this.y_min, this.y_max];
+
+        const borders = [this.xMin, this.xMax, this.yMin, this.yMax];
         PhysicsEngine.move(this, borders, t);
     }
 
@@ -93,10 +93,14 @@ export class GameObject {
     }
 
     public setBorders(borders: number[]) {
-        this.x_min = borders[0];
-        this.x_max = borders[1];
-        this.y_min = borders[2];
-        this.y_max = borders[3];
+        this.xMin = borders[0];
+        this.xMax = borders[1];
+        this.yMin = borders[2];
+        this.yMax = borders[3];
+    }
+
+    public getBorders(): number[] {
+        return [this.xMin, this.xMax, this.yMin, this.yMax];
     }
 
     public setBoundingBox(w: number, h: number) {
@@ -105,10 +109,10 @@ export class GameObject {
     }
 
     public isOutBorder(): boolean {
-        return this.pos.x < this.x_min 
-            || this.x_max < this.pos.x 
-            || this.pos.y < this.y_min 
-            || this.y_max < this.pos.y;
+        return this.pos.x < this.xMin
+            || this.xMax < this.pos.x
+            || this.pos.y < this.yMin
+            || this.yMax < this.pos.y;
     }
 
     public isToDelete(): boolean {
@@ -118,7 +122,7 @@ export class GameObject {
     public seek(target: GameObject, attractCoeff: number = 1) {
         const desired = Vect2D.sub(target.pos, this.pos);
         desired.setMag(this.speed); // scale to max speed
-        
+
         const steer = Vect2D.sub(desired, this.velo);
         steer.limit(GameObject.MAX_FORCE);
         steer.mul(attractCoeff);
@@ -138,9 +142,6 @@ export class GameObject {
     public updateHeading() {
         this.heading.setV(this.velo);
         this.heading.normalize();
-        //this.heading.round();
-        //debugger;
-        //console.log(this.heading.x + ', ' + this.heading.y);
         this.orientation = this.heading.getHeading();
     }
 }

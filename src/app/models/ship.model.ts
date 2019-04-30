@@ -11,9 +11,9 @@ export class Ship extends GameObject {
     public static readonly EXTEND_FOV: number = 0;
     public static readonly REDUCE_FOV: number = 1;
     public static readonly KEEP_FOV: number = 2;
-    
+
     public static readonly MAX_LIFE: number = 100;
-    
+
     private static readonly MAX_SPEED: number = 5;
     private static readonly MIN_FIRE_RATE: number = 0.0;
     private static readonly MAX_FIRE_RATE: number = 0.1;
@@ -21,7 +21,7 @@ export class Ship extends GameObject {
     private static readonly NB_GENES: number = 5;
     private static readonly MIN_ADN_VALUE: number = -1;
     private static readonly MAX_ADN_VALUE: number = 1;
-    
+
     public static readonly MAX_ANGLE_FOV: number = 120;
     public static readonly MIN_ANGLE_FOV: number = 10;
     private static readonly MAX_LENGTH_FOV = 50;
@@ -30,7 +30,7 @@ export class Ship extends GameObject {
     // Properties
     private coolDown: number;
     private life: number;
-    
+
     // Variables to pilot a ship
     private attractHealth: number;
     private attractMissile: number;
@@ -49,8 +49,8 @@ export class Ship extends GameObject {
         this.energy = -1; // firing takes energy
         this.useSteering = true;
 
-        this.setADN(new ADN(Ship.NB_GENES, 
-            Array<number>(Ship.NB_GENES).fill(Ship.MIN_ADN_VALUE), 
+        this.setADN(new ADN(Ship.NB_GENES,
+            Array<number>(Ship.NB_GENES).fill(Ship.MIN_ADN_VALUE),
             Array<number>(Ship.NB_GENES).fill(Ship.MAX_ADN_VALUE)));
     }
 
@@ -75,33 +75,40 @@ export class Ship extends GameObject {
         this.fov = angle;
         const slope = (Ship.MAX_LENGTH_FOV - Ship.MIN_LENGTH_FOV) / (Ship.MAX_ANGLE_FOV - Ship.MIN_ANGLE_FOV);
         this.fovLength = Ship.MIN_LENGTH_FOV + slope * (this.fov - Ship.MIN_ANGLE_FOV);
-        this.cosHalfFov = Math.cos((this.fov/2) * Math.PI / 180);
+        this.cosHalfFov = Math.cos((this.fov / 2) * Math.PI / 180);
     }
 
     public clone(id: number, orientation: number): Ship {
-        let ship = new Ship(id);
+        const ship = new Ship(id);
         ship.setPosition(this.pos);
         ship.setOrientation(orientation);
         ship.setADN(this.adn.mutate());
+        ship.setBorders(this.getBorders());
         return ship;
     }
 
     public changeFOV(action: number) {}
 
-    public canFire() {
-        return this.coolDown === 0;
+    public canFire(ships: Ship[]): boolean {
+        const target = this.getClosestInSight(ships);
+        return target !== null;
+        // return this.coolDown === 0;
     }
 
+    /*
     public reduceCoolDown() {
-        this.coolDown = this.canFire() ? 0 : this.coolDown - 1; 
+        this.coolDown = this.canFire() ? 0 : this.coolDown - 1;
     }
+    */
 
-    public fire(): boolean {
-        const proba = Math.random();
-        if (proba < this.fireRate) {
-            this.updateLife(this.energy); // firing consume energy
-            return true;
-        } 
+    public fire(ships: Ship[]): boolean {
+        if (this.canFire(ships)) {
+            const proba = Math.random();
+            if (proba < this.fireRate) {
+                this.updateLife(this.energy); // firing consume energy
+                return true;
+            }
+        }
         return false;
     }
 
@@ -110,7 +117,7 @@ export class Ship extends GameObject {
     }
 
     public applyAction(action: GameAction) {
-        switch(action.moveAction) {
+        switch (action.moveAction) {
             case Ship.TURN_LEFT: {
                 this.turnLeft();
                 break;
@@ -125,7 +132,7 @@ export class Ship extends GameObject {
             }
         }
 
-        switch(action.changeFov) {
+        switch (action.changeFov) {
             case Ship.EXTEND_FOV: {
                 this.improveFOV();
                 break;
@@ -167,22 +174,22 @@ export class Ship extends GameObject {
     private boundaries(wArea: number, hArea: number) {
         const d = 25;
         let desired: Vect2D = null;
-    
+
         if (this.pos.x - this.width / 2 < d) {
           desired = new Vect2D(this.speed, this.velo.y);
         } else if (this.pos.x + this.width / 2 > wArea - d) {
           desired = new Vect2D(-this.speed, this.velo.y);
         }
-    
+
         if (this.pos.y - this.height / 2 < d) {
           desired = new Vect2D(this.velo.x, this.speed);
         } else if (this.pos.y + this.height / 2 > hArea - d) {
           desired = new Vect2D(this.velo.x, -this.speed);
         }
-    
+
         if (desired != null) {
             desired.setMag(this.speed);
-            let steer = Vect2D.sub(desired, this.velo);
+            const steer = Vect2D.sub(desired, this.velo);
             steer.limit(GameObject.MAX_FORCE);
             this.applyForce(steer);
             return true;
@@ -206,7 +213,7 @@ export class Ship extends GameObject {
         this.orientation = this.orientation % 360;
     }
 
-    private goForward(){
+    private goForward() {
         return;
     }
 
@@ -218,10 +225,10 @@ export class Ship extends GameObject {
         this.fov = Math.max(this.fov - 1, Ship.MIN_ANGLE_FOV);
     }
 
-    private keepFOV(){
+    private keepFOV() {
         return;
     }
-    
+
     private getClosestInSight(objects: GameObject[]): GameObject {
         let minDistance = NaN;
         let target = null;
@@ -231,8 +238,7 @@ export class Ship extends GameObject {
             if (Number.isNaN(minDistance) && this.isInView(object)) {
                 minDistance = dist;
                 target = object;
-            }
-            else if (dist < minDistance) {
+            } else if (dist < minDistance) {
                 if (this.isInView(target)) {
                     minDistance = dist;
                     target = object;

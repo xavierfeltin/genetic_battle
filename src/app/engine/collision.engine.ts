@@ -2,7 +2,7 @@ import { GameObject } from '../models/game-object.model';
 import { Vect2D } from '../models/vect2D.model';
 
 export class Collision {
-    public collTime: number = 0;
+    public collTime: number;
     public objA: GameObject = null;
     public objB: GameObject = null;
 
@@ -14,16 +14,6 @@ export class Collision {
 
     public static createEmptyCollision() {
         return new Collision(null, null, -1.0);
-    }
-
-    public setCollision(collision: Collision) {
-        this.collTime = collision.collTime;
-        this.objA = collision.objA;
-        this.objB = collision.objB;
-    }
-
-    public isEmpty(): boolean {
-        return this.collTime === -1 && this.objA == null && this.objB == null;
     }
 
     private static get_closest(vOther: Vect2D, vA: Vect2D, vB: Vect2D): Vect2D {
@@ -74,23 +64,13 @@ export class Collision {
         }
 
         // Set other unit as the new reference (other is stationary and is positionned at (0, 0)
-        //const objA_ref_x_pos = objA.x_pos - objB.x_pos;
-        //const objA_ref_y_pos = objA.y_pos - objB.y_pos; //pod_in_referential = Point(x, y)
         const vObjARef = Vect2D.sub(objA.pos, objB.pos);
-        
-        //const objB_ref_x_pos = 0;
-        //const objB_ref_y_pos = 0; //other_in_referential = Point(0, 0)
         const vObjBRef = new Vect2D(0, 0);
-        
-        //const vx = objA.x_velo - objB.x_velo
-        //const vy = objA.y_velo - objB.y_velo
         const dVelo = Vect2D.sub(objA.velo, objB.velo);
 
         // Get the closest point to other unit (which is in (0,0)) on the line described by the pod speed vector
         // closest_projection = other_in_referential.get_closest(pod_in_referential, Point(x + vx, y + vy))
         const vClosestProjection = Collision.get_closest(vObjBRef, vObjARef, Vect2D.add(objA.pos, objA.velo));
-        //let x_closest_projection = closest_projection[0]; //0;
-        //let y_closest_projection = closest_projection[1]; //0;
 
         // Distance(squared) between the other unit and the closest point to the other unit on the line described by our speed vector
         const distanceUnitClosestProjection = vObjBRef.distance2(vClosestProjection);
@@ -105,14 +85,12 @@ export class Collision {
 
             // Project the pod on the line to find the point of impact
             const distanceIntersectionUnits = Math.sqrt(radiiSquared - distanceUnitClosestProjection);
-            //x_closest_projection = x_closest_projection - distanceIntersectionUnits * (vx / speedDistance);
-            //y_closest_projection = y_closest_projection - distanceIntersectionUnits * (vy / speedDistance);
             vClosestProjection.x = vClosestProjection.x - distanceIntersectionUnits * (dVelo.x / speedDistance);
-            vClosestProjection.y = vClosestProjection.y - distanceIntersectionUnits * (dVelo.y / speedDistance); 
-            
+            vClosestProjection.y = vClosestProjection.y - distanceIntersectionUnits * (dVelo.y / speedDistance);
+
             // If the projection point is further away means the pod direction is opposite of the other unit
             // => no collision will happen
-            const updatedDistancePodClosestProjection = vObjARef.distance2(vClosestProjection); //Collision.getCoordDistance2(objA_ref_x_pos, objA_ref_y_pos, x_closest_projection, y_closest_projection);
+            const updatedDistancePodClosestProjection = vObjARef.distance2(vClosestProjection);
             if ( updatedDistancePodClosestProjection > distancePodClosestProjection) {
                 return Collision.createEmptyCollision();
             }
@@ -133,9 +111,18 @@ export class Collision {
             }
 
             return new Collision(objA, objB, t);
-        }
-        else {
+        } else {
             return Collision.createEmptyCollision();
         }
+    }
+
+    public setCollision(collision: Collision) {
+        this.collTime = collision.collTime;
+        this.objA = collision.objA;
+        this.objB = collision.objB;
+    }
+
+    public isEmpty(): boolean {
+        return this.collTime === -1 && this.objA == null && this.objB == null;
     }
 }

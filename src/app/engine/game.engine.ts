@@ -10,12 +10,19 @@ import { HealthRender } from './health.engine';
 import { Health } from '../models/health.model';
 import { GameObject } from '../models/game-object.model';
 import { Vect2D } from '../models/vect2D.model';
+import { MyMath } from '../tools/math.tools';
 
 export class GameEngine {
+  private static readonly NB_HEALTH_WHEN_DIE: number = 2;
+  private static readonly NB_SHIPS: number = 10;
+  private static readonly NB_INIT_HEALTH: number = 20;
+  private static readonly RATE_SPAWN_HEALTH: number = 0.005;
+  private static readonly RATE_CLONE_SHIP: number = 0.001;
+
+
   private readonly canvas: HTMLCanvasElement;
   private readonly ctx: CanvasRenderingContext2D;
-  
-  private nbShips: number;
+
   private fps: number;
   private now: number;
   private then: number;
@@ -23,9 +30,6 @@ export class GameEngine {
   private delta: number;
   private width: number;
   private height: number;
-
-  private healthProba: number;
-  private cloneShipProba: number;
 
   private ships: ShipRender[] = [];
   private missiles: MissileRender[] = [];
@@ -46,10 +50,6 @@ export class GameEngine {
     this.interval = 1000 / this.fps;
     this.delta = 0;
     this.now = 0;
-    this.nbShips = 10;
-
-    this.healthProba = 0.05;
-    this.cloneShipProba = 0.0005;
 
     this.game = new Game();
   }
@@ -57,7 +57,7 @@ export class GameEngine {
   public run() {
     this.game.start();
 
-    for(let i = 0; i < this.nbShips; i++) {
+    for (let i = 0; i < GameEngine.NB_SHIPS; i++) {
       const pos = new Vect2D(Math.random() * this.width, Math.random() * this.height);
       const orientation = Math.random() * 360;
       this.ships.push(new ShipRender(i, 'rgba(255,0,0,0.8)', pos, orientation, [0, this.width, 0, this.height]));
@@ -66,7 +66,7 @@ export class GameEngine {
     this.bots.push(new TestBot(0));
     this.bots.push(new TestBot(1));
 
-    for (let i = 0; i < 40; i++) {
+    for (let i = 0; i < GameEngine.NB_INIT_HEALTH; i++) {
       this.createHealth(i);
     }
 
@@ -95,18 +95,13 @@ export class GameEngine {
       // by subtracting delta (112) % interval (100).
       // Hope that makes sense.
       this.then = this.now - (this.delta % this.interval);
-      //const t0 = performance.now();
 
-        if (!this.game.isOver()) {
-          this.playGame();
-          this.renderGame();
-        }
-        else {
-          this.game.start();
-        }
-
-      //const t1 = performance.now();
-      //console.log('Solveturn: ' + (t1 - t0) + ' ms');
+      if (!this.game.isOver()) {
+        this.playGame();
+        this.renderGame();
+      } else {
+        this.game.start();
+      }
     }
   }
 
@@ -133,46 +128,52 @@ export class GameEngine {
     }
     */
 
+    const missilesModel = this.missiles.map(missile => missile.getModel());
+    const healthsModel = this.health.map(health => health.getModel());
+    const shipsModel = this.ships.map(ship => ship.getModel());
+
     // Add possible new health
-    if (Math.random() < this.healthProba) {
+    if (Math.random() < GameEngine.RATE_SPAWN_HEALTH) {
       this.createHealth(this.health.length);
     }
 
     // Manage ship actions
     for (const ship of this.ships) {
-      const shipModel = ship.getModel(); 
-      
+      const shipModel = ship.getModel();
+
       // Ship may fire this turn
-      if (shipModel.fire()) {
+      if (shipModel.fire(shipsModel)) {
         const startOrientation = shipModel.orientation;
         const missile = new MissileRender(this.missiles.length, shipModel.id, shipModel.pos, startOrientation, [-50, 850, -50, 850]);
         this.missiles.push(missile);
       }
 
       // Ship may clone this turn
-      if (Math.random() < this.cloneShipProba) {
+      if (Math.random() < GameEngine.RATE_CLONE_SHIP) {
         const orientation = Math.random() * 360;
         const copy = shipModel.clone(this.ships.length, orientation);
-        
-        let renderer = new ShipRender(this.ships.length, 'rgba(255,0,0,0.8)', shipModel.pos, orientation, [0, this.width, 0, this.height]);
+
+        const renderer = new ShipRender(this.ships.length,
+          'rgba(255,0,0,0.8)',
+          shipModel.pos,
+          orientation,
+          [0, this.width, 0, this.height]);
         renderer.setModel(copy);
         this.ships.push(renderer);
-
-        // TODO: bug adding a clone put it at pos(0, 0) ...
       }
     }
 
     // Update game state
-    const missilesModel = this.missiles.map(missile => missile.getModel());
-    const healthsModel = this.health.map(health => health.getModel());
-    const shipsModel = this.ships.map(ship => ship.getModel());
+    //const missilesModel = this.missiles.map(missile => missile.getModel());
+    //const healthsModel = this.health.map(health => health.getModel());
+    //const shipsModel = this.ships.map(ship => ship.getModel());
 
     for (const ship of shipsModel) {
       ship.behaviors(missilesModel, healthsModel, shipsModel, this.width, this.height);
     }
-    
+
     const injuries = this.solveTurn(shipsModel, missilesModel, healthsModel);
-    //this.game.setScore(injuries);
+    // this.game.setScore(injuries);
 
     // Destroy exploded missiles
     let keep = [];
@@ -197,18 +198,22 @@ export class GameEngine {
     keep = [];
     for (const ship of this.ships) {
       const shipModel = ship.getModel();
-      
+
       if (!shipModel.isDead()) {
         shipModel.acc.mul(0);
         shipModel.updateHeading();
         keep.push(ship);
-      }
-      else {
-        // Create a health pack
-        this.createHealth(this.health.length, shipModel.pos);
+      } else {
+        // Create 2 healths pack
+        for (let i = 0; i < GameEngine.NB_HEALTH_WHEN_DIE; i++) {
+          const dX = MyMath.random(-50, 50);
+          const dY = MyMath.random(-50, 50);
+          const coord = new Vect2D(shipModel.pos.x + dX, shipModel.pos.y + dY);
+          this.createHealth(this.health.length, coord);
+        }
       }
     }
-    
+
     this.ships = keep;
   }
 
@@ -249,8 +254,12 @@ export class GameEngine {
 
     if (!collision.isEmpty()) {
       if ((!previousCollision.isEmpty())
-              && ((collision.objA == previousCollision.objA && collision.objB == previousCollision.objB && collision.collTime == previousCollision.collTime)
-                || (collision.objB == previousCollision.objA && collision.objA == previousCollision.objB && collision.collTime == previousCollision.collTime))) {
+              && ((collision.objA === previousCollision.objA
+                && collision.objB === previousCollision.objB
+                && collision.collTime === previousCollision.collTime)
+                || (collision.objB === previousCollision.objA
+                  && collision.objA === previousCollision.objB
+                  && collision.collTime === previousCollision.collTime))) {
           const emptyCollision = new Collision(null, null, -1.0);
           newCollision.setCollision(emptyCollision);
       } else {
@@ -271,14 +280,14 @@ export class GameEngine {
     const nShips = ships.length;
     const nMissiles = missiles.length;
     const nHealth = healths.length;
-    
+
     let previousCollision = Collision.createEmptyCollision();
     let nbTouchShipA = 0;
     let nbTouchShipB = 0;
 
     while (t < 1.0) {
-      let firstCollision = Collision.createEmptyCollision();
-      let newCollision = Collision.createEmptyCollision();
+      const firstCollision = Collision.createEmptyCollision();
+      const newCollision = Collision.createEmptyCollision();
 
       // Check for all the collisions occuring during the turn between Missiles - Ships and Missiles - Missiles
       for (let i = 0; i < nMissiles; i++) {
@@ -293,7 +302,7 @@ export class GameEngine {
             continue;
           }
 
-          //Collision is not possible if ships are going in opposite directions
+          // Collision is not possible if ships are going in opposite directions
           this.detectCollision(ship, missile, previousCollision, firstCollision, newCollision, t);
         }
 
@@ -327,7 +336,6 @@ export class GameEngine {
         }
       }
 
-      //if (firstCollision == null) {
       if (firstCollision.isEmpty()) {
         // No collision so the pod is following its path until the end of the turn
         for (let i = 0; i < nShips; i++) {
@@ -368,9 +376,9 @@ export class GameEngine {
           } else {
             // Ship gets damages
             const missile = firstCollision.objA as Missile;
-            let ship = firstCollision.objB as Ship;
+            const ship = firstCollision.objB as Ship;
             ship.updateLife(missile.getEnergy());
-            
+
             if (firstCollision.objB.id === 0) {
               nbTouchShipA ++;
             } else {
@@ -383,7 +391,7 @@ export class GameEngine {
 
           // Ship is recovering health
           const health = firstCollision.objA as Health;
-          let ship = firstCollision.objB as Ship;
+          const ship = firstCollision.objB as Ship;
           ship.updateLife(health.getEnergy());
         }
 
