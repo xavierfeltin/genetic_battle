@@ -49,7 +49,7 @@ export class Collision {
         const radii = (objA.radius + objB.radius);
         const radiiSquared = radii * radii;
 
-        if (distanceToOther < radiiSquared) {
+        if (distanceToOther <= radiiSquared) {
             // Units are already in contact so there is an immediate collision
             return new Collision(objA, objB, 0.0);
         }
@@ -79,7 +79,7 @@ export class Collision {
         let distancePodClosestProjection = vObjARef.distance2(vClosestProjection);
 
         // If the distance between other unit and this line is less than the sum of the radii, there might be a collision
-        if (distanceUnitClosestProjection < radiiSquared) {
+        if (distanceUnitClosestProjection <= radiiSquared) {
             // The pod speed on the line (norm)
             const speedDistance = dVelo.norm;
 

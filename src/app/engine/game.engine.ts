@@ -13,10 +13,10 @@ import { Vect2D } from '../models/vect2D.model';
 import { MyMath } from '../tools/math.tools';
 
 export class GameEngine {
-  private static readonly NB_HEALTH_WHEN_DIE: number = 2;
-  private static readonly NB_SHIPS: number = 10;
+  private static readonly NB_HEALTH_WHEN_DIE: number = 4;
+  private static readonly NB_SHIPS: number = 30;
   private static readonly NB_INIT_HEALTH: number = 20;
-  private static readonly RATE_SPAWN_HEALTH: number = 0.005;
+  private static readonly RATE_SPAWN_HEALTH: number = 0.01;
   private static readonly RATE_CLONE_SHIP: number = 0.001;
 
 
@@ -147,7 +147,10 @@ export class GameEngine {
         const missile = new MissileRender(this.missiles.length, shipModel.id, shipModel.pos, startOrientation, [-50, 850, -50, 850]);
         this.missiles.push(missile);
       }
-
+      else {
+        shipModel.reduceCoolDown();
+      }
+      
       // Ship may clone this turn
       if (Math.random() < GameEngine.RATE_CLONE_SHIP) {
         const orientation = Math.random() * 360;
@@ -198,6 +201,7 @@ export class GameEngine {
     keep = [];
     for (const ship of this.ships) {
       const shipModel = ship.getModel();
+      shipModel.consumeFuel();
 
       if (!shipModel.isDead()) {
         shipModel.acc.mul(0);
@@ -206,8 +210,8 @@ export class GameEngine {
       } else {
         // Create 2 healths pack
         for (let i = 0; i < GameEngine.NB_HEALTH_WHEN_DIE; i++) {
-          const dX = MyMath.random(-50, 50);
-          const dY = MyMath.random(-50, 50);
+          const dX = MyMath.random(-70, 70);
+          const dY = MyMath.random(-70, 70);
           const coord = new Vect2D(shipModel.pos.x + dX, shipModel.pos.y + dY);
           this.createHealth(this.health.length, coord);
         }

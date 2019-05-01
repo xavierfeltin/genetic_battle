@@ -4,8 +4,7 @@ import { Vect2D } from '../models/vect2D.model';
 export class ShipRender {
     public readonly sprite: HTMLImageElement = new Image();
     private readonly color: string = '';
-    private readonly maxLengthFOV = 50;
-    private readonly minLengthFOV = 200;
+    private static readonly DEBUG: number = 1;
 
     public w = 30;
     public h = 30;
@@ -40,7 +39,13 @@ export class ShipRender {
         const transY = (this.h) / 2;
 
         ctx.save(); // save current state
-        this.drawFieldOfView(ctx);
+
+        if (ShipRender.DEBUG === 0) {
+            this.drawMissileRadar(ctx);
+            this.drawFieldOfView(ctx);
+            this.drawCollisionBox(ctx);
+        }
+
         this.drawLife(ctx);
         ctx.translate(this.ship.pos.x - this.w / 2, this.ship.pos.y - this.h / 2); //move to desired point
         ctx.translate(transX, transY);
@@ -52,7 +57,8 @@ export class ShipRender {
     public drawLife(ctx: CanvasRenderingContext2D) {
         const nbMaxSections = 10;
         const angleGap = 10;
-        const angleLife = (360 - (nbMaxSections * angleGap)) / nbMaxSections; // N-1 separations of 5px
+        const angleFullLife = 120;
+        const angleLife = (angleFullLife - (nbMaxSections * angleGap)) / nbMaxSections; // N-1 separations of 5px
         const radAngle = angleLife * Math.PI / 180;
         const radGap = angleGap * Math.PI / 180;
         const life = this.ship.getLife();
@@ -61,7 +67,7 @@ export class ShipRender {
         const gradient = this.interpolateColor([255, 0, 0], [0, 255, 0] , life / Ship.MAX_LIFE);
         const color = 'rgba(' + gradient[0] + ', ' + gradient[1] + ', ' + gradient[2] + ')';
 
-        let currentAngle = (this.ship.orientation + 180) * Math.PI / 180; // position life gauge behind the ship
+        let currentAngle = (this.ship.orientation + 90 - (angleFullLife / 2)) * Math.PI / 180; // position life gauge behind the ship
         for (let i = 0; i < nbLifeSections; i++) {
             ctx.beginPath();
             ctx.lineWidth = 3;
@@ -71,6 +77,16 @@ export class ShipRender {
 
             currentAngle += radAngle + radGap;
         }
+    }
+
+    public drawCollisionBox(ctx: CanvasRenderingContext2D) {
+        const xOrigin = this.ship.pos.x;
+        const yOrigin = this.ship.pos.y;
+        
+        ctx.beginPath();
+        ctx.strokeStyle = 'rgba(50, 50, 50)';
+        ctx.arc(xOrigin, yOrigin, this.ship.radius, 0, Math.PI * 2);
+        ctx.stroke();
     }
 
     private drawFieldOfView(ctx: CanvasRenderingContext2D) {
@@ -84,18 +100,29 @@ export class ShipRender {
         ctx.beginPath();
         ctx.moveTo(xOrigin, yOrigin);
         ctx.lineTo(xOrigin + Math.cos(angleMin * Math.PI / 180) * lengthFOV, yOrigin + Math.sin(angleMin * Math.PI / 180) * lengthFOV);
-        ctx.strokeStyle = this.color;
+        ctx.strokeStyle = 'rgba(0, 255, 0)';
         ctx.stroke();
 
         ctx.beginPath();
         ctx.moveTo(xOrigin, yOrigin);
         ctx.lineTo(xOrigin + Math.cos(angleMax * Math.PI / 180) * lengthFOV, yOrigin + Math.sin(angleMax * Math.PI / 180) * lengthFOV);
-        ctx.strokeStyle = this.color;
+        ctx.strokeStyle = 'rgba(0, 255, 0)';
         ctx.stroke();
 
         ctx.beginPath();
-        ctx.strokeStyle = this.color;
+        ctx.strokeStyle = 'rgba(0, 255, 0)';
         ctx.arc(xOrigin, yOrigin, lengthFOV, angleMin * Math.PI / 180, angleMax * Math.PI / 180);
+        ctx.stroke();
+    }
+
+    private drawMissileRadar(ctx: CanvasRenderingContext2D) {
+        const xOrigin = this.ship.pos.x;
+        const yOrigin = this.ship.pos.y;
+        const lengthRadar = this.ship.getRadarLen();
+
+        ctx.beginPath();
+        ctx.strokeStyle = 'rgba(255, 0, 0)';
+        ctx.arc(xOrigin, yOrigin, lengthRadar, 0, Math.PI * 2);
         ctx.stroke();
     }
 
