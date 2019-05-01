@@ -134,7 +134,7 @@ export class GameEngine {
 
     // Add possible new health
     if (Math.random() < GameEngine.RATE_SPAWN_HEALTH) {
-      this.createHealth(this.health.length);
+      this.createHealth(this.generateId());
     }
 
     // Manage ship actions
@@ -144,7 +144,7 @@ export class GameEngine {
       // Ship may fire this turn
       if (shipModel.fire(shipsModel)) {
         const startOrientation = shipModel.orientation;
-        const missile = new MissileRender(this.missiles.length, shipModel.id, shipModel.pos, startOrientation, [-50, 850, -50, 850]);
+        const missile = new MissileRender(this.generateId(), shipModel.id, shipModel.pos, startOrientation, [-50, 850, -50, 850]);
         this.missiles.push(missile);
       }
       else {
@@ -154,15 +154,33 @@ export class GameEngine {
       // Ship may clone this turn
       if (Math.random() < GameEngine.RATE_CLONE_SHIP) {
         const orientation = Math.random() * 360;
-        const copy = shipModel.clone(this.ships.length, orientation);
+        const id = this.generateId();
+        const copy = shipModel.clone(id, orientation);
 
-        const renderer = new ShipRender(this.ships.length,
+        const renderer = new ShipRender(id,
           'rgba(255,0,0,0.8)',
           shipModel.pos,
           orientation,
           [0, this.width, 0, this.height]);
         renderer.setModel(copy);
         this.ships.push(renderer);
+      }
+
+      // Manage ship cross over
+      if (shipModel.hasPartner()) {
+        if (Math.random() < GameEngine.RATE_CLONE_SHIP) {
+          const id = this.generateId();
+          const newShip = shipModel.reproduce(id);
+          const orientation = Math.random() * 360;
+          const renderer = new ShipRender(id,
+            'rgba(255,0,0,0.8)',
+            shipModel.pos,
+            orientation,
+            [0, this.width, 0, this.height]);
+          renderer.setModel(newShip);
+          this.ships.push(renderer);
+        }
+        shipModel.setPartner(null); // if it fails, it fails 
       }
     }
 
@@ -213,7 +231,7 @@ export class GameEngine {
           const dX = MyMath.random(-70, 70);
           const dY = MyMath.random(-70, 70);
           const coord = new Vect2D(shipModel.pos.x + dX, shipModel.pos.y + dY);
-          this.createHealth(this.health.length, coord);
+          this.createHealth(this.generateId(), coord);
         }
       }
     }
@@ -243,7 +261,8 @@ export class GameEngine {
   */
 
   private detectCollision(objA: GameObject, objB: GameObject, previousCollision: Collision,
-                          firstCollision: Collision, newCollision: Collision, t: number) {
+                          firstCollision: Collision, newCollision: Collision, t: number,
+                          previousCollisions: {}) {
     // Collision is not possible if ships are going in opposite directions
     let collision: Collision = Collision.createEmptyCollision();
 
@@ -257,13 +276,19 @@ export class GameEngine {
     }
 
     if (!collision.isEmpty()) {
+      const keyA = collision.objA.id + '_' + collision.objA.constructor.name; 
+      const keyB = collision.objA.id + '_' + collision.objA.constructor.name;
+
       if ((!previousCollision.isEmpty())
+              && ((keyA in previousCollisions && previousCollisions[keyA].includes(keyB)) 
+                || (keyB in previousCollisions && previousCollisions[keyB].includes(keyA)))
+              /* 
               && ((collision.objA === previousCollision.objA
                 && collision.objB === previousCollision.objB
                 && collision.collTime === previousCollision.collTime)
                 || (collision.objB === previousCollision.objA
                   && collision.objA === previousCollision.objB
-                  && collision.collTime === previousCollision.collTime))) {
+                  && collision.collTime === previousCollision.collTime))*/) {
           const emptyCollision = new Collision(null, null, -1.0);
           newCollision.setCollision(emptyCollision);
       } else {
@@ -286,6 +311,8 @@ export class GameEngine {
     const nHealth = healths.length;
 
     let previousCollision = Collision.createEmptyCollision();
+    let previousCollisions = {};
+
     let nbTouchShipA = 0;
     let nbTouchShipB = 0;
 
@@ -307,9 +334,10 @@ export class GameEngine {
           }
 
           // Collision is not possible if ships are going in opposite directions
-          this.detectCollision(ship, missile, previousCollision, firstCollision, newCollision, t);
+          this.detectCollision(ship, missile, previousCollision, firstCollision, newCollision, t, previousCollisions);
         }
 
+        /*
         for (let j = i + 1; j < nMissiles; j++) {
           const otherMissile = missiles[j];
 
@@ -320,8 +348,9 @@ export class GameEngine {
           }
 
           // Collision is not possible if otherMissiles are going in opposite directions
-          this.detectCollision(otherMissile, missile, previousCollision, firstCollision, newCollision, t);
+          this.detectCollision(otherMissile, missile, previousCollision, firstCollision, newCollision, t, previousCollisions);
         }
+        */
       }
 
       // Check for all the collisions occuring during the turn between Missiles - Ships and Missiles - Missiles
@@ -336,7 +365,27 @@ export class GameEngine {
           }
 
           // Collision is not possible if ships are going in opposite directions
-          this.detectCollision(ship, health, previousCollision, firstCollision, newCollision, t);
+          this.detectCollision(ship, health, previousCollision, firstCollision, newCollision, t, previousCollisions);
+        }
+      }
+
+      // Check collision between ships for reproduction
+      for (let i = 0; i < nShips-1; i++) {
+        const shipA = ships[i];
+
+        
+        for (let j = i+1; j < nShips; j++) {
+          const shipB = ships[j];
+
+          //if (shipA.isToDelete() || shipB.isToDelete) {
+          //  continue;
+          //}
+        
+          //debugger;
+          //continue;
+
+          // Collision is not possible if ships are going in opposite directions
+          this.detectCollision(shipA, shipB, previousCollision, firstCollision, newCollision, t, previousCollisions);
         }
       }
 
@@ -356,7 +405,7 @@ export class GameEngine {
       } else {
         let collisionTime = firstCollision.collTime;
         if (collisionTime === 0.0) {
-            collisionTime = 0.0 ; // avoid infinity loop
+            collisionTime = 0 ; // avoid infinity loop
         }
 
         // Move the pod normally until collision time
@@ -397,10 +446,36 @@ export class GameEngine {
           const health = firstCollision.objA as Health;
           const ship = firstCollision.objB as Ship;
           ship.updateLife(health.getEnergy());
+        } else if (firstCollision.objA instanceof Ship) {
+          const shipA = firstCollision.objA as Ship;
+          const shipB = firstCollision.objB as Ship; // Obj B is a ship
+          shipA.setPartner(shipB);
         }
 
         t += collisionTime;
         previousCollision = firstCollision;
+
+        if (firstCollision !== null) {
+          const keyA = firstCollision.objA.id + '_' + firstCollision.objA.constructor.name;
+          const keyB = firstCollision.objA.id + '_' + firstCollision.objA.constructor.name;
+          if (keyA in previousCollisions) {
+            if (!(previousCollisions[keyA].includes(keyB))) {
+              previousCollisions[keyA].push(keyB);
+            }          
+          }
+          else {
+            previousCollisions[keyA] = [];
+          }
+
+          if (keyB in previousCollisions) {
+            if (!(previousCollisions[keyB].includes(keyA))) {
+              previousCollisions[keyB].push(keyA);
+            }          
+          }
+          else {
+            previousCollisions[keyB] = [];
+          }
+        }
       }
     }
 
@@ -452,5 +527,9 @@ export class GameEngine {
     this.ctx.textAlign = 'center';
     this.ctx.fillText(this.scores[0].toString() + ' - ' + this.scores[1].toString(), 400, 30);
     this.ctx.restore();
+  }
+
+  private generateId(): number {
+    return new Date().getUTCMilliseconds();
   }
 }

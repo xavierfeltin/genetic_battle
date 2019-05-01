@@ -49,6 +49,7 @@ export class Ship extends GameObject {
     private fireRate: number; // probability to fire each frame
     private adn: ADN;
     private energyFuel: number;
+    private partner: Ship;
 
     constructor(id: number) {
         super(id);
@@ -59,6 +60,7 @@ export class Ship extends GameObject {
         this.energy = -1; // firing takes energy
         this.energyFuel = 0; //moving consume energy
         this.useSteering = true;
+        this.partner = null;
 
         this.setADN(new ADN(Ship.NB_GENES,
             Array<number>(Ship.NB_GENES).fill(Ship.MIN_ADN_VALUE),
@@ -79,6 +81,21 @@ export class Ship extends GameObject {
         this.fireRate = Math.round(MyMath.map(genes[4], Ship.MIN_ADN_VALUE, Ship.MAX_ADN_VALUE, Ship.MIN_FIRE_RATE, Ship.MAX_FIRE_RATE));
         this.radarLength = Math.round(MyMath.map(genes[4], Ship.MIN_ADN_VALUE, Ship.MAX_ADN_VALUE, Ship.MIN_LENGTH_RADAR, Ship.MAX_LENGTH_RADAR));
         this.radarLenSquared = this.radarLength * this.radarLength;
+    }
+
+    public setPartner(ship: Ship) {
+        this.partner = ship;
+    }
+
+    public hasPartner(): boolean {
+        return this.partner !== null;
+    }
+
+    public reproduce(id: number): Ship {
+        const adn = this.adn.crossOver(this.partner.adn);
+        let result = new Ship(id);
+        result.setADN(adn);
+        return result;
     }
 
     public getFOV(): number { return this.fov; }
