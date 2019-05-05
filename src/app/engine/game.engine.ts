@@ -11,17 +11,19 @@ import { Health } from '../models/health.model';
 import { GameObject } from '../models/game-object.model';
 import { Vect2D } from '../models/vect2D.model';
 import { MyMath } from '../tools/math.tools';
+import { Subject } from 'rxjs';
+import { Configuration } from '../models/configuration.interface';
 
 export class GameEngine {
-  private static readonly NB_HEALTH_WHEN_DIE: number = 4;
+  private static readonly NB_HEALTH_WHEN_DIE: number = 2;
   private static readonly NB_SHIPS: number = 30;
   private static readonly NB_INIT_HEALTH: number = 20;
   private static readonly RATE_SPAWN_HEALTH: number = 0.01;
-  private static readonly RATE_CLONE_SHIP: number = 0.001;
+  private static readonly RATE_CLONE_SHIP: number = 0.005;
+  private static readonly RATE_CROSSOVER_SHIP: number = 0.01;
 
-
-  private readonly canvas: HTMLCanvasElement;
-  private readonly ctx: CanvasRenderingContext2D;
+  private canvas: HTMLCanvasElement;
+  private ctx: CanvasRenderingContext2D;
 
   private fps: number;
   private now: number;
@@ -38,20 +40,59 @@ export class GameEngine {
   private game: Game;
   private scores: number[] = [0, 0];
 
-  constructor(private readonly idCanvas: string) {
-    this.canvas = document.getElementById(idCanvas) as HTMLCanvasElement;
-    this.width = this.canvas.width;
-    this.height = this.canvas.height;
-    this.ctx = this.canvas.getContext('2d');
-    this.ctx.fillStyle = 'rgba(0, 0, 0, 0.9)';
+  private cloneRate: number;
 
+  // Output variables
+  private oldestShip: Ship;
+
+  private _nbShips$ = new Subject<number>();
+  public get nbShips$() { return this._nbShips$.asObservable() }
+
+  private _nbMissiles$ = new Subject<number>();
+  public get nbMissiles$() { return this._nbMissiles$.asObservable() }
+
+  private _nbHealth$ = new Subject<number>();
+  public get nbHealth$() { return this._nbHealth$.asObservable() }
+
+  private _ships$ = new Subject<number[][]>();
+  public get ships$() { return this._ships$.asObservable() }
+
+  private _missiles$ = new Subject<number[][]>();
+  public get missiles$() { return this._missiles$.asObservable() }
+
+  private _healths$ = new Subject<(number|boolean)[][]>();
+  public get healths$() { return this._healths$.asObservable() }
+
+  private _oldestShip$ = new Subject<Ship>();
+  public get oldestShip$() { return this._oldestShip$.asObservable() }
+
+  private _aliveOldestShip$ = new Subject<Ship>();
+  public get aliveOldestShip$() { return this._aliveOldestShip$.asObservable() }
+
+  constructor() {
     this.fps = 30;
     this.then = Date.now();
     this.interval = 1000 / this.fps;
     this.delta = 0;
     this.now = 0;
-
     this.game = new Game();
+    this.canvas = null;
+    this.oldestShip = null;
+
+    this.cloneRate = GameEngine.RATE_CLONE_SHIP;
+  }
+
+  public setCanvas(idCanvas: string) {
+    this.canvas = document.getElementById(idCanvas) as HTMLCanvasElement;
+    this.width = this.canvas.width;
+    this.height = this.canvas.height;
+    this.ctx = this.canvas.getContext('2d');
+    this.ctx.fillStyle = 'rgba(0, 0, 0, 0.9)';
+  }
+
+  public setConfigucation (config: Configuration) {
+    // TODO
+    this.cloneRate = config.cloneRate;
   }
 
   public run() {
@@ -62,6 +103,8 @@ export class GameEngine {
       const orientation = Math.random() * 360;
       this.ships.push(new ShipRender(i, 'rgba(255,0,0,0.8)', pos, orientation, [0, this.width, 0, this.height]));
     }
+    this._nbShips$.next(this.ships.length);
+    this.oldestShip = this.ships[0].getModel();
 
     this.bots.push(new TestBot(0));
     this.bots.push(new TestBot(1));
@@ -69,6 +112,7 @@ export class GameEngine {
     for (let i = 0; i < GameEngine.NB_INIT_HEALTH; i++) {
       this.createHealth(i);
     }
+    this._nbHealth$.next(this.health.length);
 
     window.requestAnimationFrame(() => this.animate());
   }
@@ -152,7 +196,7 @@ export class GameEngine {
       }
 
       // Ship may clone this turn
-      if (Math.random() < GameEngine.RATE_CLONE_SHIP) {
+      if (Math.random() < this.cloneRate) {
         const orientation = Math.random() * 360;
         const id = this.generateId();
         const copy = shipModel.clone(id, orientation);
@@ -168,10 +212,10 @@ export class GameEngine {
 
       // Manage ship cross over
       if (shipModel.hasPartner()) {
-        if (Math.random() < GameEngine.RATE_CLONE_SHIP) {
+        if (Math.random() < GameEngine.RATE_CROSSOVER_SHIP) {
           const id = this.generateId();
-          const newShip = shipModel.reproduce(id);
           const orientation = Math.random() * 360;
+          const newShip = shipModel.reproduce(id, orientation);
           const renderer = new ShipRender(id,
             'rgba(255,0,0,0.8)',
             shipModel.pos,
@@ -197,46 +241,69 @@ export class GameEngine {
     // this.game.setScore(injuries);
 
     // Destroy exploded missiles
-    let keep = [];
-    for (const missile of this.missiles) {
-      const missileModel = missile.getModel();
-      if (!missileModel.isOutBorder() && !missileModel.isToDelete()) {
-        keep.push(missile);
+    for (let i = this.missiles.length -1; i >= 0; i--) {
+      const missileModel = this.missiles[i].getModel();
+      missileModel.consumeFuel();
+      if (missileModel.isDead() || missileModel.isToDelete()) {
+        this.missiles.splice(i, 1);
       }
     }
-    this.missiles = keep;
+    this._nbMissiles$.next(this.missiles.length);
+    const Mcoordinates = this.missiles.map(missile => missile.getModel()).map(missile => [missile.id, missile.getLife()]);
+    this._missiles$.next(Mcoordinates);
 
-    keep = [];
-    for (const health of this.health) {
-      const healthModel = health.getModel();
-      if (!healthModel.isToDelete()) {
-        keep.push(health);
+    for (let i = this.health.length - 1; i >= 0; i--) {
+      const healthModel = this.health[i].getModel();
+      if (healthModel.isToDelete()) {
+        this.health.splice(i, 1);
       }
     }
-    this.health = keep;
+    this._nbHealth$.next(this.health.length);
+    const Hcoordinates = this.health.map(health => health.getModel()).map(health => [health.id, Math.round(health.pos.x), Math.round(health.pos.y), health.isToDelete()]);
+    this._healths$.next(Hcoordinates);
 
     // Manage ships (fire rate, dead ship, ....)
-    keep = [];
-    for (const ship of this.ships) {
-      const shipModel = ship.getModel();
+    for (let i = this.ships.length - 1; i >= 0; i--) {
+      const shipModel = this.ships[i].getModel();
       shipModel.consumeFuel();
 
-      if (!shipModel.isDead()) {
-        shipModel.acc.mul(0);
-        shipModel.updateHeading();
-        keep.push(ship);
-      } else {
-        // Create 2 healths pack
+      if (shipModel.isDead()) {
+        // Create healths pack
         for (let i = 0; i < GameEngine.NB_HEALTH_WHEN_DIE; i++) {
           const dX = MyMath.random(-70, 70);
           const dY = MyMath.random(-70, 70);
-          const coord = new Vect2D(shipModel.pos.x + dX, shipModel.pos.y + dY);
+          
+          let x = shipModel.pos.x + dX;
+          if ( this.width - 20 < x) { x = this.width - 20;}
+          if ( x < 0) { x = 0;}
+
+          let y = shipModel.pos.y + dY;
+          if ( this.height - 20 < y) { y = this.height - 20;}
+          if ( y < 0) { y = 0;}
+
+          const coord = new Vect2D(x, y);
           this.createHealth(this.generateId(), coord);
         }
+
+        this.ships.splice(i, 1);
+      }
+      else {
+        shipModel.acc.mul(0);
+        shipModel.updateHeading();
+        shipModel.older();
       }
     }
+    const shipModels = this.ships.map(ship => ship.getModel());
+    const aliveOldestShip = this.getOldestShip(shipModels);
+    if (this.oldestShip.getAge() < aliveOldestShip.getAge()) {
+      this.oldestShip = aliveOldestShip;
+    }
+    this._oldestShip$.next(this.oldestShip);
+    this._aliveOldestShip$.next(aliveOldestShip);
 
-    this.ships = keep;
+    this._nbShips$.next(this.ships.length);
+    const coordinates = shipModels.map(ship => [ship.id, Math.round(ship.pos.x), Math.round(ship.pos.y)]);
+    this._ships$.next(coordinates);
   }
 
   private renderGame() {
@@ -259,6 +326,21 @@ export class GameEngine {
     this.missiles[id].update(pos, orientation);
   }
   */
+
+  private getOldestShip(ships: Ship[]): Ship {
+    let result = null;
+    for (const ship of ships) {
+      if (result === null) {
+        result = ship;
+        ship.setOldest(true);
+      } else if (result.getAge() < ship.getAge()) {
+        result.setOldest(false);
+        ship.setOldest(true);
+        result = ship;
+      }
+    }
+    return result;
+  }
 
   private detectCollision(objA: GameObject, objB: GameObject, previousCollision: Collision,
                           firstCollision: Collision, newCollision: Collision, t: number,
@@ -433,14 +515,15 @@ export class GameEngine {
               nbTouchShipB ++;
             }
           }
-        } else if (firstCollision.objA instanceof Health) {
-          // Health pack are destroyed when taken
-          firstCollision.objA.toDelete = true;
 
+        } else if (firstCollision.objA instanceof Health) {
           // Ship is recovering health
           const health = firstCollision.objA as Health;
+          health.toDelete = true;
+          
           const ship = firstCollision.objB as Ship;
           ship.updateLife(health.getEnergy());
+
         } else if (firstCollision.objA instanceof Ship) {
           const shipA = firstCollision.objA as Ship;
           const shipB = firstCollision.objB as Ship; // Obj B is a ship
@@ -527,6 +610,6 @@ export class GameEngine {
   }
 
   private generateId(): number {
-    return new Date().getUTCMilliseconds();
+    return new Date().getTime(); //.getUTCMilliseconds();
   }
 }

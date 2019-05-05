@@ -1,8 +1,4 @@
 import { Component, OnInit } from '@angular/core';
-import { Select } from '@ngxs/store';
-import { ShipState, ShipStateModel } from 'src/app/states/ship.state';
-import { WorldState, WorldStateModel } from 'src/app/states/world.state';
-import { Observable } from 'rxjs';
 
 @Component({
   selector: 'app-game-viewer',

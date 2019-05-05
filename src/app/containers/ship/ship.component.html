@@ -1,0 +1,26 @@
+<div class="box">
+  <h2 class="title"> {{ name }} </h2>
+  <ul>
+    <li> Ship n° {{ id }} </li>
+    <li> Surviving during {{ age }} seconds </li>
+    <li> Life:  
+      <ng-container *ngIf="life > 0; else deadBlock"> {{ life }} </ng-container>
+      <ng-template #deadBlock> Dead </ng-template>
+    </li>
+  </ul>
+  <ul>
+    <li> Field of view: {{ fovAngle }}° - {{ fovLen }} px </li>
+    <li> Missile radar: {{ radar }} px </li>
+    <li> Fire rate: {{ fireRate }} missile/s </li>
+    <li> Attraction coefficients [-2, 2]: 
+      <ul>
+        <li> Health: {{ attractHealth }} </li>
+        <li> Ship: {{ attractShip }} </li>
+        <li> Missile: {{ attractMissile }} </li>
+      </ul>
+    </li>
+  </ul>
+  <ul>
+    <li> Descendants: {{ nbTotalChildren }} ( {{ pctClones }}% clones / {{ pctChildren }}% children) </li>
+  </ul>
+</div>

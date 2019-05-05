@@ -24,10 +24,6 @@ export class PhysicsEngine {
         if (newPos.y - h < borders[2]) {newPos.y = borders[2] + h;}
         else if (newPos.y + h > borders[3]) {newPos.y = borders[3] - h;}
 
-        if (Number.isNaN(newPos.x)) {
-            debugger;
-        }
-
         object.setPosition(newPos);
     }
 }

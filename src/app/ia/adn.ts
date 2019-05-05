@@ -1,7 +1,7 @@
 import { MyMath } from '../tools/math.tools';
 
 export class ADN {
-    private static readonly MUTATION_RATE = 0.01;
+    private static readonly MUTATION_RATE = 0.05;
     private genes: number[];
 
     // Allowed range for each adn coefficients
@@ -13,7 +13,7 @@ export class ADN {
         this.maximums = [...max];
         this.genes = Array<number>(nbGenes);
         for (let i = 0; i < nbGenes; i++) {
-            this.genes[i] = Math.random();
+            this.genes[i] = MyMath.random(min[i], max[i]);
         }
     }
 

@@ -1,0 +1,16 @@
+.title {
+    color: rgb(4, 4, 83);
+    text-align: center;
+}
+
+.box {
+    border: solid;
+    float: left;
+    margin: 5px;
+    padding: 5px;
+    min-width: 300px;
+}
+
+ul {
+    list-style-type: square;
+}

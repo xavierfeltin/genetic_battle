@@ -9,6 +9,8 @@ export class Missile extends GameObject {
         this.speed = this.maxShipSpeed;
         this.radius = 5;
         this.launchedBy = parent;
-        this.energy = -20;
+        this.energy = -40;
+        this.energyFuel = -1;
+        this.life = 80;
     }
 }

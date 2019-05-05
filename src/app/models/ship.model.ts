@@ -23,9 +23,9 @@ export class Ship extends GameObject {
     private static readonly MIN_ADN_VALUE: number = -1;
     private static readonly MAX_ADN_VALUE: number = 1;
 
-    public static readonly MAX_ANGLE_FOV: number = 120;
-    public static readonly MIN_ANGLE_FOV: number = 10;
-    private static readonly MAX_LENGTH_FOV = 50;
+    public static readonly MAX_ANGLE_FOV: number = 170;
+    public static readonly MIN_ANGLE_FOV: number = 2;
+    private static readonly MAX_LENGTH_FOV = 10;
     private static readonly MIN_LENGTH_FOV = 200;
     private static readonly MIN_LENGTH_RADAR = 1;
     private static readonly MAX_LENGTH_RADAR = 50;
@@ -35,7 +35,10 @@ export class Ship extends GameObject {
 
     // Properties
     private coolDown: number;
-    private life: number;
+    private adn: ADN;
+    private partner: Ship;
+    private nbClones: number;
+    private nbChildren: number;
 
     // Variables to pilot a ship
     private attractHealth: number;
@@ -47,9 +50,6 @@ export class Ship extends GameObject {
     private radarLength: number;
     private radarLenSquared: number; // optimisation
     private fireRate: number; // probability to fire each frame
-    private adn: ADN;
-    private energyFuel: number;
-    private partner: Ship;
 
     constructor(id: number) {
         super(id);
@@ -61,6 +61,8 @@ export class Ship extends GameObject {
         this.energyFuel = 0; //moving consume energy
         this.useSteering = true;
         this.partner = null;
+        this.nbClones = 0;
+        this.nbChildren = 0;
 
         this.setADN(new ADN(Ship.NB_GENES,
             Array<number>(Ship.NB_GENES).fill(Ship.MIN_ADN_VALUE),
@@ -74,7 +76,7 @@ export class Ship extends GameObject {
         this.attractHealth = MyMath.map(genes[0], Ship.MIN_ADN_VALUE, Ship.MAX_ADN_VALUE, Ship.MIN_ATTRACTION, Ship.MAX_ATTRACTION);
         this.attractMissile = MyMath.map(genes[1], Ship.MIN_ADN_VALUE, Ship.MAX_ADN_VALUE, Ship.MIN_ATTRACTION, Ship.MAX_ATTRACTION);
         this.attractShip = MyMath.map(genes[2], Ship.MIN_ADN_VALUE, Ship.MAX_ADN_VALUE, Ship.MIN_ATTRACTION, Ship.MAX_ATTRACTION);
-
+        
         const angle = MyMath.map(genes[3], Ship.MIN_ADN_VALUE, Ship.MAX_ADN_VALUE, Ship.MIN_ANGLE_FOV, Ship.MAX_ANGLE_FOV);
         this.setFOV(Math.round(angle));
 
@@ -91,30 +93,61 @@ export class Ship extends GameObject {
         return this.partner !== null;
     }
 
-    public reproduce(id: number): Ship {
+    public reproduce(id: number, orientation: number): Ship {
         const adn = this.adn.crossOver(this.partner.adn);
-        let result = new Ship(id);
-        result.setADN(adn);
-        return result;
+        let ship = new Ship(id);
+        ship.setADN(adn);
+        ship.setPosition(this.pos);
+        ship.setOrientation(orientation);
+        ship.setADN(this.adn.mutate());
+        ship.setBorders(this.getBorders());
+
+        this.nbChildren ++;
+        this.partner.nbChildren++;
+        return ship;
     }
+
+    public getNbClones(): number { return this.nbClones; }
+    public getNbChildren(): number { return this.nbChildren; }
 
     public getFOV(): number { return this.fov; }
     public getFOVLen(): number { return this.fovLength; }
     public setFOV(angle: number) {
         this.fov = angle;
-        this.fovLength = MyMath.map(this.fov, Ship.MIN_ANGLE_FOV, Ship.MAX_ANGLE_FOV, Ship.MIN_LENGTH_FOV, Ship.MAX_LENGTH_FOV);
         this.cosHalfFov = Math.cos((this.fov / 2) * Math.PI / 180);
+
+        const area = 2800; // constant FOV area 
+        const radAngle = this.fov * Math.PI / 180;
+        this.fovLength = Math.round(Math.sqrt(2*area/radAngle));
+        //this.fovLength = MyMath.map(this.fov, Ship.MIN_ANGLE_FOV, Ship.MAX_ANGLE_FOV, Ship.MIN_LENGTH_FOV, Ship.MAX_LENGTH_FOV);
     }
 
-    public getRadarLen() {
-        return this.radarLength;
-    }
+    public getRadarLen(): number { return this.radarLength; }
+    public getFireRate(): number { return this.fireRate; }
+    public getHealthAttraction(): number { return this.attractHealth; }
+    public getShipsAttraction(): number { return this.attractShip; }
+    public getMissileshAttraction(): number { return this.attractMissile; }
 
     public clone(id: number, orientation: number): Ship {
         const ship = new Ship(id);
         ship.setPosition(this.pos);
         ship.setOrientation(orientation);
         ship.setADN(this.adn.mutate());
+        ship.setBorders(this.getBorders());
+        
+        this.nbClones ++;
+        return ship;
+    }
+
+    public copy(): Ship {
+        const ship = new Ship(this.id);
+        ship.age = this.age;
+        ship.life = this.life;
+        ship.nbChildren = this.nbChildren;
+        ship.nbClones = this.nbClones;
+        ship.setPosition(this.pos);
+        ship.setOrientation(this.orientation);
+        ship.setADN(this.adn);
         ship.setBorders(this.getBorders());
         return ship;
     }
@@ -183,16 +216,8 @@ export class Ship extends GameObject {
         }
     }
 
-    public consumeFuel() {
-        this.life += this.energyFuel;
-    }
-
     public updateLife(energy: number) {
         this.life += energy;
-    }
-
-    public isDead(): boolean {
-        return this.life <= 0;
     }
 
     public behaviors(missiles: GameObject[], healths: GameObject[], ships: GameObject[], wArea: number, hArea: number) {

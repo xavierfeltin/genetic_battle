@@ -10,6 +10,8 @@ export class GameObject {
     public id: number;
     public toDelete: boolean;
     public radius: number;
+    public age: number;
+    public isOldest: boolean;
 
     // acceleration
     public acc: Vect2D;
@@ -19,6 +21,8 @@ export class GameObject {
     public orientation: number;
 
     protected useSteering: boolean;
+    protected life: number;
+    protected energyFuel: number;
 
     // speed
     public speed: number;
@@ -37,6 +41,8 @@ export class GameObject {
         this.id = identifier;
         this.radius = 0;
         this.toDelete = false;
+        this.age = 0;
+        this.isOldest = false;
 
         this.acc = new Vect2D(0, 0);
         this.velo = new Vect2D(0, 0);
@@ -49,15 +55,35 @@ export class GameObject {
 
         this.width = 0;
         this.height = 0;
-
+        
         this.xMin = 0;
         this.xMax = 0;
         this.yMin = 0;
         this.yMax = 0;
     }
 
+    public getAge(): number {
+        return this.age;
+    }
+
     public getEnergy() {
         return this.energy;
+    }
+
+    public getLife(): number {
+        return this.life;
+    }
+
+    public isDead(): boolean {
+        return this.life <= 0;
+    }
+
+    public older() {
+        this.age ++;
+    }
+
+    public setOldest(oldest: boolean) { 
+        this.isOldest = oldest; 
     }
 
     public move(t: number) {
@@ -73,6 +99,10 @@ export class GameObject {
 
         const borders = [this.xMin, this.xMax, this.yMin, this.yMax];
         PhysicsEngine.move(this, borders, t);
+    }
+
+    public consumeFuel() {
+        this.life += this.energyFuel;
     }
 
     public setPosition(v: Vect2D) {

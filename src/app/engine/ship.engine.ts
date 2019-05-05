@@ -14,7 +14,7 @@ export class ShipRender {
     constructor(id: number, c: string, pos: Vect2D, startOrientation: number, borders: number[]) {
         this.sprite.src = this.image64;
         this.color = c;
-
+    
         this.ship = new Ship(id);
         this.ship.setBorders(borders);
         this.ship.setBoundingBox(this.w, this.h);
@@ -25,7 +25,7 @@ export class ShipRender {
     public getModel(): Ship { return this.ship; }
     public setModel(s: Ship) { this.ship= s; }
     public getColor(): string { return this.color; }
-
+    
     /*
     public update(pos: Vect2D, orientation: number, fov: number) {
         this.ship.setPosition(pos);
@@ -40,12 +40,13 @@ export class ShipRender {
 
         ctx.save(); // save current state
 
-        if (ShipRender.DEBUG === 0) {
+        if (ShipRender.DEBUG === 1) {
             this.drawMissileRadar(ctx);
             this.drawFieldOfView(ctx);
             this.drawCollisionBox(ctx);
         }
 
+        this.drawOldest(ctx);
         this.drawLife(ctx);
         ctx.translate(this.ship.pos.x - this.w / 2, this.ship.pos.y - this.h / 2); //move to desired point
         ctx.translate(transX, transY);
@@ -70,12 +71,21 @@ export class ShipRender {
         let currentAngle = (this.ship.orientation + 90 - (angleFullLife / 2)) * Math.PI / 180; // position life gauge behind the ship
         for (let i = 0; i < nbLifeSections; i++) {
             ctx.beginPath();
-            ctx.lineWidth = 3;
-            ctx.arc(this.ship.pos.x, this.ship.pos.y, 20, currentAngle, currentAngle + radAngle);
+            ctx.lineWidth = 5;
+            ctx.arc(this.ship.pos.x, this.ship.pos.y, this.ship.radius, currentAngle, currentAngle + radAngle);
             ctx.strokeStyle = color;
             ctx.stroke();
 
             currentAngle += radAngle + radGap;
+        }
+    }
+
+    public drawOldest(ctx: CanvasRenderingContext2D) {
+        if (this.ship.isOldest) {
+            ctx.beginPath();
+            ctx.strokeStyle = 'rgba(243, 243, 21)'; //metallic gold
+            ctx.arc(this.ship.pos.x, this.ship.pos.y, this.ship.radius, 0, Math.PI * 2);
+            ctx.stroke();
         }
     }
 
