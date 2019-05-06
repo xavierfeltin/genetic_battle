@@ -1,6 +1,6 @@
 import { GameObject } from './game-object.model';
 import { GameAction } from '../bot/bot';
-import { ADN } from '../ia/adn';
+import { ADN, FactoryADN } from '../ia/adn';
 import { Vect2D } from './vect2D.model';
 import { MyMath } from '../tools/math.tools';
 
@@ -12,8 +12,9 @@ export class Ship extends GameObject {
     public static readonly EXTEND_FOV: number = 0;
     public static readonly REDUCE_FOV: number = 1;
     public static readonly KEEP_FOV: number = 2;
-
     public static readonly MAX_LIFE: number = 100;
+    public static readonly DEFAULT_ENERGY_FUEL: number = 0;
+    public static readonly DEFAULT_ENERGY_FIRE: number = -1;
 
     private static readonly MAX_SPEED: number = 5;
     private static readonly MIN_FIRE_RATE: number = 1;
@@ -25,8 +26,6 @@ export class Ship extends GameObject {
 
     public static readonly MAX_ANGLE_FOV: number = 170;
     public static readonly MIN_ANGLE_FOV: number = 2;
-    private static readonly MAX_LENGTH_FOV = 10;
-    private static readonly MIN_LENGTH_FOV = 200;
     private static readonly MIN_LENGTH_RADAR = 1;
     private static readonly MAX_LENGTH_RADAR = 50;
 
@@ -39,6 +38,7 @@ export class Ship extends GameObject {
     private partner: Ship;
     private nbClones: number;
     private nbChildren: number;
+    private adnFactory: FactoryADN;
 
     // Variables to pilot a ship
     private attractHealth: number;
@@ -51,27 +51,37 @@ export class Ship extends GameObject {
     private radarLenSquared: number; // optimisation
     private fireRate: number; // probability to fire each frame
 
-    constructor(id: number) {
+    constructor(id: number, energyFuel: number, energyFire: number, adnFactory: FactoryADN) {
         super(id);
         this.speed = Ship.MAX_SPEED;
         this.radius = 20;
         this.coolDown = 0;
         this.life = Ship.MAX_LIFE;
-        this.energy = -1; // firing takes energy
-        this.energyFuel = 0; //moving consume energy
+        this.energy = energyFire; // firing takes energy
+        this.energyFuel = energyFuel; //moving consume energy
         this.useSteering = true;
         this.partner = null;
         this.nbClones = 0;
         this.nbChildren = 0;
+        this.adnFactory = adnFactory;
 
-        this.setADN(new ADN(Ship.NB_GENES,
+        this.createADN(Ship.NB_GENES,
             Array<number>(Ship.NB_GENES).fill(Ship.MIN_ADN_VALUE),
-            Array<number>(Ship.NB_GENES).fill(Ship.MAX_ADN_VALUE)));
+            Array<number>(Ship.NB_GENES).fill(Ship.MAX_ADN_VALUE));
+    }
+
+    public createADN(nbGenes: number, minimums: number[], maximums: number[]) {
+        this.adn = this.adnFactory.create(nbGenes, minimums, maximums);
+        this.expressADN();
     }
 
     public setADN(adn: ADN) {
         this.adn = adn;
-        const genes = adn.getGenes();
+        this.expressADN();
+    }
+
+    public expressADN() {
+        const genes = this.adn.getGenes();
         
         this.attractHealth = MyMath.map(genes[0], Ship.MIN_ADN_VALUE, Ship.MAX_ADN_VALUE, Ship.MIN_ATTRACTION, Ship.MAX_ATTRACTION);
         this.attractMissile = MyMath.map(genes[1], Ship.MIN_ADN_VALUE, Ship.MAX_ADN_VALUE, Ship.MIN_ATTRACTION, Ship.MAX_ATTRACTION);
@@ -85,6 +95,10 @@ export class Ship extends GameObject {
         this.radarLenSquared = this.radarLength * this.radarLength;
     }
 
+    public getADNFactory(): FactoryADN {
+        return this.adnFactory;
+    }
+
     public setPartner(ship: Ship) {
         this.partner = ship;
     }
@@ -95,11 +109,10 @@ export class Ship extends GameObject {
 
     public reproduce(id: number, orientation: number): Ship {
         const adn = this.adn.crossOver(this.partner.adn);
-        let ship = new Ship(id);
-        ship.setADN(adn);
+        let ship = new Ship(id, this.energyFuel, this.energy, this.adnFactory);
+        ship.setADN(adn.mutate());
         ship.setPosition(this.pos);
         ship.setOrientation(orientation);
-        ship.setADN(this.adn.mutate());
         ship.setBorders(this.getBorders());
 
         this.nbChildren ++;
@@ -129,7 +142,7 @@ export class Ship extends GameObject {
     public getMissileshAttraction(): number { return this.attractMissile; }
 
     public clone(id: number, orientation: number): Ship {
-        const ship = new Ship(id);
+        const ship = new Ship(id, this.energyFuel, this.energy, this.adnFactory);
         ship.setPosition(this.pos);
         ship.setOrientation(orientation);
         ship.setADN(this.adn.mutate());
@@ -140,7 +153,7 @@ export class Ship extends GameObject {
     }
 
     public copy(): Ship {
-        const ship = new Ship(this.id);
+        const ship = new Ship(this.id, this.energyFuel, this.energy, this.adnFactory);
         ship.age = this.age;
         ship.life = this.life;
         ship.nbChildren = this.nbChildren;
@@ -319,11 +332,11 @@ export class Ship extends GameObject {
 
         for (const object of objects) {
             const dist = this.pos.distance2(object.pos);
-            if (Number.isNaN(minDistance) && this.isOnRadar(object, dist)) {
+            if (Number.isNaN(minDistance) && this.isOnRadar(dist)) {
                 minDistance = dist;
                 target = object;
             } else if (dist < minDistance) {
-                if (this.isOnRadar(object, dist)) {
+                if (this.isOnRadar(dist)) {
                     minDistance = dist;
                     target = object;
                 }
@@ -342,7 +355,39 @@ export class Ship extends GameObject {
         return dotProduct > this.cosHalfFov && distance <= this.fovLength ;
     }
 
-    public isOnRadar(target: GameObject, distanceSquared: number): boolean {
+    public isOnRadar(distanceSquared: number): boolean {
         return distanceSquared <= this.radarLenSquared;
+    }
+}
+
+export class FactoryShip {
+    private energyFuel: number;
+    private energyFire: number;
+    private adnFactory: FactoryADN;
+
+    public constructor(adnFactory: FactoryADN, energyFuel: number = Ship.DEFAULT_ENERGY_FUEL, energyFire: number = Ship.DEFAULT_ENERGY_FIRE) {
+        this.energyFuel = energyFuel;
+        this.energyFire = energyFire;
+        this.adnFactory = adnFactory;
+    }
+
+    public getEnergyFuel(): number {
+        return this.energyFuel;
+    }
+
+    public getEnergyFire(): number {
+        return this.energyFire;
+    }
+
+    public setEnergyFuel(energy: number) {
+        this.energyFuel = energy;
+    }
+
+    public setEnergyFire(energy: number) {
+        this.energyFire = energy;
+    }
+
+    public create(id: number): Ship {
+        return new Ship(id, this.energyFuel, this.energyFire, this.adnFactory);
     }
 }

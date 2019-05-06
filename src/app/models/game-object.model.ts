@@ -5,7 +5,6 @@ export class GameObject {
     protected static readonly MAX_FORCE = 0.3;
 
     private readonly maxSpeed: number = 8;
-    protected energy: number;
 
     public id: number;
     public toDelete: boolean;
@@ -22,6 +21,7 @@ export class GameObject {
 
     protected useSteering: boolean;
     protected life: number;
+    protected energy: number;
     protected energyFuel: number;
 
     // speed
@@ -120,6 +120,14 @@ export class GameObject {
     public setOrientation(angle: number) {
         this.orientation = angle;
         this.velo.setV(PhysicsEngine.getVeloFromAngle(this.orientation, this.speed));
+    }
+
+    public setEnergy(energy: number) {
+        this.energy = energy;
+    }
+
+    public setEnergyFuel(energy: number) {
+        this.energyFuel = energy;
     }
 
     public setBorders(borders: number[]) {

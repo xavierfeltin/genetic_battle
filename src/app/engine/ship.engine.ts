@@ -3,137 +3,118 @@ import { Vect2D } from '../models/vect2D.model';
 
 export class ShipRender {
     public readonly sprite: HTMLImageElement = new Image();
-    private readonly color: string = '';
     private static readonly DEBUG: number = 1;
 
     public w = 30;
     public h = 30;
 
-    private ship: Ship;
+    private ctx: CanvasRenderingContext2D;
 
-    constructor(id: number, c: string, pos: Vect2D, startOrientation: number, borders: number[]) {
+    constructor(ctx: CanvasRenderingContext2D) {
         this.sprite.src = this.image64;
-        this.color = c;
-    
-        this.ship = new Ship(id);
-        this.ship.setBorders(borders);
-        this.ship.setBoundingBox(this.w, this.h);
-        this.ship.setPosition(new Vect2D(pos.x - this.w / 2, pos.y - this.h / 2));
-        this.ship.setOrientation(startOrientation);
+        this.ctx = ctx;
     }
 
-    public getModel(): Ship { return this.ship; }
-    public setModel(s: Ship) { this.ship= s; }
-    public getColor(): string { return this.color; }
-    
-    /*
-    public update(pos: Vect2D, orientation: number, fov: number) {
-        this.ship.setPosition(pos);
-        this.ship.setOrientation(orientation);
-        this.ship.setFOV(fov);
-    }
-    */
-
-    public draw(ctx: CanvasRenderingContext2D) {
+    public draw(ship: Ship) {
         const transX = (this.w) / 2;
         const transY = (this.h) / 2;
 
-        ctx.save(); // save current state
+        this.ctx.save(); // save current state
 
         if (ShipRender.DEBUG === 1) {
-            this.drawMissileRadar(ctx);
-            this.drawFieldOfView(ctx);
-            this.drawCollisionBox(ctx);
+            this.drawMissileRadar(ship);
+            this.drawFieldOfView(ship);
+            this.drawCollisionBox(ship);
         }
 
-        this.drawOldest(ctx);
-        this.drawLife(ctx);
-        ctx.translate(this.ship.pos.x - this.w / 2, this.ship.pos.y - this.h / 2); //move to desired point
-        ctx.translate(transX, transY);
-        ctx.rotate(this.ship.orientation * Math.PI / 180); // rotate
-        ctx.drawImage(this.sprite, -transX, -transY, this.w, this.h); // draws a chain link or dagger
-        ctx.restore(); // restore original states (no rotation etc)
+        this.drawOldest(ship);
+        this.drawLife(ship);
+        this.ctx.translate(ship.pos.x - this.w / 2, ship.pos.y - this.h / 2); //move to desired point
+        this.ctx.translate(transX, transY);
+        this.ctx.rotate(ship.orientation * Math.PI / 180); // rotate
+        this.ctx.drawImage(this.sprite, -transX, -transY, this.w, this.h); // draws a chain link or dagger
+        this.ctx.restore(); // restore original states (no rotation etc)
     }
 
-    public drawLife(ctx: CanvasRenderingContext2D) {
+    public drawLife(ship: Ship) {
         const nbMaxSections = 10;
         const angleGap = 10;
         const angleFullLife = 120;
         const angleLife = (angleFullLife - (nbMaxSections * angleGap)) / nbMaxSections; // N-1 separations of 5px
         const radAngle = angleLife * Math.PI / 180;
         const radGap = angleGap * Math.PI / 180;
-        const life = this.ship.getLife();
+        const life = ship.getLife();
         const nbLifeSections = Math.ceil((life / Ship.MAX_LIFE) * nbMaxSections);
 
         const gradient = this.interpolateColor([255, 0, 0], [0, 255, 0] , life / Ship.MAX_LIFE);
         const color = 'rgba(' + gradient[0] + ', ' + gradient[1] + ', ' + gradient[2] + ')';
 
-        let currentAngle = (this.ship.orientation + 90 - (angleFullLife / 2)) * Math.PI / 180; // position life gauge behind the ship
+        let currentAngle = (ship.orientation + 90 - (angleFullLife / 2)) * Math.PI / 180; // position life gauge behind the ship
         for (let i = 0; i < nbLifeSections; i++) {
-            ctx.beginPath();
-            ctx.lineWidth = 5;
-            ctx.arc(this.ship.pos.x, this.ship.pos.y, this.ship.radius, currentAngle, currentAngle + radAngle);
-            ctx.strokeStyle = color;
-            ctx.stroke();
+            this.ctx.beginPath();
+            this.ctx.lineWidth = 5;
+            this.ctx.arc(ship.pos.x, ship.pos.y, ship.radius, currentAngle, currentAngle + radAngle);
+            this.ctx.strokeStyle = color;
+            this.ctx.stroke();
 
             currentAngle += radAngle + radGap;
         }
     }
 
-    public drawOldest(ctx: CanvasRenderingContext2D) {
-        if (this.ship.isOldest) {
-            ctx.beginPath();
-            ctx.strokeStyle = 'rgba(243, 243, 21)'; //metallic gold
-            ctx.arc(this.ship.pos.x, this.ship.pos.y, this.ship.radius, 0, Math.PI * 2);
-            ctx.stroke();
+    public drawOldest(ship: Ship) {
+        if (ship.isOldest) {
+            this.ctx.beginPath();
+            this.ctx.strokeStyle = 'rgba(243, 243, 21)'; //metallic gold
+            this.ctx.arc(ship.pos.x, ship.pos.y, ship.radius, 0, Math.PI * 2);
+            this.ctx.stroke();
         }
     }
 
-    public drawCollisionBox(ctx: CanvasRenderingContext2D) {
-        const xOrigin = this.ship.pos.x;
-        const yOrigin = this.ship.pos.y;
+    public drawCollisionBox(ship: Ship) {
+        const xOrigin = ship.pos.x;
+        const yOrigin = ship.pos.y;
         
-        ctx.beginPath();
-        ctx.strokeStyle = 'rgba(50, 50, 50)';
-        ctx.arc(xOrigin, yOrigin, this.ship.radius, 0, Math.PI * 2);
-        ctx.stroke();
+        this.ctx.beginPath();
+        this.ctx.strokeStyle = 'rgba(50, 50, 50)';
+        this.ctx.arc(xOrigin, yOrigin, ship.radius, 0, Math.PI * 2);
+        this.ctx.stroke();
     }
 
-    private drawFieldOfView(ctx: CanvasRenderingContext2D) {
-        const xOrigin = this.ship.pos.x;
-        const yOrigin = this.ship.pos.y;
-        const fov = this.ship.getFOV();
-        const lengthFOV = this.ship.getFOVLen();
-        const angleMin = -fov/2 + this.ship.orientation;
-        const angleMax = fov/2 + this.ship.orientation;
+    private drawFieldOfView(ship: Ship) {
+        const xOrigin = ship.pos.x;
+        const yOrigin = ship.pos.y;
+        const fov = ship.getFOV();
+        const lengthFOV = ship.getFOVLen();
+        const angleMin = -fov/2 + ship.orientation;
+        const angleMax = fov/2 + ship.orientation;
 
-        ctx.beginPath();
-        ctx.moveTo(xOrigin, yOrigin);
-        ctx.lineTo(xOrigin + Math.cos(angleMin * Math.PI / 180) * lengthFOV, yOrigin + Math.sin(angleMin * Math.PI / 180) * lengthFOV);
-        ctx.strokeStyle = 'rgba(0, 255, 0)';
-        ctx.stroke();
+        this.ctx.beginPath();
+        this.ctx.moveTo(xOrigin, yOrigin);
+        this.ctx.lineTo(xOrigin + Math.cos(angleMin * Math.PI / 180) * lengthFOV, yOrigin + Math.sin(angleMin * Math.PI / 180) * lengthFOV);
+        this.ctx.strokeStyle = 'rgba(0, 255, 0)';
+        this.ctx.stroke();
 
-        ctx.beginPath();
-        ctx.moveTo(xOrigin, yOrigin);
-        ctx.lineTo(xOrigin + Math.cos(angleMax * Math.PI / 180) * lengthFOV, yOrigin + Math.sin(angleMax * Math.PI / 180) * lengthFOV);
-        ctx.strokeStyle = 'rgba(0, 255, 0)';
-        ctx.stroke();
+        this.ctx.beginPath();
+        this.ctx.moveTo(xOrigin, yOrigin);
+        this.ctx.lineTo(xOrigin + Math.cos(angleMax * Math.PI / 180) * lengthFOV, yOrigin + Math.sin(angleMax * Math.PI / 180) * lengthFOV);
+        this.ctx.strokeStyle = 'rgba(0, 255, 0)';
+        this.ctx.stroke();
 
-        ctx.beginPath();
-        ctx.strokeStyle = 'rgba(0, 255, 0)';
-        ctx.arc(xOrigin, yOrigin, lengthFOV, angleMin * Math.PI / 180, angleMax * Math.PI / 180);
-        ctx.stroke();
+        this.ctx.beginPath();
+        this.ctx.strokeStyle = 'rgba(0, 255, 0)';
+        this.ctx.arc(xOrigin, yOrigin, lengthFOV, angleMin * Math.PI / 180, angleMax * Math.PI / 180);
+        this.ctx.stroke();
     }
 
-    private drawMissileRadar(ctx: CanvasRenderingContext2D) {
-        const xOrigin = this.ship.pos.x;
-        const yOrigin = this.ship.pos.y;
-        const lengthRadar = this.ship.getRadarLen();
+    private drawMissileRadar(ship: Ship) {
+        const xOrigin = ship.pos.x;
+        const yOrigin = ship.pos.y;
+        const lengthRadar = ship.getRadarLen();
 
-        ctx.beginPath();
-        ctx.strokeStyle = 'rgba(255, 0, 0)';
-        ctx.arc(xOrigin, yOrigin, lengthRadar, 0, Math.PI * 2);
-        ctx.stroke();
+        this.ctx.beginPath();
+        this.ctx.strokeStyle = 'rgba(255, 0, 0)';
+        this.ctx.arc(xOrigin, yOrigin, lengthRadar, 0, Math.PI * 2);
+        this.ctx.stroke();
     }
 
     private interpolateColor (color1: number[], color2: number[], factor: number = 0.5): number[] {

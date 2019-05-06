@@ -1,16 +1,19 @@
 import { MyMath } from '../tools/math.tools';
 
 export class ADN {
-    private static readonly MUTATION_RATE = 0.05;
+    public  static readonly MUTATION_RATE = 0.05;
     private genes: number[];
+    private mutationRate: number;
 
     // Allowed range for each adn coefficients
     private minimums: number[];
     private maximums: number[];
 
-    constructor(nbGenes: number, min: number[], max: number[]) {
+    constructor(nbGenes: number, min: number[], max: number[], mutationRate: number) {
         this.minimums = [...min];
         this.maximums = [...max];
+        this.mutationRate = mutationRate;
+
         this.genes = Array<number>(nbGenes);
         for (let i = 0; i < nbGenes; i++) {
             this.genes[i] = MyMath.random(min[i], max[i]);
@@ -26,7 +29,7 @@ export class ADN {
     }
 
     public crossOver(adn: ADN): ADN {
-        const result = new ADN(this.genes.length, this.minimums, this.maximums);
+        const result = new ADN(this.genes.length, this.minimums, this.maximums, this.mutationRate);
         const median = Math.floor(result.genes.length / 2);
         const isOdd = (result.genes.length % 2) === 0;
 
@@ -48,7 +51,7 @@ export class ADN {
     }
 
     public mutate(): ADN {
-        const result = new ADN(this.genes.length, this.minimums, this.maximums);
+        const result = new ADN(this.genes.length, this.minimums, this.maximums, this.mutationRate);
 
         for (let i = 0; i < this.genes.length; i++) {
             if (Math.random() < ADN.MUTATION_RATE) {
@@ -59,5 +62,25 @@ export class ADN {
         }
 
         return result;
+    }
+}
+
+export class FactoryADN {
+    private mutationRate: number;
+
+    public constructor(rate: number = ADN.MUTATION_RATE) {
+        this.mutationRate = rate;
+    }
+
+    public getMutationRate(): number {
+        return this.mutationRate;
+    }
+
+    public setMutationRate(rate: number) {
+        this.mutationRate = rate;
+    }
+
+    public create(nbGenes: number, min: number[], max: number[]): ADN {
+        return new ADN(nbGenes, min, max, this.mutationRate);
     }
 }
