@@ -11,4 +11,5 @@ export interface Configuration {
     crossOverRate: number;
     mutationRate: number;
     resetSimulation: boolean;
+    debugMode: boolean;
 }

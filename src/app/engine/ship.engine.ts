@@ -3,16 +3,22 @@ import { Vect2D } from '../models/vect2D.model';
 
 export class ShipRender {
     public readonly sprite: HTMLImageElement = new Image();
-    private static readonly DEBUG: number = 1;
+    public static readonly DEBUG: boolean = false;
 
     public w = 30;
     public h = 30;
 
     private ctx: CanvasRenderingContext2D;
+    private debugMode: boolean;
 
     constructor(ctx: CanvasRenderingContext2D) {
         this.sprite.src = this.image64;
         this.ctx = ctx;
+        this.debugMode = ShipRender.DEBUG;
+    }
+
+    public setDebugMode(isActive: boolean) {
+        this.debugMode = isActive;
     }
 
     public draw(ship: Ship) {
@@ -21,7 +27,7 @@ export class ShipRender {
 
         this.ctx.save(); // save current state
 
-        if (ShipRender.DEBUG === 1) {
+        if (this.debugMode) {
             this.drawMissileRadar(ship);
             this.drawFieldOfView(ship);
             this.drawCollisionBox(ship);

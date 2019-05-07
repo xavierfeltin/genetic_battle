@@ -175,7 +175,13 @@ export class GameEngine {
     this.nbHealthDestroyingShip = config.nbHealthDestroyingShip ;
     this.cloneRate = config.cloneRate ;
     this.crossOverRate = config.crossOverRate ;
-    this.resetSimulation = config.resetSimulation;
+
+    if (config.resetSimulation) {
+      this.reset();
+      this.initialize();
+    }
+
+    this.shipRenderer.setDebugMode(config.debugMode);
   }
 
   public getDefaultConfiguration(): Configuration {
@@ -191,14 +197,19 @@ export class GameEngine {
       cloneRate: GameEngine.RATE_CLONE_SHIP,
       crossOverRate: GameEngine.RATE_CROSSOVER_SHIP,
       mutationRate: ADN.MUTATION_RATE,
-      resetSimulation: true
+      resetSimulation: true,
+      debugMode: ShipRender.DEBUG
     };
     return config;
   }
 
-  public run() {
-    this.game.start();
+  private reset() {
+    this.ships = [];
+    this.health = [];
+    this.missiles = [];
+  }
 
+  public initialize() {
     for (let i = 0; i < this.nbStartingShips; i++) {
       const pos = new Vect2D(Math.random() * this.width, Math.random() * this.height);
       const orientation = Math.random() * 360;
@@ -218,6 +229,11 @@ export class GameEngine {
       this.createHealth(i);
     }
     this._nbHealth$.next(this.health.length);
+  }
+
+  public run() {
+    this.game.start();
+    this.initialize();
 
     window.requestAnimationFrame(() => this.animate());
   }

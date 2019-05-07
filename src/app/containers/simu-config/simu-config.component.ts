@@ -21,7 +21,8 @@ export class SimuConfigComponent implements OnInit {
     const config = this.simu.getDefaultConfiguration();
 
     this.formSimu = this.fb.group({
-      resetSimulation: [true, Validators.required],
+      resetSimulation: [config.resetSimulation, Validators.required],
+      debugMode: [config.debugMode, Validators.required],
       simu_global: this.fb.group({
         nbStartingShips: [config.nbStartingShips, Validators.required],
         energyFuel: [config.energyFuel, Validators.required],
@@ -47,6 +48,7 @@ export class SimuConfigComponent implements OnInit {
   }
 
   private fromFormToConfiguration(formValues: any): Configuration {
+
     const configuration: Configuration = {
       nbStartingShips: parseInt(formValues.simu_global.nbStartingShips),
       energyFuel: parseFloat(formValues.simu_global.energyFuel),
@@ -59,7 +61,8 @@ export class SimuConfigComponent implements OnInit {
       cloneRate: parseFloat(formValues.simu_genetic.cloneRate),
       crossOverRate: parseFloat(formValues.simu_genetic.crossOverRate),
       mutationRate: parseFloat(formValues.simu_genetic.mutationRate),
-      resetSimulation: parseInt(formValues.resetSimulation) == 0 ? false : true
+      resetSimulation: formValues.resetSimulation,
+      debugMode: formValues.debugMode
     }
     return configuration;
   }
