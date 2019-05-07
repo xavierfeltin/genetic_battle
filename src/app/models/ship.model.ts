@@ -12,6 +12,7 @@ export class Ship extends GameObject {
     public static readonly EXTEND_FOV: number = 0;
     public static readonly REDUCE_FOV: number = 1;
     public static readonly KEEP_FOV: number = 2;
+
     public static readonly MAX_LIFE: number = 100;
     public static readonly DEFAULT_ENERGY_FUEL: number = 0;
     public static readonly DEFAULT_ENERGY_FIRE: number = -1;
@@ -58,7 +59,7 @@ export class Ship extends GameObject {
         this.coolDown = 0;
         this.life = Ship.MAX_LIFE;
         this.energy = energyFire; // firing takes energy
-        this.energyFuel = energyFuel; //moving consume energy
+        this.energyFuel = energyFuel; // moving consume energy
         this.useSteering = true;
         this.partner = null;
         this.nbClones = 0;
@@ -82,11 +83,11 @@ export class Ship extends GameObject {
 
     public expressADN() {
         const genes = this.adn.getGenes();
-        
+
         this.attractHealth = MyMath.map(genes[0], Ship.MIN_ADN_VALUE, Ship.MAX_ADN_VALUE, Ship.MIN_ATTRACTION, Ship.MAX_ATTRACTION);
         this.attractMissile = MyMath.map(genes[1], Ship.MIN_ADN_VALUE, Ship.MAX_ADN_VALUE, Ship.MIN_ATTRACTION, Ship.MAX_ATTRACTION);
         this.attractShip = MyMath.map(genes[2], Ship.MIN_ADN_VALUE, Ship.MAX_ADN_VALUE, Ship.MIN_ATTRACTION, Ship.MAX_ATTRACTION);
-        
+
         const angle = MyMath.map(genes[3], Ship.MIN_ADN_VALUE, Ship.MAX_ADN_VALUE, Ship.MIN_ANGLE_FOV, Ship.MAX_ANGLE_FOV);
         this.setFOV(Math.round(angle));
 
@@ -129,10 +130,10 @@ export class Ship extends GameObject {
         this.fov = angle;
         this.cosHalfFov = Math.cos((this.fov / 2) * Math.PI / 180);
 
-        const area = 2800; // constant FOV area 
+        const area = 2800; // constant FOV area
         const radAngle = this.fov * Math.PI / 180;
-        this.fovLength = Math.round(Math.sqrt(2*area/radAngle));
-        //this.fovLength = MyMath.map(this.fov, Ship.MIN_ANGLE_FOV, Ship.MAX_ANGLE_FOV, Ship.MIN_LENGTH_FOV, Ship.MAX_LENGTH_FOV);
+        this.fovLength = Math.round(Math.sqrt(2 * area / radAngle));
+        // this.fovLength = MyMath.map(this.fov, Ship.MIN_ANGLE_FOV, Ship.MAX_ANGLE_FOV, Ship.MIN_LENGTH_FOV, Ship.MAX_LENGTH_FOV);
     }
 
     public getRadarLen(): number { return this.radarLength; }
@@ -147,7 +148,7 @@ export class Ship extends GameObject {
         ship.setOrientation(orientation);
         ship.setADN(this.adn.mutate());
         ship.setBorders(this.getBorders());
-        
+
         this.nbClones ++;
         return ship;
     }
@@ -173,7 +174,7 @@ export class Ship extends GameObject {
     }
 
     public reduceCoolDown() {
-        this.coolDown = Math.max(this.coolDown- 1, 0);
+        this.coolDown = Math.max(this.coolDown - 1, 0);
     }
 
     public fire(ships: Ship[]): boolean {
@@ -230,7 +231,7 @@ export class Ship extends GameObject {
     }
 
     public updateLife(energy: number) {
-        this.life += energy;
+        this.life = Math.min(this.life + energy, Ship.MAX_LIFE);
     }
 
     public behaviors(missiles: GameObject[], healths: GameObject[], ships: GameObject[], wArea: number, hArea: number) {

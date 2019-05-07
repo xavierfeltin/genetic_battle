@@ -13,7 +13,7 @@ import { Vect2D } from '../models/vect2D.model';
 import { MyMath } from '../tools/math.tools';
 import { Subject } from 'rxjs';
 import { Configuration } from '../models/configuration.interface';
-import { FactoryADN } from '../ia/adn';
+import { FactoryADN, ADN } from '../ia/adn';
 
 export class GameEngine {
   private static readonly NB_HEALTH_WHEN_DIE: number = 2;
@@ -92,12 +92,12 @@ export class GameEngine {
     this.now = 0;
     this.game = new Game();
     this.canvas = null;
-    
+
     const adnFactory  = new FactoryADN();
     this.shipFactory = new FactoryShip(adnFactory);
     this.missileFactory = new FactoryMissile();
     this.healthFactory = new FactoryHealth();
-    
+
     this.oldestShip = null;
 
     this.nbStartingShips = GameEngine.NB_SHIPS;
@@ -121,8 +121,7 @@ export class GameEngine {
     this.healthRenderer = new HealthRender(this.ctx);
   }
 
-  public setConfigucation (config: Configuration) {
-
+  public setConfigucation(config: Configuration) {
     // Missile configuration
     if (config.damageMissile !== this.missileFactory.getDamage()) {
       this.missileFactory.setDamage(config.damageMissile);
@@ -138,11 +137,11 @@ export class GameEngine {
         health.setEnergy(config.lifeFromHealth);
       }
     }
-     
+
     // Ship configuration
-    if (config.energyFire !== this.shipFactory.getEnergyFire() 
+    if (config.energyFire !== this.shipFactory.getEnergyFire()
       || config.energyFuel !== this.shipFactory.getEnergyFuel()
-      || (this.ships.length  > 0 
+      || (this.ships.length  > 0
           && config.mutationRate !== this.ships[0].getADNFactory().getMutationRate())) {
 
       if (config.energyFire !== this.shipFactory.getEnergyFire()) {
@@ -162,15 +161,13 @@ export class GameEngine {
           ship.setEnergyFuel(config.energyFuel);
         }
 
+        // ADN configuration
         if (config.mutationRate !== ship.getADNFactory().getMutationRate()) {
           ship.getADNFactory().setMutationRate(config.mutationRate);
         }
       }
     }
-    
-    // ADN configuration
-    //this.mutationRate = config. ;
-    
+
     // Simulation configuration
     this.nbStartingShips = config.nbStartingShips ;
     this.nbStartingHealth = config.nbStartingHealth ;
@@ -179,6 +176,24 @@ export class GameEngine {
     this.cloneRate = config.cloneRate ;
     this.crossOverRate = config.crossOverRate ;
     this.resetSimulation = config.resetSimulation;
+  }
+
+  public getDefaultConfiguration(): Configuration {
+    const config = {
+      nbStartingShips: GameEngine.NB_SHIPS,
+      energyFuel: Ship.DEFAULT_ENERGY_FUEL,
+      energyFire: Ship.DEFAULT_ENERGY_FIRE,
+      damageMissile: Missile.DEFAULT_DAMAGE,
+      nbStartingHealth: GameEngine.NB_INIT_HEALTH,
+      rateHealth: GameEngine.RATE_SPAWN_HEALTH,
+      nbHealthDestroyingShip: GameEngine.NB_HEALTH_WHEN_DIE,
+      lifeFromHealth: Health.DEFAULT_HEALING,
+      cloneRate: GameEngine.RATE_CLONE_SHIP,
+      crossOverRate: GameEngine.RATE_CROSSOVER_SHIP,
+      mutationRate: ADN.MUTATION_RATE,
+      resetSimulation: true
+    };
+    return config;
   }
 
   public run() {
@@ -269,11 +284,11 @@ export class GameEngine {
 
     // Manage ship actions
     for (const ship of this.ships) {
-      
+
       // Ship may fire this turn
       if (ship.fire(this.ships)) {
         const missile = this.missileFactory.create(this.generateId(), ship.id);
-        
+
         missile.setBorders([-50, 850, -50, 850]);
         missile.setPosition(ship.pos);
         missile.setOrientation(ship.orientation);
@@ -309,7 +324,7 @@ export class GameEngine {
     }
 
     this.solveTurn(this.ships, this.missiles, this.health);
-    
+
     // Destroy exploded missiles
     for (let i = this.missiles.length -1; i >= 0; i--) {
       const missileModel = this.missiles[i];
@@ -342,7 +357,7 @@ export class GameEngine {
         for (let i = 0; i < this.nbHealthDestroyingShip; i++) {
           const dX = MyMath.random(-70, 70);
           const dY = MyMath.random(-70, 70);
-          
+
           let x = shipModel.pos.x + dX;
           if ( this.width - 20 < x) { x = this.width - 20;}
           if ( x < 0) { x = 0;}
@@ -363,7 +378,7 @@ export class GameEngine {
         shipModel.older();
       }
     }
-    
+
     const aliveOldestShip = this.getOldestShip(this.ships);
     if (this.oldestShip.getAge() < aliveOldestShip.getAge()) {
       this.oldestShip = aliveOldestShip;
@@ -578,7 +593,7 @@ export class GameEngine {
           // Ship is recovering health
           const health = firstCollision.objA as Health;
           health.toDelete = true;
-          
+
           const ship = firstCollision.objB as Ship;
           ship.updateLife(health.getEnergy());
 

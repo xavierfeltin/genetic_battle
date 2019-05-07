@@ -11,32 +11,33 @@ import { Configuration } from '../../models/configuration.interface';
 })
 export class SimuConfigComponent implements OnInit {
 
-  formSimu: FormGroup; 
+  formSimu: FormGroup;
   simu: GameEngine;
-  
+
   constructor(private fb: FormBuilder, private service: SimuInfoService) { }
 
   ngOnInit() {
     this.simu = this.service.getGame();
+    const config = this.simu.getDefaultConfiguration();
 
     this.formSimu = this.fb.group({
       resetSimulation: [true, Validators.required],
       simu_global: this.fb.group({
-        nbStartingShips: ['30', Validators.required],
-        energyFuel: ['0', Validators.required],
-        energyFire: ['1', Validators.required],
-        damageMissile: ['30', Validators.required],
-        nbStartingHealth: ['20', Validators.required],
-        rateHealth: ['0.01', Validators.required],
-        nbHealthDestroyingShip: ['2', Validators.required],
-        lifeFromHealth: ['20', Validators.required]
-      }),      
+        nbStartingShips: [config.nbStartingShips, Validators.required],
+        energyFuel: [config.energyFuel, Validators.required],
+        energyFire: [config.energyFire, Validators.required],
+        damageMissile: [config.damageMissile, Validators.required],
+        nbStartingHealth: [config.nbStartingHealth, Validators.required],
+        rateHealth: [config.rateHealth, Validators.required],
+        nbHealthDestroyingShip: [config.nbHealthDestroyingShip, Validators.required],
+        lifeFromHealth: [config.lifeFromHealth, Validators.required]
+      }),
       simu_genetic: this.fb.group({
-        cloneRate: ['0.001', Validators.required],
-        crossOverRate: ['0.001', Validators.required],
-        mutationRate: ['0.05', Validators.required]
+        cloneRate: [config.cloneRate, Validators.required],
+        crossOverRate: [config.crossOverRate, Validators.required],
+        mutationRate: [config.mutationRate, Validators.required]
       })
-    }); 
+    });
   }
 
   onSubmit() {
