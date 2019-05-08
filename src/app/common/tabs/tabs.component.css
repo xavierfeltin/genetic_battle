@@ -1,0 +1,33 @@
+.layout {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(auto, 200px));
+}
+
+.delimiter {
+    margin-bottom: 25px;
+}
+
+.tab{
+    text-align: center;
+    padding: 10px;
+    box-sizing: content-box;
+    min-width: 160px;
+    text-align: center;
+    display: inline-flex;
+    justify-content: center;
+    align-items: center;
+    white-space: nowrap;
+    vertical-align: top;
+    text-transform: uppercase;
+}
+
+.tab:hover {
+    background-color: rgb(244, 244, 255);
+    cursor: pointer;
+}
+
+.selected {
+    font-style: bold;
+    color: blue;
+    border-bottom: solid;
+}

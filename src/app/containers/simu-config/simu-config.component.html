@@ -1,67 +1,54 @@
-<h3> Configuration </h3>
-<form [formGroup]="formSimu" (ngSubmit)="onSubmit(formSimu)">
+<form class="layout" [formGroup]="formSimu" (ngSubmit)="onSubmit(formSimu)">
   <fieldset formGroupName="simu_global">
-    <legend> Global </legend>        
-        <div>
-          <label [for]="nbStartingShips"> Number of ships: </label> 
-          <input type="text" formControlName="nbStartingShips" id="nbStartingShips"/>
-        </div>
-        <div>
-          <label [for]="energyFuel">Energy to move: </label> 
-          <input type="text" formControlName="energyFuel"/>
-        </div>
-        <div>
-          <label [for]="energyFire">Energy to fire: </label> 
-          <input type="text" formControlName="energyFire"/>
-        </div>
-        <div>
-          <label [for]="damageMissile">Damage from missiles: </label> 
-          <input type="text" formControlName="damageMissile"/>
-        </div>
-        <div>
-          <label [for]="nbStartingHealth">Number of health packs: </label> 
-          <input type="text" formControlName="nbStartingHealth"/>
-        </div>
-        <div>
-          <label [for]="rateHealth">Rate of apparition of health packs: </label> 
-          <input type="text" formControlName="rateHealth"/>
-        </div> 
-        <div>
-          <label [for]="nbHealthDestroyingShip">Number of health from destroying a ship: </label> 
-          <input type="text" formControlName="nbHealthDestroyingShip"/>
-        </div>
-        <div>
-          <label [for]="lifeFromHealth">Life from health pack: </label> 
-          <input type="text" formControlName="lifeFromHealth"/>
-        </div>
+    <legend> Global </legend>       
+      <h4> Ships </h4> 
+      <label [for]="nbStartingShips"> Number of ships: </label> 
+      <input type="text" formControlName="nbStartingShips" id="nbStartingShips"/>
+      <br/>  
+      <label [for]="energyFuel">Energy to move: </label> 
+      <input type="text" formControlName="energyFuel"/>
+      <br/>
+      <label [for]="energyFire">Energy to fire: </label> 
+      <input type="text" formControlName="energyFire"/>
+      <br/>
+      <h4> Missiles </h4>
+      <label [for]="damageMissile">Damage from missiles: </label> 
+      <input type="text" formControlName="damageMissile"/>
+      <br/>
+      <h4> Health </h4>
+      <label [for]="nbStartingHealth">Number of health packs: </label> 
+      <input type="text" formControlName="nbStartingHealth"/>
+      <br/>
+      <label [for]="rateHealth">Rate of health packs spawing: </label> 
+      <input type="text" formControlName="rateHealth"/>
+      <br/>
+      <label [for]="nbHealthDestroyingShip">Number of health from destroying a ship: </label> 
+      <input type="text" formControlName="nbHealthDestroyingShip"/>
+      <br/>
+      <label [for]="lifeFromHealth">Life from health pack: </label> 
+      <input type="text" formControlName="lifeFromHealth"/>
   </fieldset>
   <fieldset formGroupName="simu_genetic">
     <legend> Genetic </legend>
-    <div>                        
-      <label [for]="cloneRate"> Clone rate: </label>
-      <input type="text" formControlName="cloneRate"/>
-    </div> 
-    <div>                        
-      <label [for]="crossOverRate"> Cross over rate: </label>
-      <input type="text" formControlName="crossOverRate"/>
-    </div>  
-    <div>                        
-      <label [for]="mutationRate"> Mutation rate: </label>
-      <input type="text" formControlName="mutationRate"/>
-    </div>
+    <label [for]="cloneRate"> Clone rate: </label>
+    <input type="text" formControlName="cloneRate"/>
+    <br/>
+    <label [for]="crossOverRate"> Cross over rate: </label>
+    <input type="text" formControlName="crossOverRate"/>
+    <br/>
+    <label [for]="mutationRate"> Mutation rate: </label>
+    <input type="text" formControlName="mutationRate"/>
   </fieldset>
-  <div>
-    <label [for]="resetSimulation"> Reset simulation: </label>
-    <input type="checkbox" formControlName="resetSimulation"/>
-    <label [for]="debugMode"> Debug mode: </label>
-    <input type="checkbox" formControlName="debugMode"/>
+  <div class="layout">
+    <div>
+      <label [for]="resetSimulation"> Reset simulation: </label>
+      <input type="checkbox" formControlName="resetSimulation"/>
+      <br/>
+      <label [for]="debugMode"> Debug mode: </label>
+      <input type="checkbox" formControlName="debugMode"/>
+    </div>
+    <div>    
+      <button type="submit"> Apply </button>
+    </div>
   </div>
-  <div>    
-    <button type="submit"> Apply & Run </button>
-  </div>
-  <!--
-  <div class="full-width"> 
-    <button type="submit"> Apply & Restart </button>
-  </div>
-  -->
 </form>

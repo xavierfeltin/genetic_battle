@@ -11,6 +11,8 @@ import { ShipComponent } from './containers/ship/ship.component';
 import { OldestShipsComponent } from './containers/oldest-ships/oldest-ships.component';
 import { SimuConfigComponent } from './containers/simu-config/simu-config.component';
 import { ReactiveFormsModule } from '@angular/forms';
+import { Tabs } from './common/tabs/tabs.component';
+import { Tab } from './common/tab/tab.component';
 
 @NgModule({
   declarations: [
@@ -19,7 +21,9 @@ import { ReactiveFormsModule } from '@angular/forms';
     GameViewerComponent,
     ShipComponent,
     OldestShipsComponent,
-    SimuConfigComponent
+    SimuConfigComponent,
+    Tabs,
+    Tab
   ],
   imports: [
     BrowserModule,
