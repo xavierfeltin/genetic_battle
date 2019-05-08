@@ -1,0 +1,10 @@
+.layout {
+    display: grid;
+    grid-template-columns: 1fr;    
+}
+
+.graphLayout {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    grid-row-gap: 10px;
+}

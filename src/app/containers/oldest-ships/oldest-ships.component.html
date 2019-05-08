@@ -1,2 +1,14 @@
-<app-ship name="Alive oldest ship" [ship]="aliveOldestShip"> </app-ship>
-<app-ship name="Simulation oldest ship" [ship]="oldestShip"> </app-ship>
+<p> Elapsed time: {{formatTime()}} </p>
+<div class="layout">
+    <!--
+    <div>
+        <app-ship name="Alive oldest ship" [ship]="aliveOldestShip"> </app-ship>
+        <app-ship name="Simulation oldest ship" [ship]="oldestShip"> </app-ship>
+    </div>
+    -->
+    <div class="graphLayout">
+        <app-linechart title="Nb of ships" [population]="getPopulation$() | async"> </app-linechart>
+        <app-barchart title="FOV repartition" [labels]="getLabelsFOV$() | async" [data]="getDataFOV$() | async"> </app-barchart>
+        <app-barchart title="Radar repartition" [labels]="getLabelsRadar$() | async" [data]="getDataRadar$() | async"> </app-barchart>
+    </div>
+</div>

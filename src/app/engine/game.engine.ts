@@ -16,7 +16,7 @@ import { Configuration } from '../models/configuration.interface';
 import { FactoryADN, ADN } from '../ia/adn';
 
 export class GameEngine {
-  private static readonly NB_HEALTH_WHEN_DIE: number = 2;
+  private static readonly NB_HEALTH_WHEN_DIE: number = 1;
   private static readonly NB_SHIPS: number = 30;
   private static readonly NB_INIT_HEALTH: number = 20;
   private static readonly RATE_SPAWN_HEALTH: number = 0.01;
@@ -31,6 +31,7 @@ export class GameEngine {
   private then: number;
   private interval: number;
   private delta: number;
+  private startTime: number;
   private width: number;
   private height: number;
 
@@ -55,10 +56,12 @@ export class GameEngine {
   private nbHealthDestroyingShip: number;
   private cloneRate: number;
   private crossOverRate: number;
-  private resetSimulation: boolean;
 
   // Output variables
   private oldestShip: Ship;
+
+  private _ships$ = new Subject<Ship[]>();
+  public get ships$() { return this._ships$.asObservable() }
 
   private _nbShips$ = new Subject<number>();
   public get nbShips$() { return this._nbShips$.asObservable() }
@@ -69,8 +72,8 @@ export class GameEngine {
   private _nbHealth$ = new Subject<number>();
   public get nbHealth$() { return this._nbHealth$.asObservable() }
 
-  private _ships$ = new Subject<number[][]>();
-  public get ships$() { return this._ships$.asObservable() }
+  private _coordShips$ = new Subject<number[][]>();
+  public get coordShips$() { return this._coordShips$.asObservable() }
 
   private _missiles$ = new Subject<number[][]>();
   public get missiles$() { return this._missiles$.asObservable() }
@@ -84,12 +87,16 @@ export class GameEngine {
   private _aliveOldestShip$ = new Subject<Ship>();
   public get aliveOldestShip$() { return this._aliveOldestShip$.asObservable() }
 
+  private _elapsedTime$ = new Subject<number>();
+  public get elapsedTime$() { return this._elapsedTime$.asObservable() }
+
   constructor() {
     this.fps = 30;
     this.then = Date.now();
     this.interval = 1000 / this.fps;
     this.delta = 0;
     this.now = 0;
+    this.startTime = 0;
     this.game = new Game();
     this.canvas = null;
 
@@ -106,7 +113,6 @@ export class GameEngine {
     this.nbHealthDestroyingShip = GameEngine.NB_HEALTH_WHEN_DIE;
     this.cloneRate = GameEngine.RATE_CLONE_SHIP;
     this.crossOverRate = GameEngine.RATE_CROSSOVER_SHIP;
-    this.resetSimulation = false;
   }
 
   public setCanvas(idCanvas: string) {
@@ -221,6 +227,7 @@ export class GameEngine {
     }
     this._nbShips$.next(this.ships.length);
     this.oldestShip = this.ships[0];
+    this._ships$.next(this.ships);
 
     this.bots.push(new TestBot(0));
     this.bots.push(new TestBot(1));
@@ -231,7 +238,15 @@ export class GameEngine {
     this._nbHealth$.next(this.health.length);
   }
 
+  public getElapsedTimeInSeconds() {
+    return  Math.round( (this.now - this.startTime) / 1000 );
+  }
+
   public run() {
+    this.startTime = Date.now(); 
+    this.now = this.startTime;
+    this._elapsedTime$.next(this.getElapsedTimeInSeconds());
+    
     this.game.start();
     this.initialize();
 
@@ -260,6 +275,7 @@ export class GameEngine {
       // by subtracting delta (112) % interval (100).
       // Hope that makes sense.
       this.then = this.now - (this.delta % this.interval);
+      this._elapsedTime$.next(this.getElapsedTimeInSeconds());
 
       if (!this.game.isOver()) {
         this.playGame();
@@ -271,28 +287,6 @@ export class GameEngine {
   }
 
   public playGame() {
-    // Solve bots actions
-    /*
-    for(const bot of this.bots) {
-      const action = bot.getAction();
-      const ship = this.ships[bot.getId()];
-      const shipModel = ship.getModel();
-      shipModel.applyAction(action);
-
-      if (action.fireAction === 1) {
-        const hasFired = shipModel.fire();
-        if (hasFired) {
-          const startX = shipModel.x_pos; // + shipModel.x_velo;
-          const startY = shipModel.y_pos; // + shipModel.y_velo;
-          const startOrientation = shipModel.orientation;
-
-          const missile = new MissileRender(this.missiles.length, shipModel.id, startX, startY, startOrientation, [-50, 850, -50, 850]);
-          this.missiles.push(missile);
-        }
-      }
-    }
-    */
-
     // Add possible new health
     if (Math.random() < this.rateHealth) {
       this.createHealth(this.generateId());
@@ -404,7 +398,8 @@ export class GameEngine {
 
     this._nbShips$.next(this.ships.length);
     const coordinates = this.ships.map(ship => [ship.id, Math.round(ship.pos.x), Math.round(ship.pos.y)]);
-    this._ships$.next(coordinates);
+    this._coordShips$.next(coordinates);
+    this._ships$.next(this.ships);
   }
 
   private renderGame() {

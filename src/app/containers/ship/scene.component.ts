@@ -1,7 +1,6 @@
 import { Component, OnInit, AfterViewInit, Input, NgZone } from '@angular/core';
 import { GameEngine } from '../../engine/game.engine';
 import { SimuInfoService } from '../../services/simu-info.service';
-import { Ship } from '../../models/ship.model';
 
 @Component({
   selector: 'app-scene',

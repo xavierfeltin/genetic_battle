@@ -13,6 +13,8 @@ import { SimuConfigComponent } from './containers/simu-config/simu-config.compon
 import { ReactiveFormsModule } from '@angular/forms';
 import { Tabs } from './common/tabs/tabs.component';
 import { Tab } from './common/tab/tab.component';
+import { LineChartComponent } from './containers/linechart/linechart.component';
+import { BarChartComponent } from './containers/barchart/barchart.component';
 
 @NgModule({
   declarations: [
@@ -23,7 +25,9 @@ import { Tab } from './common/tab/tab.component';
     OldestShipsComponent,
     SimuConfigComponent,
     Tabs,
-    Tab
+    Tab,
+    LineChartComponent,
+    BarChartComponent
   ],
   imports: [
     BrowserModule,

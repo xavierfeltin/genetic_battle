@@ -17,6 +17,10 @@ export class SimuInfoService {
     return this.game;
   }
 
+  public getShips(): Observable<Ship[]> {
+    return this.game.ships$;
+  }
+
   public getNbShips(): Observable<number> {
     return this.game.nbShips$;
   }
@@ -29,8 +33,8 @@ export class SimuInfoService {
     return this.game.nbMissiles$;
   }
 
-  public getShips(): Observable<number[][]> {
-    return this.game.ships$;
+  public getCoordShips(): Observable<number[][]> {
+    return this.game.coordShips$;
   }
 
   public getHealths(): Observable<(number|boolean)[][]> {
@@ -47,5 +51,9 @@ export class SimuInfoService {
 
   public getAliveOldestShip (): Observable<Ship> {
     return this.game.aliveOldestShip$;
+  }
+
+  public getElapsedTimeInSeconds(): Observable<number> {
+    return this.game.elapsedTime$
   }
 }

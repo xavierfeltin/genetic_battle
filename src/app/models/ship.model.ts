@@ -15,7 +15,7 @@ export class Ship extends GameObject {
 
     public static readonly MAX_LIFE: number = 100;
     public static readonly DEFAULT_ENERGY_FUEL: number = 0;
-    public static readonly DEFAULT_ENERGY_FIRE: number = -1;
+    public static readonly DEFAULT_ENERGY_FIRE: number = -5;
 
     private static readonly MAX_SPEED: number = 5;
     private static readonly MIN_FIRE_RATE: number = 1;
@@ -27,8 +27,8 @@ export class Ship extends GameObject {
 
     public static readonly MAX_ANGLE_FOV: number = 170;
     public static readonly MIN_ANGLE_FOV: number = 2;
-    private static readonly MIN_LENGTH_RADAR = 1;
-    private static readonly MAX_LENGTH_RADAR = 50;
+    public static readonly MIN_LENGTH_RADAR = 1;
+    public static readonly MAX_LENGTH_RADAR = 50;
 
     private static readonly MIN_ATTRACTION = -2;
     private static readonly MAX_ATTRACTION = 2;
