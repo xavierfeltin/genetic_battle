@@ -23,6 +23,9 @@ export class OldestShipsComponent implements OnInit{
   private dataShipRadar: number[][];
   private classesShipRadar: string[];
 
+  private dataShipFire: number[][];
+  private classesShipFire: string[];
+
   private dataShipAttractions: number[][];
   private classesShipAttractions: string[];
   private titlesShipAttractions: string[];
@@ -51,6 +54,10 @@ export class OldestShipsComponent implements OnInit{
       this.dataShipRadar = [];
       this.dataShipRadar.push(Stat.countByClasses(ships.map(ship => ship.getRadarLen()),
         Ship.MIN_LENGTH_RADAR, Ship.MAX_LENGTH_RADAR, 10, 1));
+      
+      this.classesShipFire = Stat.getClasses(Ship.MIN_FIRE_RATE, Ship.MAX_FIRE_RATE, 10, 1);
+      this.dataShipFire = [];
+      this.dataShipFire.push(Stat.countByClasses(ships.map(ship => ship.getFireRate()), Ship.MIN_FIRE_RATE, Ship.MAX_FIRE_RATE, 10, 1));
 
       this.classesShipAttractions = Stat.getClasses(Ship.MIN_ATTRACTION, Ship.MAX_ATTRACTION, 10, 0.01);
       this.dataShipAttractions = [];
@@ -99,6 +106,14 @@ export class OldestShipsComponent implements OnInit{
 
   public getLabelsRadar$(): Observable<string[]> {
     return of(this.classesShipRadar);
+  }
+
+  public getDataFire$(): Observable<number[][]> {
+    return of(this.dataShipFire);
+  }
+
+  public getLabelsFire$(): Observable<string[]> {
+    return of(this.classesShipFire);
   }
 
   public getDataShipAttractions$(): Observable<number[][]> {

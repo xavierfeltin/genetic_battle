@@ -18,8 +18,8 @@ export class Ship extends GameObject {
     public static readonly DEFAULT_ENERGY_FIRE: number = -5;
 
     private static readonly MAX_SPEED: number = 5;
-    private static readonly MIN_FIRE_RATE: number = 1;
-    private static readonly MAX_FIRE_RATE: number = 10;
+    public static readonly MIN_FIRE_RATE: number = 0;
+    public static readonly MAX_FIRE_RATE: number = 10;
 
     private static readonly NB_GENES: number = 5;
     private static readonly MIN_ADN_VALUE: number = -1;
