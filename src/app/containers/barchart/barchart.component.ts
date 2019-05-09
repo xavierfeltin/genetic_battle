@@ -13,28 +13,44 @@ import { Chart } from 'chart.js';
 })
 export class BarChartComponent implements OnInit, OnChanges {
   @ViewChild('myBarChart') private chartRef;
-  
-  @Input() data: number[] = [];
+
+  @Input() data: number[][] = [];
   @Input() labels: string[] = [];
+  @Input() serieTitles: string[] = [];
   @Input() title: string;
 
   private chart: Chart;
 
+  // from http://ksrowell.com/blog-visualizing-data/2012/02/02/optimal-colors-for-graphs/
+  private colors: string[] = ['rgb(114,147,203)', 'rgb(225,151,76)', 'rgb(132,186,91)',
+    'rgb(211,94,96)', 'rgb(128,133,133)', 'rgb(144,103,167)', 'rgb(171,104,87)', 'rgb(204,194,16)'];
+
   constructor() { }
 
   ngOnInit() {
+
+    // Check serie titles consistency, completes with empty titles if needed
+    if (!this.serieTitles) {
+      this.serieTitles = [];
+    }
+
+    if (this.serieTitles.length !== this.data.length) {
+      for (let i = this.serieTitles.length; i < this.data.length; i++) {
+        this.serieTitles.push('');
+      }
+    }
+
+    const configuration = this.createDatasets(this.data, this.serieTitles, this.colors);
     this.chart = new Chart(this.chartRef.nativeElement, {
       type: 'bar',
       data: {
         labels: this.labels,
-        datasets: [{ 
-            data: this.data,
-            backgroundColor: "#add8e6"
-        }]
+        datasets: configuration
       },
       options: {
         legend: {
-          display: false
+          display: (this.data.length > 1),
+          position: 'top'
         },
         scales: {
           xAxes: [{
@@ -49,18 +65,30 @@ export class BarChartComponent implements OnInit, OnChanges {
   }
 
   ngOnChanges(change: SimpleChanges) {
-    if (change.data.previousValue) {      
-      this.updateSerie(change.labels.currentValue, change.data.currentValue);
+    if (change.data.previousValue && this.chart) {
+      this.updateSerie(change.data.currentValue);
     }
   }
 
-  private updateSerie(labels: string[], data: number[]) {
-    this.labels = labels;
-    this.data = data;
+  private createDatasets(data: number[][], label: string[], colors: string[]): any[] {
+    const datasets = [];
+    for (let i = 0; i < data.length; i++) {
+      const conf = {
+        label: label[i],
+        data: data[i],
+        backgroundColor: colors[i % colors.length]
+      };
+      datasets.push(conf);
+    }
 
-    debugger;
-    this.chart.data.datasets[0].data = this.data;    
-    this.chart.data.labels = this.labels;
+    return datasets;
+  }
+
+  private updateSerie(data: number[][]) {
+    this.data = data;
+    for (let i = 0; i < data.length; i++) {
+      this.chart.data.datasets[i].data = this.data[i];
+    }
     this.chart.update();
   }
 }

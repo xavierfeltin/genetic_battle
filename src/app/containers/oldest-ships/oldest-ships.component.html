@@ -8,6 +8,8 @@
     -->
     <div class="graphLayout">
         <app-linechart title="Nb of ships" [population]="getPopulation$() | async"> </app-linechart>
+        <app-barchart title="Ship attractions" [labels]="getLabelsShipAttractions$() | async"
+            [data]="getDataShipAttractions$() | async" [serieTitles]="getSerieTitlesShipAttractions$() | async"> </app-barchart>
         <app-barchart title="FOV repartition" [labels]="getLabelsFOV$() | async" [data]="getDataFOV$() | async"> </app-barchart>
         <app-barchart title="Radar repartition" [labels]="getLabelsRadar$() | async" [data]="getDataRadar$() | async"> </app-barchart>
     </div>

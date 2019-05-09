@@ -2,6 +2,7 @@ import { Injectable, Inject } from '@angular/core';
 import { GameEngine } from '../engine/game.engine';
 import { Observable, of } from 'rxjs';
 import { Ship } from '../models/ship.model';
+import { throttleTime } from 'rxjs/operators';
 
 @Injectable({
   providedIn: 'root'
@@ -18,11 +19,11 @@ export class SimuInfoService {
   }
 
   public getShips(): Observable<Ship[]> {
-    return this.game.ships$;
+    return this.game.ships$.pipe(throttleTime(1000));
   }
 
   public getNbShips(): Observable<number> {
-    return this.game.nbShips$;
+    return this.game.nbShips$.pipe(throttleTime(1000));
   }
 
   public getNbHealth(): Observable<number> {
@@ -46,11 +47,11 @@ export class SimuInfoService {
   }
 
   public getOldestShip(): Observable<Ship> {
-    return this.game.oldestShip$;
+    return this.game.oldestShip$.pipe(throttleTime(1000));
   }
 
-  public getAliveOldestShip (): Observable<Ship> {
-    return this.game.aliveOldestShip$;
+  public getAliveOldestShip(): Observable<Ship> {
+    return this.game.aliveOldestShip$.pipe(throttleTime(1000));
   }
 
   public getElapsedTimeInSeconds(): Observable<number> {

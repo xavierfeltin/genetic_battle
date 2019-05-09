@@ -30,8 +30,8 @@ export class Ship extends GameObject {
     public static readonly MIN_LENGTH_RADAR = 1;
     public static readonly MAX_LENGTH_RADAR = 50;
 
-    private static readonly MIN_ATTRACTION = -2;
-    private static readonly MAX_ATTRACTION = 2;
+    public static readonly MIN_ATTRACTION = -2;
+    public static readonly MAX_ATTRACTION = 2;
 
     // Properties
     private coolDown: number;
