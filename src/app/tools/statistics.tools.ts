@@ -40,6 +40,10 @@ export class Stat {
             classes[index]++;
         }
 
+        for (let i = 0 ; i < classes.length; i++) {
+            classes[i] = Math.round((classes[i] / data.length) * 100);
+        }
+
         return classes;
     }
 }

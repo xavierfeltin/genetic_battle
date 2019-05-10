@@ -57,7 +57,13 @@ export class BarChartComponent implements OnInit, OnChanges {
             display: true
           }],
           yAxes: [{
-            display: true
+            display: true,
+            ticks: {
+              suggestedMax: 100,
+              callback: (value, index, values) => {
+                return value + '%';
+              }
+            }
           }],
         }
       }
