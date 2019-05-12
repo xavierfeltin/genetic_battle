@@ -26,3 +26,7 @@ button {
 h4 {
     margin: 5px;
 }
+
+.error {
+    color: red;
+}

@@ -1,23 +1,24 @@
 import { Component, OnInit, OnChanges, SimpleChanges, ViewChild, Input } from '@angular/core';
 import { Chart } from 'chart.js';
+import { config } from 'rxjs';
 
 @Component({
-  selector: 'app-barchart',
+  selector: 'app-radarchart',
   template: `
     <div style="width: 400px; height: 250px; position: relative;">
       <h3> {{ title }} </h3>
-      <canvas #myBarChart> {{ chart }} </canvas>
+      <canvas #myRadarChart> {{ chart }} </canvas>
     </div>
   `,
-  styleUrls: ['./barchart.component.css']
+  styleUrls: ['./radarchart.component.css']
 })
-export class BarChartComponent implements OnInit, OnChanges {
-  @ViewChild('myBarChart') private chartRef;
+export class RadarChartComponent implements OnInit {
+  @ViewChild('myRadarChart') private chartRef;
 
   @Input() data: number[][] = [];
   @Input() labels: string[] = [];
   @Input() serieTitles: string[] = [];
-  @Input() title: string;
+  @Input() title: string = '';
 
   private chart: Chart;
 
@@ -42,28 +43,34 @@ export class BarChartComponent implements OnInit, OnChanges {
 
     const configuration = this.createDatasets(this.data, this.serieTitles, this.colors);
     this.chart = new Chart(this.chartRef.nativeElement, {
-      type: 'bar',
+      type: 'radar',
       data: {
         labels: this.labels,
         datasets: configuration
       },
       options: {
+        scale: {
+          ticks: {
+            beginAtZero: true,
+            min: 0,
+            max: 100,
+            stepSize: 20,
+          },
+          pointLabels: {
+            fontSize: 12
+          }
+        },
         legend: {
           display: (this.data.length > 1),
           position: 'top'
         },
         scales: {
           xAxes: [{
-            display: true
+            display: false
           }],
           yAxes: [{
-            display: true,
-            ticks: {
-              suggestedMax: 100,
-              callback: (value, index, values) => {
-                return value + '%';
-              }
-            }
+            display: false,
+
           }],
         }
       }
@@ -83,7 +90,15 @@ export class BarChartComponent implements OnInit, OnChanges {
         const conf = {
           label: label[i],
           data: data[i],
-          backgroundColor: colors[i % colors.length]
+          backgroundColor: 'transparent',
+          borderColor: colors[i % colors.length],
+          fill: false,
+          radius: 4,
+          pointRadius: 4,
+          pointBorderWidth: 3,
+          //pointBackgroundColor: "cornflowerblue",
+          pointBorderColor: colors[i % colors.length],
+          pointHoverRadius: 10,
         };
         datasets.push(conf);
       }
@@ -92,7 +107,15 @@ export class BarChartComponent implements OnInit, OnChanges {
       const conf = {
         label: '',
         data: [],
-        backgroundColor: colors[0]
+        backgroundColor: 'transparent',
+        borderColor: colors[0],
+        fill: false,
+        radius: 4,
+        pointRadius: 4,
+        pointBorderWidth: 3,
+        //pointBackgroundColor: "cornflowerblue",
+        pointBorderColor: colors[0],
+        pointHoverRadius: 10,
       };
       datasets.push(conf);
     }
@@ -102,8 +125,14 @@ export class BarChartComponent implements OnInit, OnChanges {
 
   private updateSerie(data: number[][]) {
     this.data = data;
-    for (let i = 0; i < data.length; i++) {
-      this.chart.data.datasets[i].data = this.data[i];
+    if (data.length === this.chart.data.datasets.length) {
+      for (let i = 0; i < data.length; i++) {
+        this.chart.data.datasets[i].data = this.data[i];
+      }
+    }
+    else {
+      const configuration = this.createDatasets(data, this.serieTitles, this.colors);
+      this.chart.data.datasets = configuration;
     }
     this.chart.update();
   }

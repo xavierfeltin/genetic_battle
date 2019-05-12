@@ -3,6 +3,7 @@ import { SimuInfoService } from '../../services/simu-info.service';
 import { Ship } from '../../models/ship.model';
 import { Point, Stat } from '../../tools/statistics.tools';
 import { Observable, of } from 'rxjs';
+import { MyMath } from '../../tools/math.tools';
 
 @Component({
   selector: 'app-oldest-ships',
@@ -17,24 +18,40 @@ export class OldestShipsComponent implements OnInit{
 
   private population: Point[] = [];
 
-  private dataShipFOV: number[][];
-  private classesShipFOV: string[];
+  private dataShipFOV: number[][] = [];
+  private classesShipFOV: string[] = [];
 
-  private dataShipRadar: number[][];
-  private classesShipRadar: string[];
+  private dataShipRadar: number[][] = [];
+  private classesShipRadar: string[] = [];
 
-  private dataShipFire: number[][];
-  private classesShipFire: string[];
+  private dataShipFire: number[][] = [];
+  private classesShipFire: string[] = [];
 
-  private dataShipAttractions: number[][];
-  private classesShipAttractions: string[];
-  private titlesShipAttractions: string[];
+  private dataShipAttractions: number[][] = [];
+  private classesShipAttractions: string[] = [];
+  private titlesShipAttractions: string[] = [];
+
+  private dataOldestShips: number[][] = [];
+  private axisOldestShips: string[] = ['Missile Attraction', 'Health Attraction', 'Ship Attraction', 'Fire Rate', 'Radar Length', 'FOV Angle'];
+  private titlesOldestShips: string[] = ['Alive Oldest Ship'];
 
   constructor(private service: SimuInfoService) { }
 
   ngOnInit() {
     this.service.getOldestShip().subscribe((ship: Ship) => this.oldestShip = ship.copy());
-    this.service.getAliveOldestShip().subscribe((ship: Ship) => this.aliveOldestShip = ship.copy());
+    this.service.getAliveOldestShip().subscribe((ship: Ship) => {
+      //this.aliveOldestShip = ship.copy();
+      this.dataOldestShips = [];
+      const data = [];
+      data.push(MyMath.map(ship.getMissileshAttraction(), Ship.MIN_ATTRACTION, Ship.MAX_ATTRACTION, 0, 100));
+      data.push(MyMath.map(ship.getHealthAttraction(), Ship.MIN_ATTRACTION, Ship.MAX_ATTRACTION, 0, 100));
+      data.push(MyMath.map(ship.getShipsAttraction(), Ship.MIN_ATTRACTION, Ship.MAX_ATTRACTION, 0, 100));
+      data.push(MyMath.map(ship.getFireRate(), Ship.MIN_FIRE_RATE, Ship.MAX_FIRE_RATE, 0, 100));
+      data.push(MyMath.map(ship.getRadarLen(), Ship.MIN_LENGTH_RADAR, Ship.MAX_LENGTH_RADAR, 0, 100));
+      data.push(MyMath.map(ship.getFOV(), Ship.MIN_ANGLE_FOV, Ship.MAX_ANGLE_FOV, 0, 100));
+      this.dataOldestShips.push(data);
+    });
+
     this.service.getElapsedTimeInSeconds().subscribe((time: number) => this.elapsedTime = time);
 
     this.service.getNbShips().subscribe(nbShip => {
@@ -126,5 +143,17 @@ export class OldestShipsComponent implements OnInit{
 
   public getSerieTitlesShipAttractions$(): Observable<string[]> {
     return of(this.titlesShipAttractions);
+  }
+
+  public getDataOldestShips$(): Observable<number[][]> {
+    return of(this.dataOldestShips);
+  }
+
+  public getLabelsOldestShips$(): Observable<string[]> {
+    return of(this.axisOldestShips);
+  }
+
+  public getSerieTitlesOldestShips$(): Observable<string[]> {
+    return of(this.titlesOldestShips);
   }
 }

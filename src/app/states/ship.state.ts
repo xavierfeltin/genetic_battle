@@ -69,8 +69,6 @@ export class ShipState {
                 y_max: 800
             }
             //updShips.push(ship);
-
-            console.log("Add ship");
         }
         //else TODO manage multiple same ids... 
 
@@ -118,9 +116,6 @@ export class ShipState {
     @Action(MoveForward)
     moveForward(ctx: StateContext<ShipStateModel>, { id }: MoveForward) { 
         const ref = ctx.getState();
-
-        console.log("move forward");
-        console.log(ref.ships);
 
         const updShips = [...ref.ships];
         const results = updShips.filter(ship => ship.id == id);

@@ -9,7 +9,6 @@ export class Stat {
         const range = Math.abs(max - min);
         const step = Math.round((range / nbClasses) * (1 / accuracy)) * accuracy;
         const precision = Math.abs(Math.log10(accuracy));
-        console.log(precision);
         let minimum = min;
         for (let i = 0; i < nbClasses; i ++) {
             const maximum = (i === nbClasses - 1) ? max : minimum + step;

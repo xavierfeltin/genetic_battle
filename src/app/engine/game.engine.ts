@@ -226,8 +226,11 @@ export class GameEngine {
       this.ships.push(ship);
     }
     this._nbShips$.next(this.ships.length);
-    this.oldestShip = this.ships[0];
     this._ships$.next(this.ships);
+    
+    this.oldestShip = this.ships[0];
+    this._oldestShip$.next(this.oldestShip);
+    this._aliveOldestShip$.next(this.oldestShip);
 
     this.bots.push(new TestBot(0));
     this.bots.push(new TestBot(1));

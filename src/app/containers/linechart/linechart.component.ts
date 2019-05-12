@@ -5,7 +5,7 @@ import { Chart } from 'chart.js';
 @Component({
   selector: 'app-linechart',
   template: `
-    <div style="width: 400px; height: 200px; position: relative;">
+    <div style="width: 400px; height: 250px; position: relative;">
       <h3> {{ title }} </h3>
       <canvas #myChart> {{ chart }} </canvas>
     </div>
