@@ -227,7 +227,7 @@ export class GameEngine {
     }
     this._nbShips$.next(this.ships.length);
     this._ships$.next(this.ships);
-    
+
     this.oldestShip = this.ships[0];
     this._oldestShip$.next(this.oldestShip);
     this._aliveOldestShip$.next(this.oldestShip);
@@ -495,7 +495,7 @@ export class GameEngine {
         for (let j = 0; j < nShips; j++) {
           const ship = ships[j];
 
-          if (missile.isToDelete()) {
+          if (missile.isToDelete() || ship.isDead()) {
             continue;
           } else if (ship.id === missile.launchedBy) {
             continue;
@@ -526,7 +526,7 @@ export class GameEngine {
         for (let j = 0; j < nShips; j++) {
           const ship = ships[j];
 
-          if (health.isToDelete()) {
+          if (health.isToDelete() || ship.isDead()) {
             continue;
           }
 
@@ -539,14 +539,12 @@ export class GameEngine {
       for (let i = 0; i < nShips-1; i++) {
         const shipA = ships[i];
 
-
         for (let j = i+1; j < nShips; j++) {
           const shipB = ships[j];
 
-          if (shipA.hasPartner() || shipB.hasPartner()) {
+          if (shipA.hasPartner() || shipB.hasPartner() || shipA.isDead() || shipB.isDead()) {
             continue;
           }
-
 
           // Collision is not possible if ships are going in opposite directions
           this.detectCollision(shipA, shipB, previousCollision, firstCollision, newCollision, t /*, previousCollisions*/);
@@ -568,9 +566,11 @@ export class GameEngine {
         t = 1.0; // end of the turn
       } else {
         let collisionTime = firstCollision.collTime;
+        /*
         if (collisionTime === 0.0) {
-            collisionTime = 0 ; // avoid infinity loop
+            collisionTime = 0.0 ; // avoid infinity loop
         }
+        */
 
         // Move the pod normally until collision time
         for (let i = 0; i < nShips; i++) {
