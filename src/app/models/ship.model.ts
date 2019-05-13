@@ -78,19 +78,29 @@ export class Ship extends GameObject {
         }
         this.nbGenes = this.isNeuroEvo ? this.nn.getNbCoefficients() : Ship.NB_GENES;
 
-        this.createADN(Ship.NB_GENES,
-            Array<number>(Ship.NB_GENES).fill(Ship.MIN_ADN_VALUE),
-            Array<number>(Ship.NB_GENES).fill(Ship.MAX_ADN_VALUE));
+        const min = this.isNeuroEvo ? -1 : Ship.MIN_ADN_VALUE;
+        const max = this.isNeuroEvo ? 1 : Ship.MAX_ADN_VALUE;
+
+
+        this.createADN(this.nbGenes,
+            Array<number>(Ship.NB_GENES).fill(min),
+            Array<number>(Ship.NB_GENES).fill(max));
     }
 
     public createADN(nbGenes: number, minimums: number[], maximums: number[]) {
         this.adn = this.adnFactory.create(nbGenes, minimums, maximums);
-        this.expressADN();
+        
+        if (!this.isNeuroEvo) {
+            // In GA, phenotype is processed once
+            this.expressADN();
+        }
     }
 
     public setADN(adn: ADN) {
         this.adn = adn;
-        this.expressADN();
+        if (!this.isNeuroEvo) {
+            this.expressADN();
+        }
     }
 
     public expressADN() {
@@ -106,6 +116,12 @@ export class Ship extends GameObject {
         this.fireRate = Math.round(MyMath.map(genes[4], Ship.MIN_ADN_VALUE, Ship.MAX_ADN_VALUE, Ship.MIN_FIRE_RATE, Ship.MAX_FIRE_RATE));
         this.radarLength = Math.round(MyMath.map(genes[4], Ship.MIN_ADN_VALUE, Ship.MAX_ADN_VALUE, Ship.MIN_LENGTH_RADAR, Ship.MAX_LENGTH_RADAR));
         this.radarLenSquared = this.radarLength * this.radarLength;
+    }
+
+    public expressADNNeuroEvo(missiles: GameObject[], healths: GameObject[], ships: GameObject[]) {
+        // TODO: build input from game state
+        // TODO: call NN with input
+        // TODO: match ouputs with ship attributes 
     }
 
     public getADNFactory(): FactoryADN {
@@ -247,6 +263,12 @@ export class Ship extends GameObject {
     }
 
     public behaviors(missiles: GameObject[], healths: GameObject[], ships: GameObject[], wArea: number, hArea: number) {
+
+        if (this.isNeuroEvo) {
+            // in NeuroEvolution phenotype is processed each time a ship makes an action
+            this.expressADNNeuroEvo(missiles, healths, ships);
+        }
+
         if (!this.boundaries(wArea, hArea)) {
             const missile = this.getClosestOnRadar(missiles);
             const health = this.getClosestInSight(healths);
