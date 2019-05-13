@@ -3,6 +3,7 @@ import { GameAction } from '../bot/bot';
 import { ADN, FactoryADN } from '../ia/adn';
 import { Vect2D } from './vect2D.model';
 import { MyMath } from '../tools/math.tools';
+import { NeuralNetwork } from '../ia/neural-network';
 
 export class Ship extends GameObject {
     // Constants
@@ -52,7 +53,12 @@ export class Ship extends GameObject {
     private radarLenSquared: number; // optimisation
     private fireRate: number; // probability to fire each frame
 
-    constructor(id: number, energyFuel: number, energyFire: number, adnFactory: FactoryADN) {
+    // IA / AG
+    private nbGenes: number;
+    private isNeuroEvo: boolean;
+    private nn: NeuralNetwork; // for neuroevolution
+
+    constructor(id: number, energyFuel: number, energyFire: number, adnFactory: FactoryADN, isNeuroEvo: boolean = false) {
         super(id);
         this.speed = Ship.MAX_SPEED;
         this.radius = 20;
@@ -65,6 +71,12 @@ export class Ship extends GameObject {
         this.nbClones = 0;
         this.nbChildren = 0;
         this.adnFactory = adnFactory;
+
+        this.isNeuroEvo = isNeuroEvo;
+        if (this.isNeuroEvo) {
+            this.nn = new NeuralNetwork(7, [7, 7], 7);
+        }
+        this.nbGenes = this.isNeuroEvo ? this.nn.getNbCoefficients() : Ship.NB_GENES;
 
         this.createADN(Ship.NB_GENES,
             Array<number>(Ship.NB_GENES).fill(Ship.MIN_ADN_VALUE),

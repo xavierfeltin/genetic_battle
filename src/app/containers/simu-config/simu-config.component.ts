@@ -10,8 +10,8 @@ import { Configuration } from '../../models/configuration.interface';
   templateUrl: './simu-config.component.html'
 })
 export class SimuConfigComponent implements OnInit {
-  integerPattern: "^-?[0-9]+";
-  floatPattern: "^-?[0-9]+.?[0-9]*";
+  integerPattern = '^-?[0-9]+';
+  floatPattern = '^-?[0-9]+.?[0-9]*';
 
   simu: GameEngine;
   isValidFormSubmitted: boolean;
@@ -89,7 +89,7 @@ export class SimuConfigComponent implements OnInit {
 
   get nbStartingShips() {
     return this.formSimu.get('simu_global.nbStartingShips');
-  }    
+  }
 
   get energyFuel() {
     return this.formSimu.get('simu_global.energyFuel');

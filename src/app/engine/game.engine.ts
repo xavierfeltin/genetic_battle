@@ -213,6 +213,7 @@ export class GameEngine {
     this.ships = [];
     this.health = [];
     this.missiles = [];
+    this.startTime = Date.now();
   }
 
   public initialize() {
@@ -246,10 +247,10 @@ export class GameEngine {
   }
 
   public run() {
-    this.startTime = Date.now(); 
+    this.startTime = Date.now();
     this.now = this.startTime;
     this._elapsedTime$.next(this.getElapsedTimeInSeconds());
-    
+
     this.game.start();
     this.initialize();
 
@@ -393,11 +394,13 @@ export class GameEngine {
     }
 
     const aliveOldestShip = this.getOldestShip(this.ships);
-    if (this.oldestShip.getAge() < aliveOldestShip.getAge()) {
-      this.oldestShip = aliveOldestShip;
+    if (aliveOldestShip !== null) {
+      if (this.oldestShip.getAge() < aliveOldestShip.getAge()) {
+        this.oldestShip = aliveOldestShip;
+      }
+      this._oldestShip$.next(this.oldestShip);
+      this._aliveOldestShip$.next(aliveOldestShip);
     }
-    this._oldestShip$.next(this.oldestShip);
-    this._aliveOldestShip$.next(aliveOldestShip);
 
     this._nbShips$.next(this.ships.length);
     const coordinates = this.ships.map(ship => [ship.id, Math.round(ship.pos.x), Math.round(ship.pos.y)]);
@@ -479,7 +482,7 @@ export class GameEngine {
     const nHealth = healths.length;
 
     let previousCollision = Collision.createEmptyCollision();
-    //let previousCollisions = {};
+    // let previousCollisions = {};
 
     let nbTouchShipA = 0;
     let nbTouchShipB = 0;
