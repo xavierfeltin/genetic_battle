@@ -56,6 +56,7 @@ export class GameEngine {
   private nbHealthDestroyingShip: number;
   private cloneRate: number;
   private crossOverRate: number;
+  private isNeuroEvolution: boolean;
 
   // Output variables
   private oldestShip: Ship;
@@ -113,6 +114,9 @@ export class GameEngine {
     this.nbHealthDestroyingShip = GameEngine.NB_HEALTH_WHEN_DIE;
     this.cloneRate = GameEngine.RATE_CLONE_SHIP;
     this.crossOverRate = GameEngine.RATE_CROSSOVER_SHIP;
+
+    this.isNeuroEvolution = true;
+    this.shipFactory.setNeuroEvolution(this.isNeuroEvolution);
   }
 
   public setCanvas(idCanvas: string) {
@@ -188,6 +192,8 @@ export class GameEngine {
     }
 
     this.shipRenderer.setDebugMode(config.debugMode);
+
+    this.shipFactory.setNeuroEvolution(true);
   }
 
   public getDefaultConfiguration(): Configuration {

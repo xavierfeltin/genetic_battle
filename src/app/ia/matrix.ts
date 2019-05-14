@@ -40,11 +40,13 @@ export class Matrix {
     constructor(r: number, c: number) {
         this.rows = r;
         this.columns = c;
+        this.values = [];
 
         for (let i = 0; i < this.rows; i++) {
             const line = new Array<number>(this.columns);
             line.fill(0, 0, this.columns);
-            this.values.fill(line, 0, r);
+            //this.values.fill(line, 0, r);
+            this.values.push(line);
         }
 
         this.nbValues = this.rows * this.columns;

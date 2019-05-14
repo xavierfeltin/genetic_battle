@@ -36,6 +36,9 @@ export class NeuralNetwork {
     this.nOut = nOutput;
     this.nLayer = nHidden.length;
 
+    this.HHWeights = [];
+    this.HBias = [];
+
     for (let i = 0; i < this.nLayer - 1; i++) {
       if (i < this.nLayer - 1 ) {
         const weights = Matrix.random(nHidden[i + 1], nHidden[i]);
@@ -125,7 +128,7 @@ export class NeuralNetwork {
 
   private computeNbCoefficients(): number {
     let coefficients = 0;
-    for (let i = 0; i < this.nLayer; i++)  {
+    for (let i = 0; i < this.nLayer - 1; i++)  {
       coefficients += (this.HHWeights[i].rows * this.HHWeights[i].columns);
       coefficients += (this.HBias[i].rows * this.HBias[i].columns);
     }

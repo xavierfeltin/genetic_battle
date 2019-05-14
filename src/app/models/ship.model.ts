@@ -419,12 +419,14 @@ export class FactoryShip {
     private energyFuel: number;
     private energyFire: number;
     private adnFactory: FactoryADN;
+    private isNeuroEvolution: boolean;
 
     public constructor(adnFactory: FactoryADN, energyFuel: number = Ship.DEFAULT_ENERGY_FUEL,
-                       energyFire: number = Ship.DEFAULT_ENERGY_FIRE) {
+                       energyFire: number = Ship.DEFAULT_ENERGY_FIRE, isNeuroEvolution: boolean = false) {
         this.energyFuel = energyFuel;
         this.energyFire = energyFire;
         this.adnFactory = adnFactory;
+        this.isNeuroEvolution = isNeuroEvolution;
     }
 
     public getEnergyFuel(): number {
@@ -443,7 +445,15 @@ export class FactoryShip {
         this.energyFire = energy;
     }
 
+    public getNeuroEvolution(activate: boolean) {
+        return this.isNeuroEvolution;
+    }
+
+    public setNeuroEvolution(activate: boolean) {
+        this.isNeuroEvolution = activate;
+    }
+
     public create(id: number): Ship {
-        return new Ship(id, this.energyFuel, this.energyFire, this.adnFactory);
+        return new Ship(id, this.energyFuel, this.energyFire, this.adnFactory, this.isNeuroEvolution);
     }
 }
