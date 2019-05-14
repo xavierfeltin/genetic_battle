@@ -22,7 +22,10 @@ export class Ship extends GameObject {
     public static readonly MIN_FIRE_RATE: number = 0;
     public static readonly MAX_FIRE_RATE: number = 10;
 
-    private static readonly NB_GENES: number = 5;
+    private static readonly NB_GENES: number = 6;
+    private static readonly NB_ATTRIBUTES: number = 6;
+    private static readonly NB_NN_INPUT: number = 11;
+    private static readonly NN_HIDDEN_LAYERS: number[] = [7, 7];
     private static readonly MIN_ADN_VALUE: number = -1;
     private static readonly MAX_ADN_VALUE: number = 1;
 
@@ -74,22 +77,18 @@ export class Ship extends GameObject {
 
         this.isNeuroEvo = isNeuroEvo;
         if (this.isNeuroEvo) {
-            this.nn = new NeuralNetwork(7, [7, 7], 7);
+            this.nn = new NeuralNetwork(Ship.NB_NN_INPUT, Ship.NN_HIDDEN_LAYERS, Ship.NB_ATTRIBUTES);
         }
         this.nbGenes = this.isNeuroEvo ? this.nn.getNbCoefficients() : Ship.NB_GENES;
 
-        const min = this.isNeuroEvo ? -1 : Ship.MIN_ADN_VALUE;
-        const max = this.isNeuroEvo ? 1 : Ship.MAX_ADN_VALUE;
-
-
         this.createADN(this.nbGenes,
-            Array<number>(Ship.NB_GENES).fill(min),
-            Array<number>(Ship.NB_GENES).fill(max));
+            Array<number>(Ship.NB_GENES).fill(Ship.MIN_ADN_VALUE),
+            Array<number>(Ship.NB_GENES).fill(Ship.MAX_ADN_VALUE));
     }
 
     public createADN(nbGenes: number, minimums: number[], maximums: number[]) {
         this.adn = this.adnFactory.create(nbGenes, minimums, maximums);
-        
+
         if (!this.isNeuroEvo) {
             // In GA, phenotype is processed once
             this.expressADN();
@@ -103,25 +102,46 @@ export class Ship extends GameObject {
         }
     }
 
-    public expressADN() {
+    private expressADN() {
         const genes = this.adn.getGenes();
+        this.matchAttributes(genes);
+    }
 
-        this.attractHealth = MyMath.map(genes[0], Ship.MIN_ADN_VALUE, Ship.MAX_ADN_VALUE, Ship.MIN_ATTRACTION, Ship.MAX_ATTRACTION);
-        this.attractMissile = MyMath.map(genes[1], Ship.MIN_ADN_VALUE, Ship.MAX_ADN_VALUE, Ship.MIN_ATTRACTION, Ship.MAX_ATTRACTION);
-        this.attractShip = MyMath.map(genes[2], Ship.MIN_ADN_VALUE, Ship.MAX_ADN_VALUE, Ship.MIN_ATTRACTION, Ship.MAX_ATTRACTION);
+    private matchAttributes(output: number[]) {
+        this.attractHealth = MyMath.map(output[0], Ship.MIN_ADN_VALUE, Ship.MAX_ADN_VALUE, Ship.MIN_ATTRACTION, Ship.MAX_ATTRACTION);
+        this.attractMissile = MyMath.map(output[1], Ship.MIN_ADN_VALUE, Ship.MAX_ADN_VALUE, Ship.MIN_ATTRACTION, Ship.MAX_ATTRACTION);
+        this.attractShip = MyMath.map(output[2], Ship.MIN_ADN_VALUE, Ship.MAX_ADN_VALUE, Ship.MIN_ATTRACTION, Ship.MAX_ATTRACTION);
 
-        const angle = MyMath.map(genes[3], Ship.MIN_ADN_VALUE, Ship.MAX_ADN_VALUE, Ship.MIN_ANGLE_FOV, Ship.MAX_ANGLE_FOV);
+        const angle = MyMath.map(output[3], Ship.MIN_ADN_VALUE, Ship.MAX_ADN_VALUE, Ship.MIN_ANGLE_FOV, Ship.MAX_ANGLE_FOV);
         this.setFOV(Math.round(angle));
 
-        this.fireRate = Math.round(MyMath.map(genes[4], Ship.MIN_ADN_VALUE, Ship.MAX_ADN_VALUE, Ship.MIN_FIRE_RATE, Ship.MAX_FIRE_RATE));
-        this.radarLength = Math.round(MyMath.map(genes[4], Ship.MIN_ADN_VALUE, Ship.MAX_ADN_VALUE, Ship.MIN_LENGTH_RADAR, Ship.MAX_LENGTH_RADAR));
+        this.fireRate = Math.round(MyMath.map(output[4], Ship.MIN_ADN_VALUE, Ship.MAX_ADN_VALUE, Ship.MIN_FIRE_RATE, Ship.MAX_FIRE_RATE));
+        this.radarLength = Math.round(MyMath.map(output[5], Ship.MIN_ADN_VALUE, Ship.MAX_ADN_VALUE,
+            Ship.MIN_LENGTH_RADAR, Ship.MAX_LENGTH_RADAR));
         this.radarLenSquared = this.radarLength * this.radarLength;
     }
 
     public expressADNNeuroEvo(missiles: GameObject[], healths: GameObject[], ships: GameObject[]) {
-        // TODO: build input from game state
-        // TODO: call NN with input
-        // TODO: match ouputs with ship attributes 
+        const input = [];
+        const detectedMissiles = this.getClosestOnRadar(missiles);
+        const detectedShip = this.getClosestInSight(ships);
+        const detectedHealth = this.getClosestInSight(healths);
+
+        input.push(detectedMissiles === null ? 0 : 1);
+        input.push(detectedShip === null ? 0 : 1);
+        input.push(detectedHealth === null ? 0 : 1);
+        input.push(this.hasPartner === null ? 0 : 1);
+        input.push(MyMath.map(this.attractMissile, Ship.MIN_ATTRACTION, Ship.MAX_ATTRACTION, Ship.MIN_ADN_VALUE, Ship.MAX_ADN_VALUE));
+        input.push(MyMath.map(this.attractShip, Ship.MIN_ATTRACTION, Ship.MAX_ATTRACTION, Ship.MIN_ADN_VALUE, Ship.MAX_ADN_VALUE));
+        input.push(MyMath.map(this.attractHealth, Ship.MIN_ATTRACTION, Ship.MAX_ATTRACTION, Ship.MIN_ADN_VALUE, Ship.MAX_ADN_VALUE));
+        input.push(MyMath.map(this.fov, Ship.MIN_ANGLE_FOV, Ship.MAX_ANGLE_FOV, Ship.MIN_ADN_VALUE, Ship.MAX_ADN_VALUE));
+        input.push(MyMath.map(this.radarLength, Ship.MIN_LENGTH_RADAR, Ship.MAX_LENGTH_RADAR, Ship.MIN_ADN_VALUE, Ship.MAX_ADN_VALUE));
+        input.push(MyMath.map(this.fireRate, Ship.MIN_FIRE_RATE, Ship.MAX_FIRE_RATE, Ship.MIN_ADN_VALUE, Ship.MAX_ADN_VALUE));
+        input.push(MyMath.map(this.life, 0, Ship.MAX_LIFE, Ship.MIN_ADN_VALUE, Ship.MAX_ADN_VALUE));
+
+        // Call NN with the current game state viewed by the ship
+        const output = this.nn.feedForward(input);
+        this.matchAttributes(output); // Match ouputs with ship attributes
     }
 
     public getADNFactory(): FactoryADN {
@@ -138,7 +158,7 @@ export class Ship extends GameObject {
 
     public reproduce(id: number, orientation: number): Ship {
         const adn = this.adn.crossOver(this.partner.adn);
-        let ship = new Ship(id, this.energyFuel, this.energy, this.adnFactory);
+        const ship = new Ship(id, this.energyFuel, this.energy, this.adnFactory);
         ship.setADN(adn.mutate());
         ship.setPosition(this.pos);
         ship.setOrientation(orientation);
@@ -400,7 +420,8 @@ export class FactoryShip {
     private energyFire: number;
     private adnFactory: FactoryADN;
 
-    public constructor(adnFactory: FactoryADN, energyFuel: number = Ship.DEFAULT_ENERGY_FUEL, energyFire: number = Ship.DEFAULT_ENERGY_FIRE) {
+    public constructor(adnFactory: FactoryADN, energyFuel: number = Ship.DEFAULT_ENERGY_FUEL,
+                       energyFire: number = Ship.DEFAULT_ENERGY_FIRE) {
         this.energyFuel = energyFuel;
         this.energyFire = energyFire;
         this.adnFactory = adnFactory;
