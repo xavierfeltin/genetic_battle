@@ -75,6 +75,14 @@ export class Ship extends GameObject {
         this.nbChildren = 0;
         this.adnFactory = adnFactory;
 
+        this.attractHealth = 0;
+        this.attractMissile = 0;
+        this.attractShip = 0;
+        this.setFOV((Ship.MIN_ANGLE_FOV + Ship.MAX_ANGLE_FOV) / 2 );
+        this.radarLength = Math.round((Ship.MIN_LENGTH_RADAR + Ship.MAX_LENGTH_RADAR) / 2);
+        this.radarLenSquared = this.radarLength * this.radarLength;
+        this.fireRate = Math.round((Ship.MIN_FIRE_RATE + Ship.MAX_FIRE_RATE) / 2);
+
         this.isNeuroEvo = isNeuroEvo;
         if (this.isNeuroEvo) {
             this.nn = new NeuralNetwork(Ship.NB_NN_INPUT, Ship.NN_HIDDEN_LAYERS, Ship.NB_ATTRIBUTES);
@@ -82,8 +90,8 @@ export class Ship extends GameObject {
         this.nbGenes = this.isNeuroEvo ? this.nn.getNbCoefficients() : Ship.NB_GENES;
 
         this.createADN(this.nbGenes,
-            Array<number>(Ship.NB_GENES).fill(Ship.MIN_ADN_VALUE),
-            Array<number>(Ship.NB_GENES).fill(Ship.MAX_ADN_VALUE));
+            Array<number>(this.nbGenes).fill(Ship.MIN_ADN_VALUE),
+            Array<number>(this.nbGenes).fill(Ship.MAX_ADN_VALUE));
     }
 
     public createADN(nbGenes: number, minimums: number[], maximums: number[]) {
@@ -286,6 +294,7 @@ export class Ship extends GameObject {
 
         if (this.isNeuroEvo) {
             // in NeuroEvolution phenotype is processed each time a ship makes an action
+            debugger;
             this.expressADNNeuroEvo(missiles, healths, ships);
         }
 

@@ -39,10 +39,14 @@ export class NeuralNetwork {
     this.HHWeights = [];
     this.HBias = [];
 
-    for (let i = 0; i < this.nLayer - 1; i++) {
-      if (i < this.nLayer - 1 ) {
-        const weights = Matrix.random(nHidden[i + 1], nHidden[i]);
-        this.HHWeights.push(weights);
+    for (let i = 0; i < this.nLayer; i++) {
+      if (i === 0) {
+        const wInHidden = Matrix.random(nHidden[0], nInput);
+        this.HHWeights.push(wInHidden);
+      }
+      else {
+        const wHiddenHidden = Matrix.random(nHidden[i], nHidden[i - 1]);
+        this.HHWeights.push(wHiddenHidden);
       }
 
       const bias = Matrix.random(nHidden[i], 1);
@@ -128,7 +132,7 @@ export class NeuralNetwork {
 
   private computeNbCoefficients(): number {
     let coefficients = 0;
-    for (let i = 0; i < this.nLayer - 1; i++)  {
+    for (let i = 0; i < this.nLayer; i++)  {
       coefficients += (this.HHWeights[i].rows * this.HHWeights[i].columns);
       coefficients += (this.HBias[i].rows * this.HBias[i].columns);
     }

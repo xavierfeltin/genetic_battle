@@ -6,6 +6,7 @@ export class Matrix {
 
     public static product(A: Matrix, B: Matrix): Matrix {
         if (A.columns !== B.rows) {
+            console.log('A columns (' + A.columns + ') !== B columns (' + B.columns + ')');
             return null;
         }
 
@@ -16,7 +17,8 @@ export class Matrix {
                 for (let k = 0; k < A.columns; k++) {
                     sum += A.values[i][k] * B.values[k][j];
                 }
-                result.values[j][i] = sum;
+                //result.values[j][i] = sum;
+                result.values[i][j] = sum;
             }
         }
 
