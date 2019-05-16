@@ -192,7 +192,6 @@ export class GameEngine {
     }
 
     this.shipRenderer.setDebugMode(config.debugMode);
-
     this.shipFactory.setNeuroEvolution(true);
   }
 

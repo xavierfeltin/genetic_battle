@@ -17,7 +17,7 @@ export class Matrix {
                 for (let k = 0; k < A.columns; k++) {
                     sum += A.values[i][k] * B.values[k][j];
                 }
-                //result.values[j][i] = sum;
+                // result.values[j][i] = sum;
                 result.values[i][j] = sum;
             }
         }
@@ -180,7 +180,7 @@ export class Matrix {
         const result = Array<number>(this.columns * this.rows);
         for (let i = 0; i < this.rows; i++) {
             for (let j = 0; j < this.columns; j++) {
-                result.push(this.values[i][j]);
+                result[i + (j * this.columns)] = this.values[i][j];
             }
         }
         return result;
