@@ -1,10 +1,9 @@
-export interface Individual {
-    fitness: number;
-    proba: number;
-    dna: number[];
+import { ADN } from "./adn";
 
-    crossOver(parent: Individual): Individual;
-    mutate(): void;
+export interface Individual {
+    fitness?: number;
+    proba?: number;
+    adn: ADN;
 }
 
 export class GeneticAlgorithm {
@@ -21,6 +20,10 @@ export class GeneticAlgorithm {
     public pickOne(): Individual {
         return null;
     }
+
+    public populate(individuals: Individual[]) {
+        this.population = individuals;
+    }
 }
 
 export class FortuneWheelGA extends GeneticAlgorithm {
@@ -31,13 +34,17 @@ export class FortuneWheelGA extends GeneticAlgorithm {
     public evolve() {
         this.computeProbas();
         
-        let newPopulation = Array<Individual>();
+        let newPopulation = [];
         while (newPopulation.length < this.population.length) {
             let parentA = this.pickOne();
             let parentB = this.pickOne();
-            let child = parentA.crossOver(parentB);
-            child.mutate();
-            newPopulation.push(child);
+            let childADN = parentA.adn.crossOver(parentB.adn);
+            childADN.mutate();
+
+            const ind: Individual = {
+                adn: childADN
+            }; 
+            newPopulation.push(ind);
         }
 
         this.population = newPopulation;
@@ -48,12 +55,15 @@ export class FortuneWheelGA extends GeneticAlgorithm {
             return null;
         }
 
-        let rand = Math.floor(Math.random() * this.population.length);
+        let rand = Math.random();
         let i = 0;
-        while (rand < this.population[i].proba && i < this.population.length) {
+        while (i < this.population.length && rand < this.population[i].proba) {
             i += 1;
         }
 
+        if (i === this.population.length) {
+            i = i -1;
+        }
         return this.population[i];
     }
 

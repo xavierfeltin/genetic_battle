@@ -4,7 +4,7 @@ import { Vect2D } from './vect2D.model';
 export class GameObject {
     protected static readonly MAX_FORCE = 0.3;
 
-    private readonly maxSpeed: number = 8;
+    protected maxSpeed: number = 8;
 
     public id: number;
     public toDelete: boolean;

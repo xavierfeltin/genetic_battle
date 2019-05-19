@@ -1,31 +1,58 @@
-export class Game {
-    public scores: number [];
-    public hasStarted: boolean;
-    
+export class Game {    
     private readonly MAX_SCORE: number = 10;
+    private scores: number [];
+    private hasStarted: boolean;
+    private isOver: boolean;
 
-    constructor() {
-        this.scores = [0, 0];
-        this.hasStarted = true; //Todo set to false later
+    constructor(nbPlayers: number) {
+        this.scores = Array<number>(nbPlayers);
+        for (let i = 0; i < nbPlayers; i++) {
+            this.scores[i] = 0;
+        }
+
+        this.hasStarted = false;
+        this.isOver = true;
     }
 
     public start() {
-        this.scores = [0, 0];
-        this.hasStarted = true; //Todo set to false later
+        this.hasStarted = true;
+        this.isOver = false;
     }
 
-    public setScore(delta: number[]) {
-        for(let i = 0; i < this.scores.length; i++) {
-            this.scores[i] + delta[i];
-        }
+    public getHasStarted(): boolean {
+        return this.hasStarted;
     }
 
-    public isOver() {
-        for(const score of this.scores) {
-            if (score >= this.MAX_SCORE) {
-                return true;
-            }
+    public incrementScore(idPlayer: number) {
+        this.scores[idPlayer]++;
+    }
+
+    public terminate(){
+        this.isOver = true;
+        this.hasStarted = false;
+    }
+
+    public reset() {
+        for (let i = 0; i < this.scores.length; i++) {
+            this.scores[i] = 0;
         }
-        return false;
+        
+        this.hasStarted = false;
+        this.isOver = false;
+
+        this.hasStarted = false;
+        this.isOver = false;
+    }
+
+    public isGameOver(): boolean {
+        return this.isOver;
+    }
+
+    public getScores(): number[] {
+        return this.scores;
+    }
+
+    public getScore(idPlayer: number): number {
+        return this.scores[idPlayer];
     }
 } 

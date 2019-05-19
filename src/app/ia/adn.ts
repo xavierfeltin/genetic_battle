@@ -33,6 +33,16 @@ export class ADN {
         const median = Math.floor(result.genes.length / 2);
         const isOdd = (result.genes.length % 2) === 0;
 
+        for (let i = 0; i < result.genes.length; i++) {
+            if (i % 20 < 10) {
+                result.genes[i] = this.genes[i];
+            }
+            else {
+                result.genes[i] = adn.genes[i];
+            }
+        }
+
+        /*
         for (let i = 0; i < median; i++) {
             result.genes[i] = this.genes[i];
         }
@@ -46,6 +56,7 @@ export class ADN {
         for (let i = index; i < result.genes.length; i++) {
             result.genes[i] = this.genes[i];
         }
+        */
 
         return result;
     }
@@ -55,7 +66,7 @@ export class ADN {
 
         for (let i = 0; i < this.genes.length; i++) {
             if (Math.random() < ADN.MUTATION_RATE) {
-                this.genes[i] += MyMath.random(-0.1, 0.1);
+                this.genes[i] += MyMath.random(-0.01, 0.01);
             } else {
                 result.genes[i] = this.genes[i];
             }

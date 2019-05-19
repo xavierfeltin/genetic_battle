@@ -32,7 +32,7 @@ export class OldestShipsComponent implements OnInit{
   private titlesShipAttractions: string[] = [];
 
   private dataOldestShips: number[][] = [];
-  private axisOldestShips: string[] = ['Missile Attraction', 'Health Attraction', 'Ship Attraction', 'Fire Rate', 'Radar Length', 'FOV Angle'];
+  private axisOldestShips: string[] = ['Missile Attraction', 'Health Attraction', 'Ship Attraction', 'Center Attraction', 'Fire Rate', 'Radar Length', 'FOV Angle'];
   private titlesOldestShips: string[] = ['Alive Oldest Ship'];
 
   constructor(private service: SimuInfoService) { }
@@ -46,6 +46,7 @@ export class OldestShipsComponent implements OnInit{
       data.push(MyMath.map(ship.getMissileshAttraction(), Ship.MIN_ATTRACTION, Ship.MAX_ATTRACTION, 0, 100));
       data.push(MyMath.map(ship.getHealthAttraction(), Ship.MIN_ATTRACTION, Ship.MAX_ATTRACTION, 0, 100));
       data.push(MyMath.map(ship.getShipsAttraction(), Ship.MIN_ATTRACTION, Ship.MAX_ATTRACTION, 0, 100));
+      data.push(MyMath.map(ship.getCenterAttraction(), Ship.MIN_ATTRACTION, Ship.MAX_ATTRACTION, 0, 100));
       data.push(MyMath.map(ship.getFireRate(), Ship.MIN_FIRE_RATE, Ship.MAX_FIRE_RATE, 0, 100));
       data.push(MyMath.map(ship.getRadarLen(), Ship.MIN_LENGTH_RADAR, Ship.MAX_LENGTH_RADAR, 0, 100));
       data.push(MyMath.map(ship.getFOV(), Ship.MIN_ANGLE_FOV, Ship.MAX_ANGLE_FOV, 0, 100));
@@ -84,7 +85,9 @@ export class OldestShipsComponent implements OnInit{
         Ship.MIN_ATTRACTION, Ship.MAX_ATTRACTION, 10, 0.01));
       this.dataShipAttractions.push(Stat.countByClasses(ships.map(ship => ship.getShipsAttraction()),
         Ship.MIN_ATTRACTION, Ship.MAX_ATTRACTION, 10, 0.01));
-      this.titlesShipAttractions = ['Health', 'Missiles', 'Ships'];
+      this.dataShipAttractions.push(Stat.countByClasses(ships.map(ship => ship.getCenterAttraction()),
+        Ship.MIN_ATTRACTION, Ship.MAX_ATTRACTION, 10, 0.01));
+      this.titlesShipAttractions = ['Health', 'Missiles', 'Ships', 'Center'];
     });
 
   }

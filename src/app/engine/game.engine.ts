@@ -14,6 +14,7 @@ import { MyMath } from '../tools/math.tools';
 import { Subject } from 'rxjs';
 import { Configuration } from '../models/configuration.interface';
 import { FactoryADN, ADN } from '../ia/adn';
+import { GeneticAlgorithm, FortuneWheelGA, Individual } from '../ia/ga';
 
 export class GameEngine {
   private static readonly NB_HEALTH_WHEN_DIE: number = 1;
@@ -22,6 +23,8 @@ export class GameEngine {
   private static readonly RATE_SPAWN_HEALTH: number = 0.01;
   private static readonly RATE_CLONE_SHIP: number = 0.005;
   private static readonly RATE_CROSSOVER_SHIP: number = 0.01;
+  private static readonly MAX_POPULATION = 100;
+  private static readonly GAME_TIMER = 20; // in seconds
 
   private canvas: HTMLCanvasElement;
   private ctx: CanvasRenderingContext2D;
@@ -44,6 +47,7 @@ export class GameEngine {
   private healthFactory: FactoryHealth;
 
   private ships: Ship[] = [];
+  private deadShips: Ship[] = [];
   private missiles: Missile[] = [];
   private health: Health[] = [];
   private bots: IBot[] = [];
@@ -98,7 +102,7 @@ export class GameEngine {
     this.delta = 0;
     this.now = 0;
     this.startTime = 0;
-    this.game = new Game();
+    this.game = new Game(GameEngine.NB_SHIPS);
     this.canvas = null;
 
     const adnFactory  = new FactoryADN();
@@ -216,21 +220,30 @@ export class GameEngine {
 
   private reset() {
     this.ships = [];
+    this.deadShips = [];
     this.health = [];
     this.missiles = [];
     this.startTime = Date.now();
+    this.game.reset();
   }
 
-  public initialize() {
-    for (let i = 0; i < this.nbStartingShips; i++) {
-      const pos = new Vect2D(Math.random() * this.width, Math.random() * this.height);
-      const orientation = Math.random() * 360;
-      const ship = this.shipFactory.create(i);
-      ship.setPosition(pos);
-      ship.setOrientation(orientation);
-      ship.setBorders([0, this.width, 0, this.height]);
-      this.ships.push(ship);
+  public initialize(ships: Ship[] = []) {
+
+    if (ships.length === 0) {
+      for (let i = 0; i < this.nbStartingShips; i++) {
+        const pos = new Vect2D(Math.random() * this.width, Math.random() * this.height);
+        const orientation = Math.random() * 360;
+        const ship = this.shipFactory.create(i);
+        ship.setPosition(pos);
+        ship.setOrientation(orientation);
+        ship.setBorders([0, this.width, 0, this.height]);
+        this.ships.push(ship);
+      }
     }
+    else {
+      this.ships = ships;
+    }
+    
     this._nbShips$.next(this.ships.length);
     this._ships$.next(this.ships);
 
@@ -256,8 +269,11 @@ export class GameEngine {
     this.now = this.startTime;
     this._elapsedTime$.next(this.getElapsedTimeInSeconds());
 
-    this.game.start();
+    // Need to have an initialization at this moment
+    // to allow charts to be initialized with correct values
+    // yes I know could be better ...
     this.initialize();
+    this.game.start();
 
     window.requestAnimationFrame(() => this.animate());
   }
@@ -284,14 +300,24 @@ export class GameEngine {
       // by subtracting delta (112) % interval (100).
       // Hope that makes sense.
       this.then = this.now - (this.delta % this.interval);
-      this._elapsedTime$.next(this.getElapsedTimeInSeconds());
+      
+      let elapsed = this.getElapsedTimeInSeconds();
+      if (elapsed >= GameEngine.GAME_TIMER) {
+        elapsed = 0;
+        this.game.terminate();        
+      }
+      this._elapsedTime$.next(elapsed);
 
-      if (!this.game.isOver()) {
-        this.playGame();
-        this.renderGame();
-      } else {
+      if (this.game.isGameOver()) {
+        const population = [...this.ships, ...this.deadShips];
+        const newGeneration = this.evolute(population);
+        this.reset();
+        this.initialize(newGeneration);
         this.game.start();
       }
+
+      this.playGame();        
+      this.renderGame();
     }
   }
 
@@ -305,8 +331,8 @@ export class GameEngine {
     for (const ship of this.ships) {
 
       // Ship may fire this turn
-      if (ship.fire(this.ships)) {
-        const missile = this.missileFactory.create(this.generateId(), ship.id);
+      if (ship.fire(this.ships, this.missiles)) {
+        const missile = this.missileFactory.create(this.generateId(), ship.id,ship.getFOVLen());
 
         missile.setBorders([-50, 850, -50, 850]);
         missile.setPosition(ship.pos);
@@ -318,24 +344,8 @@ export class GameEngine {
         ship.reduceCoolDown();
       }
 
-      // Ship may clone this turn
-      if (Math.random() < this.cloneRate) {
-        const orientation = Math.random() * 360;
-        const id = this.generateId();
-        const copy = ship.clone(id, orientation);
-        this.ships.push(copy);
-      }
-
-      // Manage ship cross over
-      if (ship.hasPartner()) {
-        if (Math.random() < this.crossOverRate) {
-          const id = this.generateId();
-          const orientation = Math.random() * 360;
-          const newShip = ship.reproduce(id, orientation);
-          this.ships.push(newShip);
-        }
-        ship.setPartner(null); // if it fails, it fails
-      }
+      // Try solution with evolution of all ships
+      // this.continuousEvolution(ship);
     }
 
     for (const ship of this.ships) {
@@ -389,7 +399,8 @@ export class GameEngine {
           this.createHealth(this.generateId(), coord);
         }
 
-        this.ships.splice(i, 1);
+        const deleted = this.ships.splice(i, 1);
+        this.deadShips.push(deleted[0]);
       }
       else {
         shipModel.acc.mul(0);
@@ -420,6 +431,63 @@ export class GameEngine {
     this.drawShips();
     this.drawMissiles();
     this.drawHealth();
+  }
+
+  private evolute(ships: Ship[]): Ship[] {
+    const ga = new FortuneWheelGA();
+    
+    const individuals = new Array<Individual>(ships.length);
+    for (let i = 0;  i < ships.length; i++) {
+      const ind = {
+        adn: ships[i].getADN(),
+        fitness: ships[i].getHealthPackPicked()
+      };
+      individuals[i] = ind;
+    }
+
+    ga.populate(individuals);
+    const newIndividuals = ga.evolve();
+
+    const newShips = new Array<Ship>(ships.length);
+    for (let i = 0;  i < ships.length; i++) {
+      const pos = new Vect2D(Math.random() * this.width, Math.random() * this.height);
+      const orientation = Math.random() * 360;
+      const ship = this.shipFactory.create(i);
+      ship.setADN(newIndividuals[i].adn);
+      ship.setPosition(pos);
+      ship.setOrientation(orientation);
+      ship.setBorders([0, this.width, 0, this.height]);
+      newShips[i] = ship;
+    }
+
+    return newShips;
+  }
+
+  // To Keep
+  private continuousEvolution(ship: Ship) {
+    if (this.ships.length > GameEngine.MAX_POPULATION) {
+      ship.setPartner(null); // if it fails, it fails
+    }
+    else {
+      // Ship may clone this turn
+      if (Math.random() < this.cloneRate) {
+        const orientation = Math.random() * 360;
+        const id = this.generateId();
+        const copy = ship.clone(id, orientation);
+        this.ships.push(copy);
+      }
+
+      // Manage ship cross over
+      if (ship.hasPartner()) {
+        if (Math.random() < this.crossOverRate) {
+          const id = this.generateId();
+          const orientation = Math.random() * 360;
+          const newShip = ship.reproduce(id, orientation);
+          this.ships.push(newShip);
+        }
+        ship.setPartner(null); // if it fails, it fails
+      }
+    }
   }
 
   private getOldestShip(ships: Ship[]): Ship {
@@ -602,7 +670,7 @@ export class GameEngine {
             // Ship gets damages
             const missile = firstCollision.objA as Missile;
             const ship = firstCollision.objB as Ship;
-            ship.updateLife(missile.getEnergy());
+            ship.updateLife(missile.getEnergy(), Ship.DUE_TO_MISSILE);
 
             if (firstCollision.objB.id === 0) {
               nbTouchShipA ++;
@@ -617,8 +685,8 @@ export class GameEngine {
           health.toDelete = true;
 
           const ship = firstCollision.objB as Ship;
-          ship.updateLife(health.getEnergy());
-
+          ship.updateLife(health.getEnergy(), Ship.DUE_TO_HEALTH_PACK);
+          
         } else if (firstCollision.objA instanceof Ship) {
           const shipA = firstCollision.objA as Ship;
           const shipB = firstCollision.objB as Ship; // Obj B is a ship
