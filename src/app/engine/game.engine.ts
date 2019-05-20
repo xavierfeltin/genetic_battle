@@ -24,7 +24,7 @@ export class GameEngine {
   private static readonly RATE_CLONE_SHIP: number = 0.005;
   private static readonly RATE_CROSSOVER_SHIP: number = 0.01;
   private static readonly MAX_POPULATION = 100;
-  private static readonly GAME_TIMER = 20; // in seconds
+  private static readonly GAME_TIMER = 60; // in seconds
 
   private canvas: HTMLCanvasElement;
   private ctx: CanvasRenderingContext2D;
@@ -243,7 +243,7 @@ export class GameEngine {
     else {
       this.ships = ships;
     }
-    
+
     this._nbShips$.next(this.ships.length);
     this._ships$.next(this.ships);
 
@@ -300,11 +300,11 @@ export class GameEngine {
       // by subtracting delta (112) % interval (100).
       // Hope that makes sense.
       this.then = this.now - (this.delta % this.interval);
-      
+
       let elapsed = this.getElapsedTimeInSeconds();
       if (elapsed >= GameEngine.GAME_TIMER) {
         elapsed = 0;
-        this.game.terminate();        
+        this.game.terminate();
       }
       this._elapsedTime$.next(elapsed);
 
@@ -316,7 +316,7 @@ export class GameEngine {
         this.game.start();
       }
 
-      this.playGame();        
+      this.playGame();
       this.renderGame();
     }
   }
@@ -435,18 +435,19 @@ export class GameEngine {
 
   private evolute(ships: Ship[]): Ship[] {
     const ga = new FortuneWheelGA();
-    
+
     const individuals = new Array<Individual>(ships.length);
     for (let i = 0;  i < ships.length; i++) {
       const ind = {
         adn: ships[i].getADN(),
-        fitness: ships[i].getHealthPackPicked()
+        fitness: ships[i].getHealthPackPicked() + 1 // count results with 0 pack as well
       };
       individuals[i] = ind;
     }
 
     ga.populate(individuals);
-    const newIndividuals = ga.evolve();
+    ga.evolve();
+    const newIndividuals = ga.getPopulation();
 
     const newShips = new Array<Ship>(ships.length);
     for (let i = 0;  i < ships.length; i++) {
@@ -686,7 +687,7 @@ export class GameEngine {
 
           const ship = firstCollision.objB as Ship;
           ship.updateLife(health.getEnergy(), Ship.DUE_TO_HEALTH_PACK);
-          
+
         } else if (firstCollision.objA instanceof Ship) {
           const shipA = firstCollision.objA as Ship;
           const shipB = firstCollision.objB as Ship; // Obj B is a ship

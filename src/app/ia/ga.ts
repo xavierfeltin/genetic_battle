@@ -24,6 +24,10 @@ export class GeneticAlgorithm {
     public populate(individuals: Individual[]) {
         this.population = individuals;
     }
+
+    public getPopulation(): Individual[] {
+        return this.population;
+    }
 }
 
 export class FortuneWheelGA extends GeneticAlgorithm {
@@ -33,17 +37,17 @@ export class FortuneWheelGA extends GeneticAlgorithm {
 
     public evolve() {
         this.computeProbas();
-        
-        let newPopulation = [];
+
+        const newPopulation = [];
         while (newPopulation.length < this.population.length) {
-            let parentA = this.pickOne();
-            let parentB = this.pickOne();
-            let childADN = parentA.adn.crossOver(parentB.adn);
+            const parentA = this.pickOne();
+            const parentB = this.pickOne();
+            const childADN = parentA.adn.crossOver(parentB.adn);
             childADN.mutate();
 
             const ind: Individual = {
                 adn: childADN
-            }; 
+            };
             newPopulation.push(ind);
         }
 
@@ -55,32 +59,33 @@ export class FortuneWheelGA extends GeneticAlgorithm {
             return null;
         }
 
-        let rand = Math.random();
+        const rand = Math.random();
         let i = 0;
         while (i < this.population.length && rand < this.population[i].proba) {
             i += 1;
         }
 
         if (i === this.population.length) {
-            i = i -1;
+            i = i - 1;
         }
         return this.population[i];
     }
 
     private computeProbas() {
         let sumFit = 0;
-        for (let i = 0; i < this.population.length; i++) {
-            sumFit += this.population[i].fitness;
+        for (const pop of this.population) {
+            sumFit += pop.fitness;
         }
 
         let previousProba = 0;
-        for (let i = 0; i < this.population.length; i++) {
-            let relativeFitness = this.population[i].fitness / sumFit;
-            this.population[i].proba = previousProba + relativeFitness;
-            previousProba = this.population[i].proba;  
+        for (const pop of this.population) {
+            const relativeFitness = pop.fitness / sumFit;
+            pop.proba = previousProba + relativeFitness;
+            previousProba = pop.proba;
         }
 
         // Round last probability to 1
-        this.population[this.population.length-1].proba += (1 - this.population[this.population.length-1].proba);
-    }    
+        // this.population[this.population.length - 1].proba += (1 - this.population[this.population.length - 1].proba);
+        this.population[this.population.length - 1].proba = 1;
+    }
 }
