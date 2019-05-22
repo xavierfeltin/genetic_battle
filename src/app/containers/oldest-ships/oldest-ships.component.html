@@ -1,4 +1,4 @@
-<p> Elapsed time: {{formatTime()}} </p>
+<p> Elapsed time: {{formatTime(true)}} </p>
 <div class="layout">
     <!--
     <div>
@@ -7,7 +7,7 @@
     </div>
     -->
     <div class="graphLayout">
-        <app-linechart title="Nb of ships" [population]="getPopulation$() | async"> </app-linechart>
+        <app-linechart title="Nb of ships" [population]="getPopulation$() | async" label="Nb Ships"> </app-linechart>
         <app-radarchart title="Oldest ship alive's phenotype" [labels]="getLabelsOldestShips$() | async" [data]="getDataOldestShips$() | async"
             [serieTitles]="getSerieTitlesOldestShips$() | async"> </app-radarchart>
         <app-barchart title="Ship attractions" [labels]="getLabelsShipAttractions$() | async"

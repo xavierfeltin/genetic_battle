@@ -5,6 +5,7 @@ import { Vect2D } from './vect2D.model';
 import { MyMath } from '../tools/math.tools';
 import { NeuralNetwork } from '../ia/neural-network';
 import { Missile } from './missile.model';
+import { Scoring } from '../ia/scoring';
 
 export class Ship extends GameObject {
     // Constants
@@ -71,7 +72,12 @@ export class Ship extends GameObject {
     private radarLenSquared: number; // optimisation
     private fireRate: number; // probability to fire each frame
 
+    // Variables for scoring
     private nbHealthPackPicked: number;
+    private nbReceivedDamage: number;
+    private missileAccuracy: number;
+    private nbMissilesLaunched: number;
+    private nbEnnemiesTouched: number;
 
     // flags previous frame
     private hasBeenShot: boolean; // true if took damage due to missile
@@ -87,7 +93,7 @@ export class Ship extends GameObject {
         super(id);
 
         this.centerObject = new GameObject(-1);
-        this.centerObject.setPosition(new Vect2D(this.xMax/2, this.yMax/2));
+        this.centerObject.setPosition(new Vect2D(this.xMax / 2, this.yMax / 2));
         this.centerObject.setVelocity(new Vect2D(0, 0));
 
         this.radius = 20;
@@ -99,12 +105,16 @@ export class Ship extends GameObject {
         this.partner = null;
         this.nbClones = 0;
         this.nbChildren = 0;
-        this.nbHealthPackPicked = 0;
-
         this.hasBeenShot = false;
         this.hasBeenHealed = false;
         this.hasFired = false;
-    
+
+        this.nbHealthPackPicked = 0;
+        this.nbReceivedDamage = 0;
+        this.nbEnnemiesTouched = 0;
+        this.missileAccuracy = 0;
+        this.nbMissilesLaunched = 0;
+
         this.adnFactory = adnFactory;
 
         this.attractHealth = 0;
@@ -112,10 +122,10 @@ export class Ship extends GameObject {
         this.attractShip = 0;
         this.attractCenter = 0;
         this.setFOV((Ship.MIN_ANGLE_FOV + Ship.MAX_ANGLE_FOV) / 2 );
-        
+
         const length = Math.round((Ship.MIN_LENGTH_RADAR + Ship.MAX_LENGTH_RADAR) / 2);;
         this.setRadar(length);
-        
+
         this.fireRate = Math.round((Ship.MIN_FIRE_RATE + Ship.MAX_FIRE_RATE) / 2);
 
         this.isNeuroEvo = isNeuroEvo;
@@ -148,8 +158,30 @@ export class Ship extends GameObject {
         }
     }
 
+    public ennemyDown() {
+        this.nbEnnemiesTouched ++;
+        this.missileAccuracy = this.nbEnnemiesTouched / this.nbMissilesLaunched;
+    }
+
     public getADN(): ADN {
         return this.adn;
+    }
+
+    public scoring(): number {
+        const score = (this.nbHealthPackPicked * 20) + (this.missileAccuracy * 100) - (this.nbReceivedDamage * 10);
+        return score;
+    }
+
+    public getScore(): Scoring {
+        const score = {
+            id: this.id,
+            nbHealthPack: this.nbHealthPackPicked,
+            damageReceived: this.nbReceivedDamage,
+            accuracy: this.missileAccuracy,
+            score: this.scoring(),
+            state: this.isDead() ? 'Dead' : 'Alive'
+        };
+        return score;
     }
 
     private expressADN() {
@@ -170,7 +202,7 @@ export class Ship extends GameObject {
         this.setFOV(Math.round(angle));
 
         this.fireRate = Math.round(MyMath.map(output[4], min, max, Ship.MIN_FIRE_RATE, Ship.MAX_FIRE_RATE));
-        
+
         const length = Math.round(MyMath.map(output[5], min, max, Ship.MIN_LENGTH_RADAR, Ship.MAX_LENGTH_RADAR));
         this.setRadar(length);
     }
@@ -190,7 +222,7 @@ export class Ship extends GameObject {
 
         //input.push(detectedMissiles === null ? 0 : 1);
         //input.push(detectedShip === null ? 0 : 1);
-        //input.push(detectedHealth === null ? 0 : 1);        
+        //input.push(detectedHealth === null ? 0 : 1);
         //input.push(detectedMissilesFOV === null ? 0 : 1);
 
         input.push(MyMath.map(distDetectedHealth, 0, fovSquared, Ship.MIN_ADN_VALUE, Ship.MAX_ADN_VALUE));
@@ -203,23 +235,23 @@ export class Ship extends GameObject {
         input.push(MyMath.map(this.attractShip, Ship.MIN_ATTRACTION, Ship.MAX_ATTRACTION, Ship.MIN_ADN_VALUE, Ship.MAX_ADN_VALUE));
         input.push(MyMath.map(this.attractHealth, Ship.MIN_ATTRACTION, Ship.MAX_ATTRACTION, Ship.MIN_ADN_VALUE, Ship.MAX_ADN_VALUE));
         input.push(MyMath.map(this.attractCenter, Ship.MIN_ATTRACTION, Ship.MAX_ATTRACTION, Ship.MIN_ADN_VALUE, Ship.MAX_ADN_VALUE));
-        
+
         input.push(MyMath.map(this.fov, Ship.MIN_ANGLE_FOV, Ship.MAX_ANGLE_FOV, Ship.MIN_ADN_VALUE, Ship.MAX_ADN_VALUE));
         //input.push(this.fov);
-    
+
         input.push(MyMath.map(this.radarLength, Ship.MIN_LENGTH_RADAR, Ship.MAX_LENGTH_RADAR, Ship.MIN_ADN_VALUE, Ship.MAX_ADN_VALUE));
         //input.push(this.radarLength);
-        
+
 
         input.push(MyMath.map(this.fireRate, Ship.MIN_FIRE_RATE, Ship.MAX_FIRE_RATE, Ship.MIN_ADN_VALUE, Ship.MAX_ADN_VALUE));
-        
+
         input.push(MyMath.map(this.life, 0, Ship.MAX_LIFE, Ship.MIN_ADN_VALUE, Ship.MAX_ADN_VALUE));
         //input.push(this.life);
 
         input.push(this.hasFired ? 1 : 0);
         input.push(this.hasBeenHealed ? 1 : 0);
         input.push(this.hasBeenShot ? 1 : 0);
-        
+
         input.push(MyMath.map(this.velo.x, 0, Ship.MAX_SPEED, Ship.MIN_ADN_VALUE, Ship.MAX_ADN_VALUE));
         input.push(MyMath.map(this.velo.y, 0, Ship.MAX_SPEED, Ship.MIN_ADN_VALUE, Ship.MAX_ADN_VALUE));
         input.push(MyMath.map(this.pos.x, this.xMin, this.xMax, Ship.MIN_ADN_VALUE, Ship.MAX_ADN_VALUE));
@@ -329,6 +361,7 @@ export class Ship extends GameObject {
             this.updateLife(this.energy, Ship.DUE_TO_OTHER); // firing consume energy
             this.coolDown = this.fireRate;
             this.hasFired = true;
+            this.nbMissilesLaunched++;
 
             return true;
 
@@ -385,10 +418,11 @@ export class Ship extends GameObject {
 
     public updateLife(energy: number, cause: number) {
         this.life = Math.min(this.life + energy, Ship.MAX_LIFE);
-        
-        switch(cause) {
+
+        switch (cause) {
             case Ship.DUE_TO_MISSILE: {
                 this.hasBeenShot = true;
+                this.nbReceivedDamage ++;
                 break;
             }
             case Ship.DUE_TO_HEALTH_PACK: {
@@ -497,7 +531,7 @@ export class Ship extends GameObject {
         for (const object of objects) {
             if (object instanceof Missile) {
                 const m = object as Missile;
-                if (m.getLauncher() === this.id) {
+                if (m.getLauncher().id === this.id) {
                     continue;
                 }
             }
@@ -524,7 +558,7 @@ export class Ship extends GameObject {
         for (const object of objects) {
             if (object instanceof Missile) {
                 const m = object as Missile;
-                if (m.getLauncher() === this.id) {
+                if (m.getLauncher().id === this.id) {
                     continue;
                 }
             }

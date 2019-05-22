@@ -43,8 +43,7 @@ export class NeuralNetwork {
       if (i === 0) {
         const wInHidden = Matrix.random(nHidden[0], nInput);
         this.HHWeights.push(wInHidden);
-      }
-      else {
+      } else {
         const wHiddenHidden = Matrix.random(nHidden[i], nHidden[i - 1]);
         this.HHWeights.push(wHiddenHidden);
       }

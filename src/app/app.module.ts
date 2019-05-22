@@ -16,6 +16,7 @@ import { Tab } from './common/tab/tab.component';
 import { LineChartComponent } from './containers/linechart/linechart.component';
 import { BarChartComponent } from './containers/barchart/barchart.component';
 import { RadarChartComponent } from './containers/radarchart/radarchart.component';
+import { ScoringComponent } from './containers/scoring/scoring.component';
 
 @NgModule({
   declarations: [
@@ -29,7 +30,8 @@ import { RadarChartComponent } from './containers/radarchart/radarchart.componen
     Tab,
     LineChartComponent,
     BarChartComponent,
-    RadarChartComponent
+    RadarChartComponent,
+    ScoringComponent
   ],
   imports: [
     BrowserModule,

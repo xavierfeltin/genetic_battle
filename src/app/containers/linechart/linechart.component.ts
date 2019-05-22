@@ -16,24 +16,25 @@ export class LineChartComponent implements OnInit, OnChanges {
   @ViewChild('myChart') private chartRef;
 
   @Input() population: Point[] = [];
-  @Input() title: string;
-  
+  @Input() title: string = '';
+  @Input() label: string = '';
+
   private chart: Chart;
 
   constructor() { }
 
   ngOnInit() {
-    const labels = this.population.map(pop => pop.stamp);
+    const popLabels = this.population.map(pop => pop.stamp);
     const serie = this.population.map(pop => pop.data);
 
     this.chart = new Chart(this.chartRef.nativeElement, {
       type: 'line',
       data: {
-        labels: labels,
-        datasets: [{ 
-            label: "Nb of ships",
+        labels: popLabels,
+        datasets: [{
+            label: this.label,
             data: serie,
-            borderColor: "#3e95cd",
+            borderColor: '#3e95cd',
             fill: false
         }]
       },
@@ -57,7 +58,7 @@ export class LineChartComponent implements OnInit, OnChanges {
   }
 
   ngOnChanges(change: SimpleChanges) {
-    if (change.population.previousValue) {      
+    if (change.population.previousValue) {
       this.updateSerie(change.population.currentValue);
     }
   }
@@ -66,7 +67,7 @@ export class LineChartComponent implements OnInit, OnChanges {
     const labels = population.map(pop => pop.stamp);
     const serie = population.map(pop => pop.data);
 
-    this.chart.data.datasets[0].data = serie;    
+    this.chart.data.datasets[0].data = serie;
     this.chart.data.labels = labels;
     this.chart.update();
   }

@@ -55,7 +55,7 @@ export class GameObject {
 
         this.width = 0;
         this.height = 0;
-        
+
         this.xMin = 0;
         this.xMax = 0;
         this.yMin = 0;
@@ -82,8 +82,8 @@ export class GameObject {
         this.age ++;
     }
 
-    public setOldest(oldest: boolean) { 
-        this.isOldest = oldest; 
+    public setOldest(oldest: boolean) {
+        this.isOldest = oldest;
     }
 
     public move(t: number) {

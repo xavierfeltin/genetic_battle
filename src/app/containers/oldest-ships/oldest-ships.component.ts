@@ -15,6 +15,7 @@ export class OldestShipsComponent implements OnInit{
   private oldestShip: Ship;
   private aliveOldestShip: Ship;
   private elapsedTime: number;
+  private nbGeneration: number;
 
   private population: Point[] = [];
 
@@ -54,6 +55,7 @@ export class OldestShipsComponent implements OnInit{
     });
 
     this.service.getElapsedTimeInSeconds().subscribe((time: number) => this.elapsedTime = time);
+    this.service.getGenerations().subscribe((generation: number) => this.nbGeneration = generation);
 
     this.service.getNbShips().subscribe(nbShip => {
       const point: Point = {
@@ -72,7 +74,7 @@ export class OldestShipsComponent implements OnInit{
       this.dataShipRadar = [];
       this.dataShipRadar.push(Stat.countByClasses(ships.map(ship => ship.getRadarLen()),
         Ship.MIN_LENGTH_RADAR, Ship.MAX_LENGTH_RADAR, 10, 1));
-      
+
       this.classesShipFire = Stat.getClasses(Ship.MIN_FIRE_RATE, Ship.MAX_FIRE_RATE, 10, 1);
       this.dataShipFire = [];
       this.dataShipFire.push(Stat.countByClasses(ships.map(ship => ship.getFireRate()), Ship.MIN_FIRE_RATE, Ship.MAX_FIRE_RATE, 10, 1));
@@ -92,13 +94,19 @@ export class OldestShipsComponent implements OnInit{
 
   }
 
-  public formatTime(): string {
+  public formatTime(extended: boolean = false): string {
     const sec = this.elapsedTime % 60;
     const mn = Math.floor(this.elapsedTime / 60) % 60;
     const hh = Math.floor(this.elapsedTime / 3600);
-    return hh.toLocaleString('en-US', {minimumIntegerDigits: 2, useGrouping:false})
-      + ' : ' + mn.toLocaleString('en-US', {minimumIntegerDigits: 2, useGrouping:false})
-      + ' : ' + sec.toLocaleString('en-US', {minimumIntegerDigits: 2, useGrouping:false});
+    let elaspedTime = hh.toLocaleString('en-US', {minimumIntegerDigits: 2, useGrouping: false})
+    + ' : ' + mn.toLocaleString('en-US', {minimumIntegerDigits: 2, useGrouping: false})
+    + ' : ' + sec.toLocaleString('en-US', {minimumIntegerDigits: 2, useGrouping: false});
+
+    if (extended) {
+      elaspedTime += ' - generation: ' + this.nbGeneration;
+    }
+
+    return elaspedTime;
   }
 
   addData(point: Point) {

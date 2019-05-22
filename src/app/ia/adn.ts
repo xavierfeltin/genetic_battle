@@ -1,7 +1,9 @@
 import { MyMath } from '../tools/math.tools';
 
 export class ADN {
-    public  static readonly MUTATION_RATE = 0.05;
+    public static readonly MUTATION_RATE = 0.02;
+    public static readonly SWITCH_RATE = 0.01;
+
     private genes: number[];
     private mutationRate: number;
 
@@ -30,19 +32,20 @@ export class ADN {
 
     public crossOver(adn: ADN): ADN {
         const result = new ADN(this.genes.length, this.minimums, this.maximums, this.mutationRate);
-        const median = Math.floor(result.genes.length / 2);
-        const isOdd = (result.genes.length % 2) === 0;
 
         for (let i = 0; i < result.genes.length; i++) {
-            if (i % 20 < 10) {
-                result.genes[i] = this.genes[i];
-            }
-            else {
+            const probaSwitch = Math.random();
+            if (probaSwitch <= ADN.SWITCH_RATE) {
                 result.genes[i] = adn.genes[i];
+            } else {
+                result.genes[i] = this.genes[i];
             }
         }
 
         /*
+        const median = Math.floor(result.genes.length / 2);
+        const isOdd = (result.genes.length % 2) === 0;
+
         for (let i = 0; i < median; i++) {
             result.genes[i] = this.genes[i];
         }
@@ -66,7 +69,11 @@ export class ADN {
 
         for (let i = 0; i < this.genes.length; i++) {
             if (Math.random() < ADN.MUTATION_RATE) {
-                this.genes[i] += MyMath.random(-0.01, 0.01);
+                let pct = this.genes[i] * 0.05;
+                if (pct === 0) {
+                    pct = 0.01;
+                }
+                this.genes[i] += MyMath.random(-pct, pct);
             } else {
                 result.genes[i] = this.genes[i];
             }

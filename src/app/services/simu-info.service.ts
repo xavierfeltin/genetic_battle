@@ -3,6 +3,8 @@ import { GameEngine } from '../engine/game.engine';
 import { Observable, of } from 'rxjs';
 import { Ship } from '../models/ship.model';
 import { throttleTime } from 'rxjs/operators';
+import { Point } from '../tools/statistics.tools';
+import { Scoring } from '../ia/scoring';
 
 @Injectable({
   providedIn: 'root'
@@ -20,6 +22,10 @@ export class SimuInfoService {
 
   public getShips(): Observable<Ship[]> {
     return this.game.ships$.pipe(throttleTime(1000));
+  }
+
+  public getAllShips(): Observable<Ship[]> {
+    return this.game.allShips$.pipe(throttleTime(1000));
   }
 
   public getNbShips(): Observable<number> {
@@ -55,6 +61,14 @@ export class SimuInfoService {
   }
 
   public getElapsedTimeInSeconds(): Observable<number> {
-    return this.game.elapsedTime$
+    return this.game.elapsedTime$;
+  }
+
+  public getGenerations(): Observable<number> {
+    return this.game.generations$;
+  }
+
+  public getGenerationHighScore(): Observable<Scoring> {
+    return this.game.getHighScore$;
   }
 }

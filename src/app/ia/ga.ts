@@ -1,4 +1,4 @@
-import { ADN } from "./adn";
+import { ADN } from './adn';
 
 export interface Individual {
     fitness?: number;
@@ -36,10 +36,22 @@ export class FortuneWheelGA extends GeneticAlgorithm {
     }
 
     public evolve() {
-        this.computeProbas();
-
         const newPopulation = [];
-        while (newPopulation.length < this.population.length) {
+        this.population.sort((a: Individual, b: Individual): number => {
+            if (a.fitness < b.fitness) {
+                return 1;
+            } else if (a.fitness === b.fitness) {
+                return 0;
+            } else {
+                return -1;
+            }
+        });
+        const best = this.population[0];
+        newPopulation.push(best);
+
+        this.computeProbas();
+        const nbChildren = this.population.length - 1;
+        for (let i = 0; i < nbChildren; i++) {
             const parentA = this.pickOne();
             const parentB = this.pickOne();
             const childADN = parentA.adn.crossOver(parentB.adn);
@@ -72,8 +84,18 @@ export class FortuneWheelGA extends GeneticAlgorithm {
     }
 
     private computeProbas() {
+        let minValue = Infinity;
+        for (const pop of this.population) {
+            if (pop.fitness < minValue) {
+                minValue = pop.fitness;
+            }
+        }
+
         let sumFit = 0;
         for (const pop of this.population) {
+            if (minValue <= 0) {
+                pop.fitness += minValue + 1; // start at 1 to avoid null share
+            }
             sumFit += pop.fitness;
         }
 
