@@ -5,7 +5,7 @@ export class Missile extends GameObject {
     public static readonly DEFAULT_DAMAGE: number = -40;
     public static readonly DEFAULT_LIFE: number = 20;
 
-    private readonly maxShipSpeed: number = 8;
+    private readonly maxShipSpeed: number = 10;
 
     public launchedBy: Ship;
 

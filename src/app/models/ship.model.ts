@@ -29,7 +29,7 @@ export class Ship extends GameObject {
     private static readonly NB_GENES: number = 7;
     private static readonly NB_ATTRIBUTES: number = 7;
     private static readonly NB_NN_INPUT: number = 19;
-    private static readonly NN_HIDDEN_LAYERS: number[] = [16, 8];
+    private static readonly NN_HIDDEN_LAYERS: number[] = [5, 5];
     private static readonly MIN_ADN_VALUE: number = -1;
     private static readonly MAX_ADN_VALUE: number = 1;
     private static readonly MIN_NN_VALUE: number = 0;
@@ -168,7 +168,7 @@ export class Ship extends GameObject {
     }
 
     public scoring(): number {
-        const score = (this.nbHealthPackPicked * 20) + (this.missileAccuracy * 100) + (this.getAge() / 30) - (this.nbReceivedDamage * 10);
+        const score = (this.nbHealthPackPicked * 20) + (this.nbEnnemiesTouched * 10) + (this.missileAccuracy * 100) + (this.getAge() / 30) - (this.nbReceivedDamage * 10);
         return score;
     }
 

@@ -16,7 +16,7 @@ import { Configuration } from '../models/configuration.interface';
 import { FactoryADN, ADN } from '../ia/adn';
 import { FortuneWheelGA, Individual } from '../ia/ga';
 import { Scoring } from '../ia/scoring';
-import * as seedrandom from 'seedrandom';
+//import * as seedrandom from 'seedrandom';
 
 export class GameEngine {
   private static readonly NB_HEALTH_WHEN_DIE: number = 1;
@@ -109,7 +109,7 @@ export class GameEngine {
 
 
   constructor() {
-    seedrandom('hello.', { global: true });
+    //seedrandom('hello.', { global: true });
 
     this.fps = 30;
     this.then = Date.now();
