@@ -168,7 +168,7 @@ export class Ship extends GameObject {
     }
 
     public scoring(): number {
-        const score = (this.nbHealthPackPicked * 20) + (this.missileAccuracy * 100) - (this.nbReceivedDamage * 10);
+        const score = (this.nbHealthPackPicked * 20) + (this.missileAccuracy * 100) + (this.getAge() / 30) - (this.nbReceivedDamage * 10);
         return score;
     }
 
@@ -190,8 +190,8 @@ export class Ship extends GameObject {
     }
 
     private matchAttributes(output: number[]) {
-        let min = this.isNeuroEvo ? Ship.MIN_NN_VALUE : Ship.MIN_ADN_VALUE;
-        let max = this.isNeuroEvo ? Ship.MAX_NN_VALUE : Ship.MAX_ADN_VALUE;
+        const min = this.isNeuroEvo ? Ship.MIN_NN_VALUE : Ship.MIN_ADN_VALUE;
+        const max = this.isNeuroEvo ? Ship.MAX_NN_VALUE : Ship.MAX_ADN_VALUE;
 
         this.attractHealth = MyMath.map(output[0], min, max, Ship.MIN_ATTRACTION, Ship.MAX_ATTRACTION);
         this.attractMissile = MyMath.map(output[1], min, max, Ship.MIN_ATTRACTION, Ship.MAX_ATTRACTION);

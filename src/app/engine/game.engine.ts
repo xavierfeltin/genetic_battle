@@ -14,9 +14,9 @@ import { MyMath } from '../tools/math.tools';
 import { Subject } from 'rxjs';
 import { Configuration } from '../models/configuration.interface';
 import { FactoryADN, ADN } from '../ia/adn';
-import { GeneticAlgorithm, FortuneWheelGA, Individual } from '../ia/ga';
+import { FortuneWheelGA, Individual } from '../ia/ga';
 import { Scoring } from '../ia/scoring';
-import { ScoringComponent } from '../containers/scoring/scoring.component';
+import * as seedrandom from 'seedrandom';
 
 export class GameEngine {
   private static readonly NB_HEALTH_WHEN_DIE: number = 1;
@@ -109,6 +109,8 @@ export class GameEngine {
 
 
   constructor() {
+    seedrandom('hello.', { global: true });
+
     this.fps = 30;
     this.then = Date.now();
     this.interval = 1000 / this.fps;
@@ -321,7 +323,7 @@ export class GameEngine {
       this.then = this.now - (this.delta % this.interval);
 
       let elapsed = this.getElapsedTimeInSeconds();
-      if (elapsed >= GameEngine.GAME_TIMER) {
+      if (elapsed >= GameEngine.GAME_TIMER || this.ships.length === 0) {
         elapsed = 0;
         this.game.terminate();
       }
@@ -407,17 +409,18 @@ export class GameEngine {
 
       if (shipModel.isDead()) {
         // Create healths pack
-        for (let i = 0; i < this.nbHealthDestroyingShip; i++) {
-          const dX = MyMath.random(-70, 70);
-          const dY = MyMath.random(-70, 70);
+        const dispersion = Math.round(MyMath.map(this.nbHealthDestroyingShip, 0, 5, 0, 70));
+        for (let j = 0; j < this.nbHealthDestroyingShip; j++) {
+          const dX = MyMath.random(-dispersion, dispersion);
+          const dY = MyMath.random(-dispersion, dispersion);
 
           let x = shipModel.pos.x + dX;
           if ( this.width - 20 < x) { x = this.width - 20;}
-          if ( x < 0) { x = 0;}
+          if ( x < 0) { x = 0; }
 
           let y = shipModel.pos.y + dY;
           if ( this.height - 20 < y) { y = this.height - 20;}
-          if ( y < 0) { y = 0;}
+          if ( y < 0) { y = 0; }
 
           const coord = new Vect2D(x, y);
           this.createHealth(this.generateId(), coord);
@@ -425,8 +428,7 @@ export class GameEngine {
 
         const deleted = this.ships.splice(i, 1);
         this.deadShips.push(deleted[0]);
-      }
-      else {
+      } else {
         shipModel.acc.mul(0);
         shipModel.updateHeading();
         shipModel.older();
