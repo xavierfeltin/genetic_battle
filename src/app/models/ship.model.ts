@@ -28,7 +28,7 @@ export class Ship extends GameObject {
 
     private static readonly NB_GENES: number = 7;
     private static readonly NB_ATTRIBUTES: number = 7;
-    private static readonly NB_NN_INPUT: number = 24;
+    private static readonly NB_NN_INPUT: number = 25;
     private static readonly NN_HIDDEN_LAYERS: number[] = [20, 16, 8];
     private static readonly MIN_ADN_VALUE: number = -1;
     private static readonly MAX_ADN_VALUE: number = 1;
@@ -141,8 +141,8 @@ export class Ship extends GameObject {
             this.nn = new NeuralNetwork(Ship.NB_NN_INPUT, Ship.NN_HIDDEN_LAYERS, Ship.NB_ATTRIBUTES);
         }
         this.nbGenes = this.isNeuroEvo ? this.nn.getNbCoefficients() : Ship.NB_GENES;
-        const minValue = Ship.MIN_ADN_VALUE * 100;
-        const maxValue = Ship.MAX_ADN_VALUE * 100;
+        const minValue = Ship.MIN_ADN_VALUE * 1;
+        const maxValue = Ship.MAX_ADN_VALUE * 1;
 
 
         this.createADN(this.nbGenes,
@@ -188,10 +188,10 @@ export class Ship extends GameObject {
     }
 
     public scoring(): number {
-        // const score = (this.nbHealthPackPicked * 40) + (this.nbEnnemiesTouched * 5) + (this.missileAccuracy * 5)
-        //            + (this.getAge() / 30) - (this.nbReceivedDamage * 10);
-        const score = (this.nbHealthPackPicked);
-        return score * score;
+        const score = (this.nbHealthPackPicked * 40) + (this.nbEnnemiesTouched) + (this.missileAccuracy * 5)
+                    + (this.getAge() / 30) - (this.nbReceivedDamage);
+        //const score = (this.nbHealthPackPicked);
+        return score;
     }
 
     public getScore(): Scoring {
@@ -212,8 +212,8 @@ export class Ship extends GameObject {
     }
 
     private matchAttributes(output: number[]) {
-        const min = this.isNeuroEvo ? Ship.MIN_NN_VALUE : Ship.MIN_ADN_VALUE;
-        const max = this.isNeuroEvo ? Ship.MAX_NN_VALUE : Ship.MAX_ADN_VALUE;
+        const min = this.isNeuroEvo ? Ship.MIN_ADN_VALUE : Ship.MIN_ADN_VALUE;
+        const max = this.isNeuroEvo ? Ship.MAX_ADN_VALUE : Ship.MAX_ADN_VALUE;
 
         this.attractHealth = MyMath.map(output[0], min, max, Ship.MIN_ATTRACTION, Ship.MAX_ATTRACTION);
         this.attractMissile = MyMath.map(output[1], min, max, Ship.MIN_ATTRACTION, Ship.MAX_ATTRACTION);
@@ -247,27 +247,41 @@ export class Ship extends GameObject {
         input.push(detectedHealth === null ? 0 : 1);
         input.push(detectedMissilesFOV === null ? 0 : 1);
 
-        input.push(MyMath.map(distDetectedHealth, 0, fovSquared, Ship.MIN_ADN_VALUE, Ship.MAX_ADN_VALUE));
-        input.push(MyMath.map(distDetectedShip, 0, fovSquared, Ship.MIN_ADN_VALUE, Ship.MAX_ADN_VALUE));
-        input.push(MyMath.map(distDetectedMissiles, 0, this.radarLenSquared, Ship.MIN_ADN_VALUE, Ship.MAX_ADN_VALUE));
-        input.push(MyMath.map(distDetectedMissilesInFOV, 0, fovSquared, Ship.MIN_ADN_VALUE, Ship.MAX_ADN_VALUE));
+        /*
+        input.push(distDetectedHealth);
+        input.push(distDetectedShip);
+        input.push(distDetectedMissiles);
+        input.push(distDetectedMissilesInFOV);
+        */
+        input.push(MyMath.map(distDetectedHealth, 0, fovSquared, Ship.MIN_NN_VALUE, Ship.MAX_ADN_VALUE));
+        input.push(MyMath.map(distDetectedShip, 0, fovSquared, Ship.MIN_NN_VALUE, Ship.MAX_ADN_VALUE));
+        input.push(MyMath.map(distDetectedMissiles, 0, this.radarLenSquared, Ship.MIN_NN_VALUE, Ship.MAX_ADN_VALUE));
+        input.push(MyMath.map(distDetectedMissilesInFOV, 0, fovSquared, Ship.MIN_NN_VALUE, Ship.MAX_ADN_VALUE));
 
         // input.push(this.hasPartner === null ? 0 : 1);
-        input.push(MyMath.map(this.attractMissile, Ship.MIN_ATTRACTION, Ship.MAX_ATTRACTION, Ship.MIN_ADN_VALUE, Ship.MAX_ADN_VALUE));
-        input.push(MyMath.map(this.attractShip, Ship.MIN_ATTRACTION, Ship.MAX_ATTRACTION, Ship.MIN_ADN_VALUE, Ship.MAX_ADN_VALUE));
-        input.push(MyMath.map(this.attractHealth, Ship.MIN_ATTRACTION, Ship.MAX_ATTRACTION, Ship.MIN_ADN_VALUE, Ship.MAX_ADN_VALUE));
-        // input.push(MyMath.map(this.attractCenter, Ship.MIN_ATTRACTION, Ship.MAX_ATTRACTION, Ship.MIN_ADN_VALUE, Ship.MAX_ADN_VALUE));
 
-        input.push(MyMath.map(this.fov, Ship.MIN_ANGLE_FOV, Ship.MAX_ANGLE_FOV, Ship.MIN_ADN_VALUE, Ship.MAX_ADN_VALUE));
-        // input.push(this.fov);
+        /*
+        input.push(this.attractMissile);
+        input.push(this.attractShip);
+        input.push(this.attractHealth);
+        */
+        input.push(MyMath.map(this.attractMissile, Ship.MIN_ATTRACTION, Ship.MAX_ATTRACTION, Ship.MIN_NN_VALUE, Ship.MAX_ADN_VALUE));
+        input.push(MyMath.map(this.attractShip, Ship.MIN_ATTRACTION, Ship.MAX_ATTRACTION, Ship.MIN_NN_VALUE, Ship.MAX_ADN_VALUE));
+        input.push(MyMath.map(this.attractHealth, Ship.MIN_ATTRACTION, Ship.MAX_ATTRACTION, Ship.MIN_NN_VALUE, Ship.MAX_ADN_VALUE));
+        input.push(MyMath.map(this.attractCenter, Ship.MIN_ATTRACTION, Ship.MAX_ATTRACTION, Ship.MIN_NN_VALUE, Ship.MAX_ADN_VALUE));
+        
 
-        input.push(MyMath.map(this.radarLength, Ship.MIN_LENGTH_RADAR, Ship.MAX_LENGTH_RADAR, Ship.MIN_ADN_VALUE, Ship.MAX_ADN_VALUE));
-        // input.push(this.radarLength);
+        input.push(MyMath.map(this.fov, Ship.MIN_ANGLE_FOV, Ship.MAX_ANGLE_FOV, Ship.MIN_NN_VALUE, Ship.MAX_ADN_VALUE));
+        //input.push(this.fov);
 
-        input.push(MyMath.map(this.fireRate, Ship.MIN_FIRE_RATE, Ship.MAX_FIRE_RATE, Ship.MIN_ADN_VALUE, Ship.MAX_ADN_VALUE));
+        input.push(MyMath.map(this.radarLength, Ship.MIN_LENGTH_RADAR, Ship.MAX_LENGTH_RADAR, Ship.MIN_NN_VALUE, Ship.MAX_ADN_VALUE));
+        //input.push(this.radarLength);
 
-        input.push(MyMath.map(this.life, 0, Ship.MAX_LIFE, Ship.MIN_ADN_VALUE, Ship.MAX_ADN_VALUE));
-        // input.push(this.life);
+        input.push(MyMath.map(this.fireRate, Ship.MIN_FIRE_RATE, Ship.MAX_FIRE_RATE, Ship.MIN_NN_VALUE, Ship.MAX_ADN_VALUE));
+        //input.push(this.fireRate);
+
+        input.push(MyMath.map(this.life, 0, Ship.MAX_LIFE, Ship.MIN_NN_VALUE, Ship.MAX_ADN_VALUE));
+        //input.push(this.life);
 
         input.push(this.hasFired ? 1 : 0);
         // input.push(this.hasBeenHealed ? 1 : 0);
@@ -275,15 +289,29 @@ export class Ship extends GameObject {
         input.push(this.hasTouchedEnnemy ? 1 : 0);
         input.push(this.hasTouchedMissile ? 1 : 0);
 
-        input.push(MyMath.map(this.velo.x, 0, Ship.MAX_SPEED, Ship.MIN_ADN_VALUE, Ship.MAX_ADN_VALUE));
-        input.push(MyMath.map(this.velo.y, 0, Ship.MAX_SPEED, Ship.MIN_ADN_VALUE, Ship.MAX_ADN_VALUE));
-        input.push(MyMath.map(this.pos.x, this.xMin, this.xMax, Ship.MIN_ADN_VALUE, Ship.MAX_ADN_VALUE));
-        input.push(MyMath.map(this.pos.y, this.yMin, this.yMax, Ship.MIN_ADN_VALUE, Ship.MAX_ADN_VALUE));
+        /*
+        input.push(this.velo.x);
+        input.push(this.velo.y);
+        input.push(this.pos.x);
+        input.push(this.pos.y);
+        */
+        input.push(MyMath.map(this.velo.x, 0, Ship.MAX_SPEED, Ship.MIN_NN_VALUE, Ship.MAX_ADN_VALUE));
+        input.push(MyMath.map(this.velo.y, 0, Ship.MAX_SPEED, Ship.MIN_NN_VALUE, Ship.MAX_ADN_VALUE));
+        input.push(MyMath.map(this.pos.x, this.xMin, this.xMax, Ship.MIN_NN_VALUE, Ship.MAX_ADN_VALUE));
+        input.push(MyMath.map(this.pos.y, this.yMin, this.yMax, Ship.MIN_NN_VALUE, Ship.MAX_ADN_VALUE));
 
-        input.push(MyMath.map(this.timer, 0, this.maxTimer, Ship.MIN_ADN_VALUE, Ship.MAX_ADN_VALUE));
+        //input.push(this.timer);
+        input.push(MyMath.map(this.timer, 0, this.maxTimer, Ship.MIN_NN_VALUE, Ship.MAX_ADN_VALUE));
 
         // Call NN with the current game state viewed by the ship
         const output = this.nn.feedForward(input);
+
+        if (this.id === 0) {
+            debugger;
+            console.log(input);
+            console.log(output);
+        }
+
         this.matchAttributes(output); // Match ouputs with ship attributes
     }
 
@@ -468,7 +496,7 @@ export class Ship extends GameObject {
             this.steer(missile, this.attractMissile);
             this.steer(health, this.attractHealth);
             this.steer(ship, this.attractShip);
-            // this.steer(this.centerObject, this.attractCenter);
+            this.steer(this.centerObject, this.attractCenter);
         }
 
         // Apply acceleration to velocity

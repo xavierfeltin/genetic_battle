@@ -54,11 +54,12 @@ export class FortuneWheelGA extends GeneticAlgorithm {
         if (this.best === null || this.best.fitness < this.population[0].fitness) {
             this.best = this.population[0];
         }
-        newPopulation.push(this.best);
         */
+        const best = this.population[0];
+        newPopulation.push(best);
 
         this.computeProbas();
-        const nbChildren = this.population.length;
+        const nbChildren = this.population.length - 1;
         for (let i = 0; i < nbChildren; i++) {
             const parentA = this.pickOne();
             const parentB = this.pickOne();
