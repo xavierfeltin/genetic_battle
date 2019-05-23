@@ -8,9 +8,11 @@ export interface Individual {
 
 export class GeneticAlgorithm {
     public population: Individual[];
+    protected best: Individual;
 
     constructor() {
         this.population = [];
+        this.best = null;
     }
 
     public evolve() {
@@ -37,6 +39,7 @@ export class FortuneWheelGA extends GeneticAlgorithm {
 
     public evolve() {
         const newPopulation = [];
+
         this.population.sort((a: Individual, b: Individual): number => {
             if (a.fitness < b.fitness) {
                 return 1;
@@ -46,11 +49,16 @@ export class FortuneWheelGA extends GeneticAlgorithm {
                 return -1;
             }
         });
-        const best = this.population[0];
-        newPopulation.push(best);
+
+        /*
+        if (this.best === null || this.best.fitness < this.population[0].fitness) {
+            this.best = this.population[0];
+        }
+        newPopulation.push(this.best);
+        */
 
         this.computeProbas();
-        const nbChildren = this.population.length - 1;
+        const nbChildren = this.population.length;
         for (let i = 0; i < nbChildren; i++) {
             const parentA = this.pickOne();
             const parentB = this.pickOne();
@@ -62,6 +70,19 @@ export class FortuneWheelGA extends GeneticAlgorithm {
             };
             newPopulation.push(ind);
         }
+
+        /*
+        const nbChildren = this.population.length;
+        for (let i = 1; i < nbChildren; i++) {
+            const childADN = this.population[i].adn;
+            childADN.mutate();
+
+            const ind: Individual = {
+                adn: childADN
+            };
+            newPopulation.push(ind);
+        }
+        */
 
         this.population = newPopulation;
     }

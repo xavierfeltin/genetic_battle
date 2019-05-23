@@ -20,13 +20,13 @@ import { Scoring } from '../ia/scoring';
 
 export class GameEngine {
   private static readonly NB_HEALTH_WHEN_DIE: number = 1;
-  private static readonly NB_SHIPS: number = 30;
-  private static readonly NB_INIT_HEALTH: number = 20;
-  private static readonly RATE_SPAWN_HEALTH: number = 0.01;
+  private static readonly NB_SHIPS: number = 20;
+  private static readonly NB_INIT_HEALTH: number = 0; // 20;
+  private static readonly RATE_SPAWN_HEALTH: number = 0; // 0.01;
   private static readonly RATE_CLONE_SHIP: number = 0.005;
   private static readonly RATE_CROSSOVER_SHIP: number = 0.01;
   private static readonly MAX_POPULATION = 100;
-  private static readonly GAME_TIMER = 60; // in seconds
+  private static readonly GAME_TIMER = 30; // 60; // in seconds
 
   private canvas: HTMLCanvasElement;
   private ctx: CanvasRenderingContext2D;
@@ -354,7 +354,9 @@ export class GameEngine {
     }
 
     // Manage ship actions
+    const t = this.getElapsedTimeInSeconds();
     for (const ship of this.ships) {
+      ship.setTime(t, GameEngine.GAME_TIMER);
 
       // Ship may fire this turn
       if (ship.fire(this.ships, this.missiles)) {
@@ -627,7 +629,7 @@ export class GameEngine {
         for (let j = i + 1; j < nMissiles; j++) {
           const otherMissile = missiles[j];
 
-          if (otherMissile.isToDelete()) {
+          if (missile.isToDelete() || otherMissile.isToDelete()) {
             continue;
           } else if (otherMissile.launchedBy === missile.launchedBy) {
             continue;
@@ -709,13 +711,19 @@ export class GameEngine {
 
           if (firstCollision.objB instanceof Missile) {
             firstCollision.objB.toDelete = true;
+            const missileA = firstCollision.objA as Missile;
+            const missileB = firstCollision.objB as Missile;
+
+            // update ships statistics
+            missileA.getLauncher().missileDestroyed();
+            missileB.getLauncher().missileDestroyed();
           } else {
             // Ship gets damages
             const missile = firstCollision.objA as Missile;
             const ship = firstCollision.objB as Ship;
             ship.updateLife(missile.getEnergy(), Ship.DUE_TO_MISSILE);
 
-            // comptabilize hit for parent ship
+            // update ships statistics
             missile.getLauncher().ennemyDown();
 
             if (firstCollision.objB.id === 0) {

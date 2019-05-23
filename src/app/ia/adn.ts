@@ -1,8 +1,8 @@
 import { MyMath } from '../tools/math.tools';
 
 export class ADN {
-    public static readonly MUTATION_RATE = 0.02;
-    public static readonly SWITCH_RATE = 0.01;
+    public static readonly MUTATION_RATE = 0.05;
+    public static readonly SWITCH_RATE = 0.05;
 
     private genes: number[];
     private mutationRate: number;
@@ -69,7 +69,7 @@ export class ADN {
 
         for (let i = 0; i < this.genes.length; i++) {
             if (Math.random() < ADN.MUTATION_RATE) {
-                let pct = this.genes[i] * 0.05;
+                let pct = this.genes[i] * 0.5;
                 if (pct === 0) {
                     pct = 0.01;
                 }
