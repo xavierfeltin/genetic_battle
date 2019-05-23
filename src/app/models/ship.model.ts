@@ -583,6 +583,13 @@ export class Ship extends GameObject {
                 }
             }
 
+            if (object instanceof Ship) {
+                const s = object as Ship;
+                if (s.id === this.id) {
+                    continue;
+                }
+            }
+
             const dist = this.pos.distance2(object.pos);
             if (Number.isNaN(minDistance) && this.isInView(object)) {
                 minDistance = dist;
