@@ -6,6 +6,8 @@
       <tr>
         <th> ID </th>
         <th> Score </th>
+        <th> Generation </th>
+        <th> lifespan </th>
         <th> Health Packs </th>
         <th> Damage </th>
         <th> Accuracy </th>
@@ -13,10 +15,11 @@
       <tr *ngFor="let score of scores" >
         <td> {{score.id}} </td>
         <td> {{score.score.toFixed(2)}} </td>
+        <td> {{score.generation}} </td>
+        <td> {{formatTime(score.lifespan)}} </td>
         <td> {{score.nbHealthPack}} </td>
         <td> {{score.damageReceived}} </td>
         <td> {{score.accuracy.toFixed(2)}} </td>
-        <td> {{score.state}} </td>
       </tr>
     </table>
   </diV>

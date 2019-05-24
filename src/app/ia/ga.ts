@@ -8,14 +8,20 @@ export interface Individual {
 
 export class GeneticAlgorithm {
     public population: Individual[];
+    public refPopulation: Individual[];
     protected best: Individual;
 
     constructor() {
         this.population = [];
+        this.refPopulation = [];
         this.best = null;
     }
 
     public evolve() {
+        return;
+    }
+
+    public evolveFromReference() {
         return;
     }
 
@@ -25,6 +31,10 @@ export class GeneticAlgorithm {
 
     public populate(individuals: Individual[]) {
         this.population = individuals;
+    }
+
+    public populateReference(individuals: Individual[]) {
+        this.refPopulation = individuals;
     }
 
     public getPopulation(): Individual[] {
@@ -84,6 +94,41 @@ export class FortuneWheelGA extends GeneticAlgorithm {
             newPopulation.push(ind);
         }
         */
+
+        this.population = newPopulation;
+    }
+
+    public evolveFromReference() {
+        const newPopulation = [];
+        this.refPopulation.sort((a: Individual, b: Individual): number => {
+            if (a.fitness < b.fitness) {
+                return 1;
+            } else if (a.fitness === b.fitness) {
+                return 0;
+            } else {
+                return -1;
+            }
+        });
+
+        const scoreAvg = (this.refPopulation[0].fitness + this.refPopulation[this.refPopulation.length - 1].fitness) / 2;
+        for (const popInd of this.population) {
+            let childADN: ADN = null;
+            if (popInd.fitness < scoreAvg ) {
+                // Indiv is coming from two good parents
+                const parentA = this.pickOne();
+                const parentB = this.pickOne();
+                childADN = parentA.adn.crossOver(parentB.adn);
+            } else {
+                // Indiv is good enough to be cloned directly
+                childADN = popInd.adn;
+            }
+
+            childADN.mutate();
+            const ind: Individual = {
+                adn: childADN
+            };
+            newPopulation.push(ind);
+        }
 
         this.population = newPopulation;
     }

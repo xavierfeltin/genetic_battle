@@ -69,6 +69,6 @@ export class SimuInfoService {
   }
 
   public getGenerationHighScore(): Observable<Scoring> {
-    return this.game.getHighScore$;
+    return this.game.getHighScore$.pipe(throttleTime(1000));
   }
 }

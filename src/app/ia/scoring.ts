@@ -6,4 +6,5 @@ export interface Scoring {
     score: number;
     state: string;
     generation?: number;
+    lifespan?: number;
 }

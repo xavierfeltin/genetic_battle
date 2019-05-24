@@ -3,6 +3,7 @@ import { Scoring } from '../../ia/scoring';
 import { SimuInfoService } from '../../services/simu-info.service';
 import { of, Observable } from 'rxjs';
 import { Point } from '../../tools/statistics.tools';
+import { MyMath } from 'src/app/tools/math.tools';
 
 @Component({
   selector: 'app-scoring',
@@ -10,7 +11,7 @@ import { Point } from '../../tools/statistics.tools';
   styleUrls: ['./scoring.component.css']
 })
 export class ScoringComponent implements OnInit {
-  private static readonly MAX_POP = 100;
+  private static readonly MAX_POP = 50;
   scores: Scoring[] = [];
   population: Point[] = [];
 
@@ -53,5 +54,9 @@ export class ScoringComponent implements OnInit {
 
   public getPopulation$(): Observable<Point[]> {
     return of(this.population);
+  }
+
+  public formatTime(elapsedTime: number, nbGeneration: number = -1): string {
+    return MyMath.formatTime(elapsedTime, nbGeneration);
   }
 }

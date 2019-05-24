@@ -20,13 +20,13 @@ import { Scoring } from '../ia/scoring';
 
 export class GameEngine {
   private static readonly NB_HEALTH_WHEN_DIE: number = 1;
-  private static readonly NB_SHIPS: number = 20;
+  private static readonly NB_SHIPS: number = 10;
   private static readonly NB_INIT_HEALTH: number = 0; // 20;
   private static readonly RATE_SPAWN_HEALTH: number = 0; // 0.01;
   private static readonly RATE_CLONE_SHIP: number = 0.005;
   private static readonly RATE_CROSSOVER_SHIP: number = 0.01;
   private static readonly MAX_POPULATION = 100;
-  private static readonly GAME_TIMER = 30; // 60; // in seconds
+  private static readonly GAME_TIMER = 45; // 60; // in seconds
 
   private canvas: HTMLCanvasElement;
   private ctx: CanvasRenderingContext2D;
@@ -119,7 +119,7 @@ export class GameEngine {
     this.startTime = 0;
     this.game = new Game(GameEngine.NB_SHIPS);
     this.canvas = null;
-    this.nbGenerations = 1;
+    this.nbGenerations = -1;
 
     const adnFactory  = new FactoryADN();
     this.shipFactory = new FactoryShip(adnFactory);
@@ -253,7 +253,7 @@ export class GameEngine {
       for (let i = 0; i < this.nbStartingShips; i++) {
         const pos = new Vect2D(Math.random() * this.width, Math.random() * this.height);
         const orientation = Math.random() * 360;
-        const ship = this.shipFactory.create(i);
+        const ship = this.shipFactory.create(i, 1);
         ship.setPosition(pos);
         ship.setOrientation(orientation);
         ship.setBorders([0, this.width, 0, this.height]);
@@ -322,13 +322,18 @@ export class GameEngine {
       // Hope that makes sense.
       this.then = this.now - (this.delta % this.interval);
 
-      let elapsed = this.getElapsedTimeInSeconds();
+      const elapsed = this.getElapsedTimeInSeconds();
+      /*
+      // Uncomment for managing batches of ships with a timer
       if (elapsed >= GameEngine.GAME_TIMER || this.ships.length === 0) {
         elapsed = 0;
         this.game.terminate();
       }
+      */
       this._elapsedTime$.next(elapsed);
 
+      /*
+      // Uncomment for managing batches of ships
       if (this.game.isGameOver()) {
         const population = [...this.ships, ...this.deadShips];
         this._getHighScore$.next(this.getHighScore(population));
@@ -341,6 +346,7 @@ export class GameEngine {
         this.nbGenerations ++;
         this._generations$.next(this.nbGenerations);
       }
+      */
 
       this.playGame();
       this.renderGame();
@@ -352,6 +358,11 @@ export class GameEngine {
     if (Math.random() < this.rateHealth) {
       this.createHealth(this.generateId());
     }
+
+    // respawn new ships
+    const newShips = this.continuousEvolutionWhenDying(this.deadShips, this.ships);
+    this.ships = [...this.ships, ...newShips];
+    this.deadShips  = [];
 
     // Manage ship actions
     const t = this.getElapsedTimeInSeconds();
@@ -367,13 +378,11 @@ export class GameEngine {
         missile.setOrientation(ship.orientation);
 
         this.missiles.push(missile);
-      }
-      else {
+      } else {
         ship.reduceCoolDown();
       }
 
-      // Try solution with evolution of all ships
-      // this.continuousEvolution(ship);
+      // this.continuousEvolutionWhenLiving(ship);
     }
 
     for (const ship of this.ships) {
@@ -451,6 +460,8 @@ export class GameEngine {
     this._coordShips$.next(coordinates);
     this._ships$.next(this.ships);
     this._allShips$.next([...this.ships, ...this.deadShips]);
+
+    this._getHighScore$.next(this.getHighScore(this.ships));
   }
 
   private renderGame() {
@@ -462,6 +473,7 @@ export class GameEngine {
     this.drawHealth();
   }
 
+  /*
   private evolute(ships: Ship[]): Ship[] {
     const ga = new FortuneWheelGA();
 
@@ -492,28 +504,31 @@ export class GameEngine {
 
     return newShips;
   }
+  */
 
   private getHighScore(ships: Ship[]): Scoring {
     let maxScore = -Infinity;
     let score: Scoring = null;
+    let best = null;
     for (const ship of ships) {
       const scoring = ship.getScore();
       if (scoring.score > maxScore) {
         maxScore = scoring.score;
         score = scoring;
+        best = ship;
       }
     }
 
-    score.generation = this.nbGenerations;
+    score.generation = best.getGeneration();
     return score;
   }
 
-  // To Keep
-  private continuousEvolution(ship: Ship) {
+  // Evolution performed while the ship is living
+  // The ship is cloning itself or reproduce with another ship if meeting it
+  private continuousEvolutionWhenLiving(ship: Ship) {
     if (this.ships.length > GameEngine.MAX_POPULATION) {
       ship.setPartner(null); // if it fails, it fails
-    }
-    else {
+    } else {
       // Ship may clone this turn
       if (Math.random() < this.cloneRate) {
         const orientation = Math.random() * 360;
@@ -534,6 +549,51 @@ export class GameEngine {
       }
     }
   }
+
+  // Evolution performed once the ship is dead
+  // The ship is cloning itself if it was good enough
+  // or a new ship is created based on two ships with a good score
+  private continuousEvolutionWhenDying(deadShips: Ship[], referenceShips: Ship[]): Ship[] {
+    const ga = new FortuneWheelGA();
+
+    const individuals = new Array<Individual>(deadShips.length);
+    for (let i = 0;  i < deadShips.length; i++) {
+      const ind = {
+        adn: deadShips[i].getADN(),
+        fitness: deadShips[i].scoring()
+      };
+      individuals[i] = ind;
+    }
+
+    const refIndividuals = new Array<Individual>(referenceShips.length);
+    for (let i = 0;  i < referenceShips.length; i++) {
+      const ind = {
+        adn: referenceShips[i].getADN(),
+        fitness: referenceShips[i].scoring()
+      };
+      refIndividuals[i] = ind;
+    }
+
+    ga.populate(individuals);
+    ga.populateReference(refIndividuals);
+    ga.evolveFromReference();
+    const newIndividuals = ga.getPopulation();
+
+    const newShips = new Array<Ship>(deadShips.length);
+    for (let i = 0;  i < deadShips.length; i++) {
+      const pos = new Vect2D(Math.random() * this.width, Math.random() * this.height);
+      const orientation = Math.random() * 360;
+      const ship = this.shipFactory.create(deadShips[i].id, deadShips[i].getGeneration() + 1);
+      ship.setADN(newIndividuals[i].adn);
+      ship.setPosition(pos);
+      ship.setOrientation(orientation);
+      ship.setBorders([0, this.width, 0, this.height]);
+      newShips[i] = ship;
+    }
+
+    return newShips;
+  }
+
 
   private getOldestShip(ships: Ship[]): Ship {
     let result = null;

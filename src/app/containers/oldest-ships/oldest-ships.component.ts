@@ -33,7 +33,8 @@ export class OldestShipsComponent implements OnInit{
   private titlesShipAttractions: string[] = [];
 
   private dataOldestShips: number[][] = [];
-  private axisOldestShips: string[] = ['Missile Attraction', 'Health Attraction', 'Ship Attraction', 'Center Attraction', 'Fire Rate', 'Radar Length', 'FOV Angle'];
+  private axisOldestShips: string[] = ['Missile Attraction', 'Health Attraction', 'Ship Attraction',
+                                       'Center Attraction', 'Fire Rate', 'Radar Length', 'FOV Angle'];
   private titlesOldestShips: string[] = ['Alive Oldest Ship'];
 
   constructor(private service: SimuInfoService) { }
@@ -41,7 +42,7 @@ export class OldestShipsComponent implements OnInit{
   ngOnInit() {
     this.service.getOldestShip().subscribe((ship: Ship) => this.oldestShip = ship.copy());
     this.service.getAliveOldestShip().subscribe((ship: Ship) => {
-      //this.aliveOldestShip = ship.copy();
+      // this.aliveOldestShip = ship.copy();
       this.dataOldestShips = [];
       const data = [];
       data.push(MyMath.map(ship.getMissileshAttraction(), Ship.MIN_ATTRACTION, Ship.MAX_ATTRACTION, 0, 100));
@@ -60,7 +61,7 @@ export class OldestShipsComponent implements OnInit{
     this.service.getNbShips().subscribe(nbShip => {
       const point: Point = {
         data: nbShip,
-        stamp: this.formatTime()
+        stamp: MyMath.formatTime(this.elapsedTime)
       };
       this.addData(point);
     });
@@ -94,19 +95,8 @@ export class OldestShipsComponent implements OnInit{
 
   }
 
-  public formatTime(extended: boolean = false): string {
-    const sec = this.elapsedTime % 60;
-    const mn = Math.floor(this.elapsedTime / 60) % 60;
-    const hh = Math.floor(this.elapsedTime / 3600);
-    let elaspedTime = hh.toLocaleString('en-US', {minimumIntegerDigits: 2, useGrouping: false})
-    + ' : ' + mn.toLocaleString('en-US', {minimumIntegerDigits: 2, useGrouping: false})
-    + ' : ' + sec.toLocaleString('en-US', {minimumIntegerDigits: 2, useGrouping: false});
-
-    if (extended) {
-      elaspedTime += ' - generation: ' + this.nbGeneration;
-    }
-
-    return elaspedTime;
+  public formatTime(): string {
+    return MyMath.formatTime(this.elapsedTime, this.nbGeneration);
   }
 
   addData(point: Point) {
