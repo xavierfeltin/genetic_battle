@@ -5,6 +5,7 @@ export interface Scoring {
     accuracy: number;
     score: number;
     state: string;
+    stamp: number; // in seconds
     generation?: number;
-    lifespan?: number;
+    lifespan?: number;    
 }

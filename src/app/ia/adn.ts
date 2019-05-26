@@ -1,8 +1,8 @@
 import { MyMath } from '../tools/math.tools';
 
 export class ADN {
-    public static readonly MUTATION_RATE = 0.05;
-    public static readonly SWITCH_RATE = 0.05;
+    public static readonly MUTATION_RATE = 0.1;
+    public static readonly SWITCH_RATE = 0.5;
 
     private genes: number[];
     private mutationRate: number;
@@ -64,20 +64,28 @@ export class ADN {
         return result;
     }
 
-    public mutate(): ADN {
+    public mutate() {
         const result = new ADN(this.genes.length, this.minimums, this.maximums, this.mutationRate);
+        const maxGenesToMutate = this.genes.length * ADN.MUTATION_RATE;
+        const nbToMutate = Math.round(Math.random() * maxGenesToMutate);
+
+        const indexes = [];
+        for (let i = 0; i < nbToMutate; i++) {
+            indexes.push(Math.round(Math.random() * this.genes.length));
+        }
 
         for (let i = 0; i < this.genes.length; i++) {
-            if (Math.random() < ADN.MUTATION_RATE) {
+            if (i in indexes) {
                 let pct = this.genes[i] * 0.5;
                 if (pct === 0) {
                     pct = 0.01;
                 }
-                this.genes[i] += MyMath.random(-pct, pct);
-            } else {
-                result.genes[i] = this.genes[i];
+                result[i] = this.genes[i] + MyMath.random(-pct, pct);
             }
-        }
+            else {
+                result[i] = this.genes[i];
+            }            
+        } 
 
         return result;
     }

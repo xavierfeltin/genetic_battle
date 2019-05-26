@@ -1,5 +1,6 @@
 <div class="layout">
-  <app-linechart title="Score evolution" [population]="getPopulation$() | async" label="Score"> </app-linechart>
+  <app-linechart class="chart" title="Living score evolution" [population]="getPopulation$() | async" [labels]="getLabels$() | async"> </app-linechart>
+  <app-linechart class="chart" title="Dead score evolution" [population]="getDeadPopulation$() | async" [labels]="getLabels$() | async"> </app-linechart>
 
   <diV>
     <table>

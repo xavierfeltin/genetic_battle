@@ -1,9 +1,10 @@
 import { Component, OnInit } from '@angular/core';
 import { Scoring } from '../../ia/scoring';
 import { SimuInfoService } from '../../services/simu-info.service';
-import { of, Observable } from 'rxjs';
+import { of, Observable, Subscription } from 'rxjs';
 import { Point } from '../../tools/statistics.tools';
-import { MyMath } from 'src/app/tools/math.tools';
+import { MyMath } from '../../tools/math.tools';
+import { throttleTime } from 'rxjs/operators';
 
 @Component({
   selector: 'app-scoring',
@@ -11,18 +12,45 @@ import { MyMath } from 'src/app/tools/math.tools';
   styleUrls: ['./scoring.component.css']
 })
 export class ScoringComponent implements OnInit {
-  private static readonly MAX_POP = 50;
+  private static readonly MAX_POP = 300; // 5mn
+  private subscription: Subscription;
+  private subscription2: Subscription;
+
   scores: Scoring[] = [];
-  population: Point[] = [];
+  population: Point[][] = [];
+  deadPopulation: Point[][] = [];
+  labels: string[] = ['Min', 'Avg', 'Max'];
+
+  private deadMinScore: number = Infinity;
+  private deadMaxScore: number = -Infinity;
+  private deadAvgScore: number = 0;
+  private nbDeads: number = 0
+  private timer: string = '';
 
   constructor(private service: SimuInfoService) { }
 
   ngOnInit() {
-    this.service.getAllShips().subscribe(ships => {
+    this.subscription = this.service.getShips().subscribe(ships => {
       this.scores = [];
-      ships.map(ship => {
-        this.scores.push(ship.getScore());
-      });
+      let maxScore = -Infinity;
+      let minScore = Infinity;
+      let avgScore = 0;
+
+      for (const ship of ships) {
+        const scoring = ship.getScore();
+        this.scores.push(scoring);
+
+        if (scoring.score > maxScore) {
+          maxScore = scoring.score;
+        }
+        
+        if (scoring.score <  minScore) {
+          minScore = scoring.score;
+        }
+
+        avgScore += scoring.score;
+      }
+      avgScore /= ships.length;
 
       this.scores.sort((a: Scoring, b: Scoring): number => {
         if (a.score < b.score) {
@@ -33,30 +61,107 @@ export class ScoringComponent implements OnInit {
           return -1;
         }
       });
-    });
 
-    this.service.getGenerationHighScore().subscribe((score: Scoring) => {
-      const point: Point = {
-        data: score.score,
-        stamp: score.generation.toString()
+      this.timer = this.formatTime(this.scores[0].stamp); 
+      const minPoint: Point = {
+        data: minScore,
+        stamp: this.timer
       };
 
-      this.addData(point);
+      const maxPoint: Point = {
+        data: maxScore,
+        stamp: this.timer
+      };
+
+      const avgPoint: Point = {
+        data: avgScore,
+        stamp: this.timer
+      };
+
+      this.population = this.addData(this.population, [minPoint, avgPoint, maxPoint]);
+    });
+
+    this.subscription2 = this.service.getDeadShips().subscribe(bufferedShips => {
+      for (const ships of bufferedShips) {
+        if (ships.length != 0) {
+          this.nbDeads += ships.length;
+
+          for (const ship of ships) {
+            const scoring = ship.getScore();
+            
+            if (scoring.score > this.deadMaxScore) {
+              this.deadMaxScore = scoring.score;
+            }
+            
+            if (scoring.score <  this.deadMinScore) {
+              this.deadMinScore = scoring.score;
+            }
+            
+            this.deadAvgScore += scoring.score;
+          }
+        }
+      }
+      
+      const minPoint: Point = {
+        data: this.deadMinScore === Infinity ? 0 : this.deadMinScore,
+        stamp: this.timer
+      };
+
+      const maxPoint: Point = {
+        data: this.deadMaxScore === -Infinity ? 0 : this.deadMaxScore,
+        stamp: this.timer
+      };
+
+      const avgPoint: Point = {
+        data: this.nbDeads !== 0 ? this.deadAvgScore / this.nbDeads : 0,
+        stamp: this.timer
+      };
+
+      this.deadPopulation = this.addData(this.deadPopulation, [minPoint, avgPoint, maxPoint]);
     });
   }
 
-  addData(point: Point) {
-    this.population = [...this.population, point];
-    if (this.population.length > ScoringComponent.MAX_POP) {
-      const _ = this.population.shift();
+  private addData(population: Point[][], points: Point[]) {
+    const newPopulation = [];
+    
+    for (let i = 0; i < points.length; i++) {
+      newPopulation[i] = [];
+    }  
+        
+    for (let i = 0; i < points.length; i++) {
+      if (population.length > 0 ) {
+        newPopulation[i] = [...population[i], points[i]];
+      }
+      else {
+        newPopulation[i].push(points[i]);
+      }
+      
+      if (newPopulation[i].length > ScoringComponent.MAX_POP) {
+        const _ = newPopulation[i].shift();
+      }
     }
+
+    return newPopulation;
   }
 
-  public getPopulation$(): Observable<Point[]> {
+  public getPopulation$(): Observable<Point[][]> {
     return of(this.population);
+  }
+
+  public getDeadPopulation$(): Observable<Point[][]> {
+    return of(this.deadPopulation);
+  }
+
+  public getLabels$(): Observable<string[]> {
+    return of(this.labels);
   }
 
   public formatTime(elapsedTime: number, nbGeneration: number = -1): string {
     return MyMath.formatTime(elapsedTime, nbGeneration);
+  }
+
+  ngOnDestroy() {
+    this.subscription.unsubscribe();
+    this.subscription2.unsubscribe();
   }
 }

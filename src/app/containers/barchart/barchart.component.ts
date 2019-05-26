@@ -1,4 +1,4 @@
-import { Component, OnInit, OnChanges, SimpleChanges, ViewChild, Input } from '@angular/core';
+import { Component, OnInit, OnChanges, SimpleChanges, ViewChild, Input, ChangeDetectionStrategy } from '@angular/core';
 import { Chart } from 'chart.js';
 
 @Component({
@@ -9,7 +9,8 @@ import { Chart } from 'chart.js';
       <canvas #myBarChart> {{ chart }} </canvas>
     </div>
   `,
-  styleUrls: ['./barchart.component.css']
+  styleUrls: ['./barchart.component.css'],
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class BarChartComponent implements OnInit, OnChanges {
   @ViewChild('myBarChart') private chartRef;

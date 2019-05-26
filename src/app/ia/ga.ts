@@ -25,16 +25,16 @@ export class GeneticAlgorithm {
         return;
     }
 
-    public pickOne(): Individual {
+    public pickOne(population: Individual[]): Individual {
         return null;
     }
 
     public populate(individuals: Individual[]) {
-        this.population = individuals;
+        this.population = [...individuals];
     }
 
     public populateReference(individuals: Individual[]) {
-        this.refPopulation = individuals;
+        this.refPopulation = [...individuals];
     }
 
     public getPopulation(): Individual[] {
@@ -71,10 +71,10 @@ export class FortuneWheelGA extends GeneticAlgorithm {
         this.computeProbas();
         const nbChildren = this.population.length - 1;
         for (let i = 0; i < nbChildren; i++) {
-            const parentA = this.pickOne();
-            const parentB = this.pickOne();
-            const childADN = parentA.adn.crossOver(parentB.adn);
-            childADN.mutate();
+            const parentA = this.pickOne(this.population);
+            const parentB = this.pickOne(this.population);
+            let childADN = parentA.adn.crossOver(parentB.adn);
+            childADN = childADN.mutate();
 
             const ind: Individual = {
                 adn: childADN
@@ -99,6 +99,7 @@ export class FortuneWheelGA extends GeneticAlgorithm {
     }
 
     public evolveFromReference() {
+
         const newPopulation = [];
         this.refPopulation.sort((a: Individual, b: Individual): number => {
             if (a.fitness < b.fitness) {
@@ -111,19 +112,40 @@ export class FortuneWheelGA extends GeneticAlgorithm {
         });
 
         const scoreAvg = (this.refPopulation[0].fitness + this.refPopulation[this.refPopulation.length - 1].fitness) / 2;
+        this.refPopulation.push(this.best);
+        this.computeProbas();
+        
         for (const popInd of this.population) {
             let childADN: ADN = null;
-            if (popInd.fitness < scoreAvg ) {
+            if (this.best === null ||  this.best.fitness < popInd.fitness ) {
+                // only clone the bests
+                this.best = popInd;
+                childADN = popInd.adn;
+                this.computeProbas();
+            }
+            else if ((this.best.fitness * 0.5) < popInd.fitness) {
+                childADN = popInd.adn;
+            }
+            else {
+                const parentA = this.pickOne(this.refPopulation);
+                const parentB = this.pickOne(this.refPopulation);
+                //const parentA = this.refPopulation[0];
+                //const parentB = this.refPopulation[1];
+                childADN = parentA.adn.crossOver(parentB.adn);
+            }
+            /*
+            else if (popInd.fitness < scoreAvg ) {
                 // Indiv is coming from two good parents
-                const parentA = this.pickOne();
-                const parentB = this.pickOne();
+                const parentA = this.pickOne(this.refPopulation);
+                const parentB = this.pickOne(this.refPopulation);
                 childADN = parentA.adn.crossOver(parentB.adn);
             } else {
                 // Indiv is good enough to be cloned directly
                 childADN = popInd.adn;
             }
+            */
 
-            childADN.mutate();
+            childADN = childADN.mutate();
             const ind: Individual = {
                 adn: childADN
             };
@@ -133,21 +155,21 @@ export class FortuneWheelGA extends GeneticAlgorithm {
         this.population = newPopulation;
     }
 
-    public pickOne(): Individual {
-        if (this.population.length === 0) {
+    public pickOne(population: Individual[]): Individual {
+        if (population.length === 0) {
             return null;
         }
 
         const rand = Math.random();
         let i = 0;
-        while (i < this.population.length && rand < this.population[i].proba) {
+        while (i < population.length && rand < population[i].proba) {
             i += 1;
         }
 
-        if (i === this.population.length) {
+        if (i === population.length) {
             i = i - 1;
         }
-        return this.population[i];
+        return population[i];
     }
 
     private computeProbas() {
@@ -163,12 +185,12 @@ export class FortuneWheelGA extends GeneticAlgorithm {
             if (minValue <= 0) {
                 pop.fitness += minValue + 1; // start at 1 to avoid null share
             }
-            sumFit += pop.fitness;
+            sumFit += (pop.fitness * pop.fitness);
         }
 
         let previousProba = 0;
         for (const pop of this.population) {
-            const relativeFitness = pop.fitness / sumFit;
+            const relativeFitness = (pop.fitness * pop.fitness) / sumFit;
             pop.proba = previousProba + relativeFitness;
             previousProba = pop.proba;
         }

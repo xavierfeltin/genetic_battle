@@ -2,7 +2,7 @@ import { Injectable, Inject } from '@angular/core';
 import { GameEngine } from '../engine/game.engine';
 import { Observable, of } from 'rxjs';
 import { Ship } from '../models/ship.model';
-import { throttleTime } from 'rxjs/operators';
+import { throttleTime, bufferTime } from 'rxjs/operators';
 import { Point } from '../tools/statistics.tools';
 import { Scoring } from '../ia/scoring';
 
@@ -24,14 +24,15 @@ export class SimuInfoService {
     return this.game.ships$.pipe(throttleTime(1000));
   }
 
-  public getAllShips(): Observable<Ship[]> {
-    return this.game.allShips$.pipe(throttleTime(1000));
+  public getDeadShips(): Observable<(Ship[])[]> {
+    return this.game.deadShips$.pipe(bufferTime(1000));
   }
 
   public getNbShips(): Observable<number> {
     return this.game.nbShips$.pipe(throttleTime(1000));
   }
 
+  /*
   public getNbHealth(): Observable<number> {
     return this.game.nbHealth$;
   }
@@ -55,6 +56,7 @@ export class SimuInfoService {
   public getOldestShip(): Observable<Ship> {
     return this.game.oldestShip$.pipe(throttleTime(1000));
   }
+  */
 
   public getAliveOldestShip(): Observable<Ship> {
     return this.game.aliveOldestShip$.pipe(throttleTime(1000));
@@ -68,7 +70,9 @@ export class SimuInfoService {
     return this.game.generations$;
   }
 
-  public getGenerationHighScore(): Observable<Scoring> {
-    return this.game.getHighScore$.pipe(throttleTime(1000));
+  /*
+  public getGenerationScores(): Observable<Scoring[]> {
+    return this.game.getScores$.pipe(throttleTime(1000));
   }
+  */
 }

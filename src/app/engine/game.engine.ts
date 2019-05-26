@@ -65,18 +65,21 @@ export class GameEngine {
   private crossOverRate: number;
   private isNeuroEvolution: boolean;
 
+  private ga: FortuneWheelGA;
+
   // Output variables
   private oldestShip: Ship;
 
   private _ships$ = new Subject<Ship[]>();
   public get ships$() { return this._ships$.asObservable() }
 
-  private _allShips$ = new Subject<Ship[]>();
-  public get allShips$() { return this._allShips$.asObservable() }
+  private _deadShips$ = new Subject<Ship[]>();
+  public get deadShips$() { return this._deadShips$.asObservable() }
 
   private _nbShips$ = new Subject<number>();
   public get nbShips$() { return this._nbShips$.asObservable() }
 
+  /*
   private _nbMissiles$ = new Subject<number>();
   public get nbMissiles$() { return this._nbMissiles$.asObservable() }
 
@@ -94,6 +97,7 @@ export class GameEngine {
 
   private _oldestShip$ = new Subject<Ship>();
   public get oldestShip$() { return this._oldestShip$.asObservable() }
+  */
 
   private _aliveOldestShip$ = new Subject<Ship>();
   public get aliveOldestShip$() { return this._aliveOldestShip$.asObservable() }
@@ -104,8 +108,8 @@ export class GameEngine {
   private _generations$ = new Subject<number>();
   public get generations$() { return this._generations$.asObservable() }
 
-  private _getHighScore$ = new Subject<Scoring>();
-  public get getHighScore$() { return this._getHighScore$.asObservable() }
+  //private _getScores$ = new Subject<Scoring[]>();
+  //public get getScore$() { return this._getScores$.asObservable() }
 
 
   constructor() {
@@ -137,6 +141,8 @@ export class GameEngine {
 
     this.isNeuroEvolution = true;
     this.shipFactory.setNeuroEvolution(this.isNeuroEvolution);
+
+    this.ga = new FortuneWheelGA();
   }
 
   public setCanvas(idCanvas: string) {
@@ -257,6 +263,7 @@ export class GameEngine {
         ship.setPosition(pos);
         ship.setOrientation(orientation);
         ship.setBorders([0, this.width, 0, this.height]);
+        ship.setTime(0, GameEngine.GAME_TIMER);
         this.ships.push(ship);
       }
     } else {
@@ -265,10 +272,10 @@ export class GameEngine {
 
     this._nbShips$.next(this.ships.length);
     this._ships$.next(this.ships);
-    this._allShips$.next([...this.ships, ...this.deadShips]);
+    this._deadShips$.next(this.deadShips);
 
     this.oldestShip = this.ships[0];
-    this._oldestShip$.next(this.oldestShip);
+    //this._oldestShip$.next(this.oldestShip);
     this._aliveOldestShip$.next(this.oldestShip);
 
     this.bots.push(new TestBot(0));
@@ -277,7 +284,7 @@ export class GameEngine {
     for (let i = 0; i < this.nbStartingHealth; i++) {
       this.createHealth(i);
     }
-    this._nbHealth$.next(this.health.length);
+    //this._nbHealth$.next(this.health.length);
   }
 
   public getElapsedTimeInSeconds() {
@@ -360,8 +367,12 @@ export class GameEngine {
     }
 
     // respawn new ships
+    /*
     const newShips = this.continuousEvolutionWhenDying(this.deadShips, this.ships);
-    this.ships = [...this.ships, ...newShips];
+    for (const ship of newShips) {
+      this.ships.push(ship)  
+    }
+    */
     this.deadShips  = [];
 
     // Manage ship actions
@@ -399,9 +410,9 @@ export class GameEngine {
         this.missiles.splice(i, 1);
       }
     }
-    this._nbMissiles$.next(this.missiles.length);
-    const Mcoordinates = this.missiles.map(missile => [missile.id, missile.getLife()]);
-    this._missiles$.next(Mcoordinates);
+    //this._nbMissiles$.next(this.missiles.length);
+    //const Mcoordinates = this.missiles.map(missile => [missile.id, missile.getLife()]);
+    //this._missiles$.next(Mcoordinates);
 
     for (let i = this.health.length - 1; i >= 0; i--) {
       const healthModel = this.health[i];
@@ -409,9 +420,9 @@ export class GameEngine {
         this.health.splice(i, 1);
       }
     }
-    this._nbHealth$.next(this.health.length);
-    const Hcoordinates = this.health.map(health => [health.id, Math.round(health.pos.x), Math.round(health.pos.y), health.isToDelete()]);
-    this._healths$.next(Hcoordinates);
+    //this._nbHealth$.next(this.health.length);
+    //const Hcoordinates = this.health.map(health => [health.id, Math.round(health.pos.x), Math.round(health.pos.y), health.isToDelete()]);
+    //this._healths$.next(Hcoordinates);
 
     // Manage ships (fire rate, dead ship, ....)
     for (let i = this.ships.length - 1; i >= 0; i--) {
@@ -451,17 +462,20 @@ export class GameEngine {
       if (this.oldestShip.getAge() < aliveOldestShip.getAge()) {
         this.oldestShip = aliveOldestShip;
       }
-      this._oldestShip$.next(this.oldestShip);
+      //this._oldestShip$.next(this.oldestShip);
       this._aliveOldestShip$.next(aliveOldestShip);
     }
 
     this._nbShips$.next(this.ships.length);
-    const coordinates = this.ships.map(ship => [ship.id, Math.round(ship.pos.x), Math.round(ship.pos.y)]);
-    this._coordShips$.next(coordinates);
+    //const coordinates = this.ships.map(ship => [ship.id, Math.round(ship.pos.x), Math.round(ship.pos.y)]);
+    //this._coordShips$.next(coordinates);
     this._ships$.next(this.ships);
-    this._allShips$.next([...this.ships, ...this.deadShips]);
 
-    this._getHighScore$.next(this.getHighScore(this.ships));
+    if (this.deadShips.length > 0) {
+      this._deadShips$.next(this.deadShips);
+    }
+    
+    // this._getScores$.next(this.getScores(this.ships));
   }
 
   private renderGame() {
@@ -506,22 +520,46 @@ export class GameEngine {
   }
   */
 
-  private getHighScore(ships: Ship[]): Scoring {
+  /**
+   * Return the minimal score, the average score and the highest
+   * Warning use only score and generation property of these scorings
+   * @param ships 
+   */
+  /*
+  private getScores(ships: Ship[]): Scoring[] {
     let maxScore = -Infinity;
-    let score: Scoring = null;
-    let best = null;
+    let minScore = Infinity;
+    let avgScore = 0;
+
     for (const ship of ships) {
-      const scoring = ship.getScore();
-      if (scoring.score > maxScore) {
-        maxScore = scoring.score;
-        score = scoring;
-        best = ship;
+      const shipScore = ship.getScore();
+      if (shipScore.score > maxScore) {
+        maxScore = shipScore.score;
       }
+      else if (shipScore.score <  minScore) {
+        minScore = shipScore.score;
+      }
+      avgScore += shipScore.score;
     }
 
-    score.generation = best.getGeneration();
-    return score;
+    const currentTime = this.getElapsedTimeInSeconds();
+    const minScoring = ships[0].getScore();
+    minScoring.score = minScore;
+    minScoring.generation = currentTime; 
+
+    const maxScoring = ships[0].getScore();
+    maxScoring.score = maxScore;
+    maxScoring.generation = currentTime; 
+
+    const avgScoring = ships[0].getScore();
+    avgScoring.score = avgScore;
+    avgScoring.generation = currentTime; 
+
+    const scorings = [];
+    scorings.push(minScoring, avgScoring, maxScoring);
+    return scorings;
   }
+  */
 
   // Evolution performed while the ship is living
   // The ship is cloning itself or reproduce with another ship if meeting it
@@ -554,41 +592,43 @@ export class GameEngine {
   // The ship is cloning itself if it was good enough
   // or a new ship is created based on two ships with a good score
   private continuousEvolutionWhenDying(deadShips: Ship[], referenceShips: Ship[]): Ship[] {
-    const ga = new FortuneWheelGA();
+    const newShips = [];
 
-    const individuals = new Array<Individual>(deadShips.length);
-    for (let i = 0;  i < deadShips.length; i++) {
-      const ind = {
-        adn: deadShips[i].getADN(),
-        fitness: deadShips[i].scoring()
-      };
-      individuals[i] = ind;
-    }
+    if (deadShips.length > 0) {
+      
+      const individuals = [];
+      for (let i = 0;  i < deadShips.length; i++) {
+        const ind = {
+          adn: deadShips[i].getADN(),
+          fitness: deadShips[i].scoring()
+        };
+        individuals.push(ind);
+      }
 
-    const refIndividuals = new Array<Individual>(referenceShips.length);
-    for (let i = 0;  i < referenceShips.length; i++) {
-      const ind = {
-        adn: referenceShips[i].getADN(),
-        fitness: referenceShips[i].scoring()
-      };
-      refIndividuals[i] = ind;
-    }
+      const refIndividuals = [];
+      for (let i = 0;  i < referenceShips.length; i++) {
+        const ind = {
+          adn: referenceShips[i].getADN(),
+          fitness: referenceShips[i].scoring()
+        };
+        refIndividuals.push(ind);
+      }
 
-    ga.populate(individuals);
-    ga.populateReference(refIndividuals);
-    ga.evolveFromReference();
-    const newIndividuals = ga.getPopulation();
+      this.ga.populate(individuals);
+      this.ga.populateReference(refIndividuals);
+      this.ga.evolveFromReference();
+      const newIndividuals = this.ga.getPopulation();
 
-    const newShips = new Array<Ship>(deadShips.length);
-    for (let i = 0;  i < deadShips.length; i++) {
-      const pos = new Vect2D(Math.random() * this.width, Math.random() * this.height);
-      const orientation = Math.random() * 360;
-      const ship = this.shipFactory.create(deadShips[i].id, deadShips[i].getGeneration() + 1);
-      ship.setADN(newIndividuals[i].adn);
-      ship.setPosition(pos);
-      ship.setOrientation(orientation);
-      ship.setBorders([0, this.width, 0, this.height]);
-      newShips[i] = ship;
+      for (let i = 0;  i < deadShips.length; i++) {
+        const pos = new Vect2D(Math.random() * this.width, Math.random() * this.height);
+        const orientation = Math.random() * 360;
+        const ship = this.shipFactory.create(deadShips[i].id, deadShips[i].getGeneration() + 1);
+        ship.setADN(newIndividuals[i].adn);
+        ship.setPosition(pos);
+        ship.setOrientation(orientation);
+        ship.setBorders([0, this.width, 0, this.height]);
+        newShips.push(ship);
+      }
     }
 
     return newShips;
@@ -800,6 +840,9 @@ export class GameEngine {
 
           const ship = firstCollision.objB as Ship;
           ship.updateLife(health.getEnergy(), Ship.DUE_TO_HEALTH_PACK);
+
+          const newShips = this.continuousEvolutionWhenDying([ship], this.ships);
+          this.ships.push(newShips[0]);
 
         } else if (firstCollision.objA instanceof Ship) {
           const shipA = firstCollision.objA as Ship;

@@ -1,4 +1,4 @@
-import { Component, OnInit, OnChanges, SimpleChanges, ViewChild, Input } from '@angular/core';
+import { Component, OnInit, OnChanges, SimpleChanges, ViewChild, Input, ChangeDetectionStrategy } from '@angular/core';
 import { Chart } from 'chart.js';
 import { config } from 'rxjs';
 
@@ -10,7 +10,8 @@ import { config } from 'rxjs';
       <canvas #myRadarChart> {{ chart }} </canvas>
     </div>
   `,
-  styleUrls: ['./radarchart.component.css']
+  styleUrls: ['./radarchart.component.css'],
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class RadarChartComponent implements OnInit {
   @ViewChild('myRadarChart') private chartRef;
