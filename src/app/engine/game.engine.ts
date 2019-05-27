@@ -370,7 +370,7 @@ export class GameEngine {
     /*
     const newShips = this.continuousEvolutionWhenDying(this.deadShips, this.ships);
     for (const ship of newShips) {
-      this.ships.push(ship)  
+      this.ships.push(ship)
     }
     */
     this.deadShips  = [];
@@ -474,7 +474,7 @@ export class GameEngine {
     if (this.deadShips.length > 0) {
       this._deadShips$.next(this.deadShips);
     }
-    
+
     // this._getScores$.next(this.getScores(this.ships));
   }
 
@@ -523,7 +523,7 @@ export class GameEngine {
   /**
    * Return the minimal score, the average score and the highest
    * Warning use only score and generation property of these scorings
-   * @param ships 
+   * @param ships
    */
   /*
   private getScores(ships: Ship[]): Scoring[] {
@@ -545,15 +545,15 @@ export class GameEngine {
     const currentTime = this.getElapsedTimeInSeconds();
     const minScoring = ships[0].getScore();
     minScoring.score = minScore;
-    minScoring.generation = currentTime; 
+    minScoring.generation = currentTime;
 
     const maxScoring = ships[0].getScore();
     maxScoring.score = maxScore;
-    maxScoring.generation = currentTime; 
+    maxScoring.generation = currentTime;
 
     const avgScoring = ships[0].getScore();
     avgScoring.score = avgScore;
-    avgScoring.generation = currentTime; 
+    avgScoring.generation = currentTime;
 
     const scorings = [];
     scorings.push(minScoring, avgScoring, maxScoring);
@@ -595,7 +595,7 @@ export class GameEngine {
     const newShips = [];
 
     if (deadShips.length > 0) {
-      
+
       const individuals = [];
       for (let i = 0;  i < deadShips.length; i++) {
         const ind = {
@@ -842,6 +842,7 @@ export class GameEngine {
           ship.updateLife(health.getEnergy(), Ship.DUE_TO_HEALTH_PACK);
 
           const newShips = this.continuousEvolutionWhenDying([ship], this.ships);
+          newShips[0].id = this.generateId();
           this.ships.push(newShips[0]);
 
         } else if (firstCollision.objA instanceof Ship) {
