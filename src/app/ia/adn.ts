@@ -8,17 +8,17 @@ export class ADN {
     private mutationRate: number;
 
     // Allowed range for each adn coefficients
-    private minimums: number[];
-    private maximums: number[];
+    private minimum: number;
+    private maximum: number;
 
-    constructor(nbGenes: number, min: number[], max: number[], mutationRate: number) {
-        this.minimums = [...min];
-        this.maximums = [...max];
+    constructor(nbGenes: number, min: number, max: number, mutationRate: number) {
+        this.minimum = min;
+        this.maximum = max;
         this.mutationRate = mutationRate;
 
-        this.genes = Array<number>(nbGenes);
+        this.genes = [];
         for (let i = 0; i < nbGenes; i++) {
-            this.genes[i] = MyMath.random(min[i], max[i]);
+            this.genes.push(MyMath.random(this.minimum, this.maximum));
         }
     }
 
@@ -31,7 +31,7 @@ export class ADN {
     }
 
     public crossOver(adn: ADN): ADN {
-        const result = new ADN(this.genes.length, this.minimums, this.maximums, this.mutationRate);
+        const result = new ADN(this.genes.length, this.minimum, this.maximum, this.mutationRate);
 
         for (let i = 0; i < result.genes.length; i++) {
             const probaSwitch = Math.random();
@@ -65,7 +65,7 @@ export class ADN {
     }
 
     public mutate() {
-        const result = new ADN(this.genes.length, this.minimums, this.maximums, this.mutationRate);
+        const result = new ADN(this.genes.length, this.minimum, this.maximum, this.mutationRate);
         const maxGenesToMutate = this.genes.length * ADN.MUTATION_RATE;
         const nbToMutate = Math.round(Math.random() * maxGenesToMutate);
 
@@ -81,11 +81,10 @@ export class ADN {
                     pct = 0.01;
                 }
                 result[i] = this.genes[i] + MyMath.random(-pct, pct);
-            }
-            else {
+            } else {
                 result[i] = this.genes[i];
-            }            
-        } 
+            }
+        }
 
         return result;
     }
@@ -106,7 +105,7 @@ export class FactoryADN {
         this.mutationRate = rate;
     }
 
-    public create(nbGenes: number, min: number[], max: number[]): ADN {
+    public create(nbGenes: number, min: number, max: number): ADN {
         return new ADN(nbGenes, min, max, this.mutationRate);
     }
 }

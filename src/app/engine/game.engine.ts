@@ -76,8 +76,8 @@ export class GameEngine {
   private _deadShips$ = new Subject<Ship[]>();
   public get deadShips$() { return this._deadShips$.asObservable() }
 
-  private _nbShips$ = new Subject<number>();
-  public get nbShips$() { return this._nbShips$.asObservable() }
+  // private _nbShips$ = new Subject<number>();
+  // public get nbShips$() { return this._nbShips$.asObservable() }
 
   /*
   private _nbMissiles$ = new Subject<number>();
@@ -105,11 +105,11 @@ export class GameEngine {
   private _elapsedTime$ = new Subject<number>();
   public get elapsedTime$() { return this._elapsedTime$.asObservable() }
 
-  private _generations$ = new Subject<number>();
-  public get generations$() { return this._generations$.asObservable() }
+  // private _generations$ = new Subject<number>();
+  // public get generations$() { return this._generations$.asObservable() }
 
-  //private _getScores$ = new Subject<Scoring[]>();
-  //public get getScore$() { return this._getScores$.asObservable() }
+  // private _getScores$ = new Subject<Scoring[]>();
+  // public get getScore$() { return this._getScores$.asObservable() }
 
 
   constructor() {
@@ -270,12 +270,12 @@ export class GameEngine {
       this.ships = ships;
     }
 
-    this._nbShips$.next(this.ships.length);
+    // this._nbShips$.next(this.ships.length);
     this._ships$.next(this.ships);
     this._deadShips$.next(this.deadShips);
 
     this.oldestShip = this.ships[0];
-    //this._oldestShip$.next(this.oldestShip);
+    // this._oldestShip$.next(this.oldestShip);
     this._aliveOldestShip$.next(this.oldestShip);
 
     this.bots.push(new TestBot(0));
@@ -284,7 +284,7 @@ export class GameEngine {
     for (let i = 0; i < this.nbStartingHealth; i++) {
       this.createHealth(i);
     }
-    //this._nbHealth$.next(this.health.length);
+    // this._nbHealth$.next(this.health.length);
   }
 
   public getElapsedTimeInSeconds() {
@@ -301,7 +301,7 @@ export class GameEngine {
     // yes I know could be better ...
     this.initialize();
     this.game.start();
-    this._generations$.next(this.nbGenerations);
+    // this._generations$.next(this.nbGenerations);
 
     window.requestAnimationFrame(() => this.animate());
   }
@@ -462,13 +462,13 @@ export class GameEngine {
       if (this.oldestShip.getAge() < aliveOldestShip.getAge()) {
         this.oldestShip = aliveOldestShip;
       }
-      //this._oldestShip$.next(this.oldestShip);
+      // this._oldestShip$.next(this.oldestShip);
       this._aliveOldestShip$.next(aliveOldestShip);
     }
 
-    this._nbShips$.next(this.ships.length);
-    //const coordinates = this.ships.map(ship => [ship.id, Math.round(ship.pos.x), Math.round(ship.pos.y)]);
-    //this._coordShips$.next(coordinates);
+    // this._nbShips$.next(this.ships.length);
+    // const coordinates = this.ships.map(ship => [ship.id, Math.round(ship.pos.x), Math.round(ship.pos.y)]);
+    // this._coordShips$.next(coordinates);
     this._ships$.next(this.ships);
 
     if (this.deadShips.length > 0) {

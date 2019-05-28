@@ -39,8 +39,8 @@ export class OldestShipsComponent implements OnInit{
 
   private subscription1: Subscription;
   private subscription2: Subscription;
-  private subscription3: Subscription;
-  private subscription4: Subscription;
+  // private subscription3: Subscription;
+  // private subscription4: Subscription;
   private subscription5: Subscription;
 
   constructor(private service: SimuInfoService) { }
@@ -53,7 +53,7 @@ export class OldestShipsComponent implements OnInit{
       data.push(MyMath.map(ship.getMissileshAttraction(), Ship.MIN_ATTRACTION, Ship.MAX_ATTRACTION, 0, 100));
       data.push(MyMath.map(ship.getHealthAttraction(), Ship.MIN_ATTRACTION, Ship.MAX_ATTRACTION, 0, 100));
       data.push(MyMath.map(ship.getShipsAttraction(), Ship.MIN_ATTRACTION, Ship.MAX_ATTRACTION, 0, 100));
-      //data.push(MyMath.map(ship.getCenterAttraction(), Ship.MIN_ATTRACTION, Ship.MAX_ATTRACTION, 0, 100));
+      // data.push(MyMath.map(ship.getCenterAttraction(), Ship.MIN_ATTRACTION, Ship.MAX_ATTRACTION, 0, 100));
       data.push(MyMath.map(ship.getFireRate(), Ship.MIN_FIRE_RATE, Ship.MAX_FIRE_RATE, 0, 100));
       data.push(MyMath.map(ship.getRadarLen(), Ship.MIN_LENGTH_RADAR, Ship.MAX_LENGTH_RADAR, 0, 100));
       data.push(MyMath.map(ship.getFOV(), Ship.MIN_ANGLE_FOV, Ship.MAX_ANGLE_FOV, 0, 100));
@@ -61,17 +61,16 @@ export class OldestShipsComponent implements OnInit{
     });
 
     this.subscription2 = this.service.getElapsedTimeInSeconds().subscribe((time: number) => this.elapsedTime = time);
-    this.subscription3 = this.service.getGenerations().subscribe((generation: number) => this.nbGeneration = generation);
+    // this.subscription3 = this.service.getGenerations().subscribe((generation: number) => this.nbGeneration = generation);
 
-    this.subscription4 = this.service.getNbShips().subscribe(nbShip => {
+    this.subscription5 = this.service.getShips().subscribe(ships => {
+
       const point: Point = {
-        data: nbShip,
+        data: ships.length,
         stamp: MyMath.formatTime(this.elapsedTime)
       };
       this.addData(point);
-    });
 
-    this.subscription5 = this.service.getShips().subscribe(ships => {
       this.classesShipFOV = Stat.getClasses(Ship.MIN_ANGLE_FOV, Ship.MAX_ANGLE_FOV, 10, 1);
       this.dataShipFOV = [];
       this.dataShipFOV.push(Stat.countByClasses(ships.map(ship => ship.getFOV()), Ship.MIN_ANGLE_FOV, Ship.MAX_ANGLE_FOV, 10, 1));
@@ -101,8 +100,8 @@ export class OldestShipsComponent implements OnInit{
   ngOnDestroy() {
     this.subscription1.unsubscribe();
     this.subscription2.unsubscribe();
-    this.subscription3.unsubscribe();
-    this.subscription4.unsubscribe();
+    // this.subscription3.unsubscribe();
+    // this.subscription4.unsubscribe();
     this.subscription5.unsubscribe();
   }
 

@@ -147,13 +147,11 @@ export class Ship extends GameObject {
         const maxValue = Ship.MAX_ADN_VALUE * 1;
         this.generation = generation;
 
-        this.createADN(this.nbGenes,
-            Array<number>(this.nbGenes).fill(minValue),
-            Array<number>(this.nbGenes).fill(maxValue));
+        this.createADN(this.nbGenes, minValue, maxValue);
     }
 
-    public createADN(nbGenes: number, minimums: number[], maximums: number[]) {
-        this.adn = this.adnFactory.create(nbGenes, minimums, maximums);
+    public createADN(nbGenes: number, minimum: number, maximum: number) {
+        this.adn = this.adnFactory.create(nbGenes, minimum, maximum);
 
         if (!this.isNeuroEvo) {
             // In GA, phenotype is processed once
@@ -175,12 +173,12 @@ export class Ship extends GameObject {
 
     public ennemyDown() {
         this.nbEnnemiesTouched ++;
-        this.hasTouchedEnnemy = true;        
+        this.hasTouchedEnnemy = true;
     }
 
     public missileDestroyed() {
         this.nbMissilesDestroyed ++;
-        this.hasTouchedMissile = true;        
+        this.hasTouchedMissile = true;
     }
 
     public getADN(): ADN {
@@ -188,9 +186,9 @@ export class Ship extends GameObject {
     }
 
     public scoring(): number {
-        const score = (this.nbHealthPackPicked * 10) 
+        const score = (this.nbHealthPackPicked * 10)
                     + (this.nbEnnemiesTouched * 5)
-                    + this.nbMissilesDestroyed 
+                    + this.nbMissilesDestroyed
                     + (this.missileAccuracy * 20)
                     - (this.nbReceivedDamage * 2)
                     + ((this.age / 30) * 5); // - (this.nbReceivedDamage);
@@ -474,7 +472,7 @@ export class Ship extends GameObject {
     }
 
     public behaviors(missiles: GameObject[], healths: GameObject[], ships: GameObject[], wArea: number, hArea: number) {
-        
+
         if (this.isNeuroEvo) {
             // in NeuroEvolution phenotype is processed each time a ship makes an action
             this.expressADNNeuroEvo(missiles, healths, ships);
@@ -489,9 +487,9 @@ export class Ship extends GameObject {
         this.steer(health, this.attractHealth);
         this.steer(ship, this.attractShip);
         this.boundaries(wArea, hArea)
-        
+
         // Apply acceleration to velocity
-        this.applyAcc();        
+        this.applyAcc();
     }
 
     private resetStates() {

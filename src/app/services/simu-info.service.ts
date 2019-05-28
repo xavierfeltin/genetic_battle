@@ -28,9 +28,11 @@ export class SimuInfoService {
     return this.game.deadShips$.pipe(bufferTime(1000));
   }
 
+  /*
   public getNbShips(): Observable<number> {
     return this.game.nbShips$.pipe(throttleTime(1000));
   }
+  */
 
   /*
   public getNbHealth(): Observable<number> {
@@ -63,12 +65,14 @@ export class SimuInfoService {
   }
 
   public getElapsedTimeInSeconds(): Observable<number> {
-    return this.game.elapsedTime$;
+    return this.game.elapsedTime$.pipe(throttleTime(1000));
   }
 
+  /*
   public getGenerations(): Observable<number> {
     return this.game.generations$;
   }
+  */
 
   /*
   public getGenerationScores(): Observable<Scoring[]> {
