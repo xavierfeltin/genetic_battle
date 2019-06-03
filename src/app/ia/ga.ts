@@ -100,6 +100,10 @@ export class FortuneWheelGA extends GeneticAlgorithm {
 
     public evolveFromReference() {
 
+        if (this.population.length === 0 || this.refPopulation.length === 0) {
+            return;
+        }
+
         const newPopulation = [];
         this.refPopulation.sort((a: Individual, b: Individual): number => {
             if (a.fitness < b.fitness) {
@@ -114,7 +118,7 @@ export class FortuneWheelGA extends GeneticAlgorithm {
         const scoreAvg = (this.refPopulation[0].fitness + this.refPopulation[this.refPopulation.length - 1].fitness) / 2;
         this.refPopulation.push(this.best);
         this.computeProbas();
-        
+
         for (const popInd of this.population) {
             let childADN: ADN = null;
             if (this.best === null ||  this.best.fitness < popInd.fitness ) {

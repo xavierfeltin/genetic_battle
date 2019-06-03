@@ -1,16 +1,17 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { SimuInfoService } from '../../services/simu-info.service';
 import { Ship } from '../../models/ship.model';
 import { Point, Stat } from '../../tools/statistics.tools';
 import { Observable, of, Subscription } from 'rxjs';
 import { MyMath } from '../../tools/math.tools';
+import { Phenotype } from '../../models/phenotype.interface';
 
 @Component({
   selector: 'app-oldest-ships',
   templateUrl: './oldest-ships.component.html',
   styleUrls: ['./oldest-ships.component.css']
 })
-export class OldestShipsComponent implements OnInit{
+export class OldestShipsComponent implements OnInit, OnDestroy {
   private static readonly MAX_POP = 50;
   private oldestShip: Ship;
   private aliveOldestShip: Ship;
@@ -39,74 +40,67 @@ export class OldestShipsComponent implements OnInit{
 
   private subscription1: Subscription;
   private subscription2: Subscription;
-  // private subscription3: Subscription;
-  // private subscription4: Subscription;
   private subscription5: Subscription;
+
+  private timer = '';
 
   constructor(private service: SimuInfoService) { }
 
   ngOnInit() {
-    this.subscription1 = this.service.getAliveOldestShip().subscribe((ship: Ship) => {
-      // this.aliveOldestShip = ship.copy();
+    this.subscription1 = this.service.getAliveOldestShip().subscribe((phenotype: Phenotype) => {
       this.dataOldestShips = [];
       const data = [];
-      data.push(MyMath.map(ship.getMissileshAttraction(), Ship.MIN_ATTRACTION, Ship.MAX_ATTRACTION, 0, 100));
-      data.push(MyMath.map(ship.getHealthAttraction(), Ship.MIN_ATTRACTION, Ship.MAX_ATTRACTION, 0, 100));
-      data.push(MyMath.map(ship.getShipsAttraction(), Ship.MIN_ATTRACTION, Ship.MAX_ATTRACTION, 0, 100));
-      // data.push(MyMath.map(ship.getCenterAttraction(), Ship.MIN_ATTRACTION, Ship.MAX_ATTRACTION, 0, 100));
-      data.push(MyMath.map(ship.getFireRate(), Ship.MIN_FIRE_RATE, Ship.MAX_FIRE_RATE, 0, 100));
-      data.push(MyMath.map(ship.getRadarLen(), Ship.MIN_LENGTH_RADAR, Ship.MAX_LENGTH_RADAR, 0, 100));
-      data.push(MyMath.map(ship.getFOV(), Ship.MIN_ANGLE_FOV, Ship.MAX_ANGLE_FOV, 0, 100));
+      data.push(MyMath.map(phenotype.attractionMissile, Ship.MIN_ATTRACTION, Ship.MAX_ATTRACTION, 0, 100));
+      data.push(MyMath.map(phenotype.attractionHealth, Ship.MIN_ATTRACTION, Ship.MAX_ATTRACTION, 0, 100));
+      data.push(MyMath.map(phenotype.attractionShip, Ship.MIN_ATTRACTION, Ship.MAX_ATTRACTION, 0, 100));
+      data.push(MyMath.map(phenotype.fireRate, Ship.MIN_FIRE_RATE, Ship.MAX_FIRE_RATE, 0, 100));
+      data.push(MyMath.map(phenotype.radarLength, Ship.MIN_LENGTH_RADAR, Ship.MAX_LENGTH_RADAR, 0, 100));
+      data.push(MyMath.map(phenotype.fovAngle, Ship.MIN_ANGLE_FOV, Ship.MAX_ANGLE_FOV, 0, 100));
       this.dataOldestShips.push(data);
     });
 
-    this.subscription2 = this.service.getElapsedTimeInSeconds().subscribe((time: number) => this.elapsedTime = time);
-    // this.subscription3 = this.service.getGenerations().subscribe((generation: number) => this.nbGeneration = generation);
+    this.subscription2 = this.service.getElapsedTimeInSeconds().subscribe((time: number) => this.timer = this.formatTime(time));
 
-    this.subscription5 = this.service.getShips().subscribe(ships => {
-
+    this.subscription5 = this.service.getShips().subscribe(phenotypes => {
       const point: Point = {
-        data: ships.length,
-        stamp: MyMath.formatTime(this.elapsedTime)
+        data: phenotypes.length,
+        stamp: this.timer // MyMath.formatTime(this.elapsedTime)
       };
       this.addData(point);
 
       this.classesShipFOV = Stat.getClasses(Ship.MIN_ANGLE_FOV, Ship.MAX_ANGLE_FOV, 10, 1);
       this.dataShipFOV = [];
-      this.dataShipFOV.push(Stat.countByClasses(ships.map(ship => ship.getFOV()), Ship.MIN_ANGLE_FOV, Ship.MAX_ANGLE_FOV, 10, 1));
+      this.dataShipFOV.push(Stat.countByClasses(phenotypes.map(ship => ship.fovAngle), Ship.MIN_ANGLE_FOV, Ship.MAX_ANGLE_FOV, 10, 1));
 
       this.classesShipRadar = Stat.getClasses(Ship.MIN_LENGTH_RADAR, Ship.MAX_LENGTH_RADAR, 10, 1);
       this.dataShipRadar = [];
-      this.dataShipRadar.push(Stat.countByClasses(ships.map(ship => ship.getRadarLen()),
+      this.dataShipRadar.push(Stat.countByClasses(phenotypes.map(ship => ship.radarLength),
         Ship.MIN_LENGTH_RADAR, Ship.MAX_LENGTH_RADAR, 10, 1));
 
       this.classesShipFire = Stat.getClasses(Ship.MIN_FIRE_RATE, Ship.MAX_FIRE_RATE, 10, 1);
       this.dataShipFire = [];
-      this.dataShipFire.push(Stat.countByClasses(ships.map(ship => ship.getFireRate()), Ship.MIN_FIRE_RATE, Ship.MAX_FIRE_RATE, 10, 1));
+      this.dataShipFire.push(Stat.countByClasses(phenotypes.map(ship => ship.fireRate), Ship.MIN_FIRE_RATE, Ship.MAX_FIRE_RATE, 10, 1));
 
       this.classesShipAttractions = Stat.getClasses(Ship.MIN_ATTRACTION, Ship.MAX_ATTRACTION, 10, 0.01);
       this.dataShipAttractions = [];
-      this.dataShipAttractions.push(Stat.countByClasses(ships.map(ship => ship.getHealthAttraction()),
+      this.dataShipAttractions.push(Stat.countByClasses(phenotypes.map(ship => ship.attractionHealth),
         Ship.MIN_ATTRACTION, Ship.MAX_ATTRACTION, 10, 0.01));
-      this.dataShipAttractions.push(Stat.countByClasses(ships.map(ship => ship.getMissileshAttraction()),
+      this.dataShipAttractions.push(Stat.countByClasses(phenotypes.map(ship => ship.attractionMissile),
         Ship.MIN_ATTRACTION, Ship.MAX_ATTRACTION, 10, 0.01));
-      this.dataShipAttractions.push(Stat.countByClasses(ships.map(ship => ship.getShipsAttraction()),
+      this.dataShipAttractions.push(Stat.countByClasses(phenotypes.map(ship => ship.attractionShip),
         Ship.MIN_ATTRACTION, Ship.MAX_ATTRACTION, 10, 0.01));
-      // this.dataShipAttractions.push(Stat.countByClasses(ships.map(ship => ship.getCenterAttraction()),
-      //  Ship.MIN_ATTRACTION, Ship.MAX_ATTRACTION, 10, 0.01));
     });
   }
 
   ngOnDestroy() {
     this.subscription1.unsubscribe();
     this.subscription2.unsubscribe();
-    // this.subscription3.unsubscribe();
-    // this.subscription4.unsubscribe();
     this.subscription5.unsubscribe();
   }
 
-  public formatTime(): string {
-    return MyMath.formatTime(this.elapsedTime, this.nbGeneration);
+  public formatTime(t: number): string {
+    return MyMath.formatTime(t, this.nbGeneration);
+    // return MyMath.formatTime(this.elapsedTime, this.nbGeneration);
   }
 
   addData(point: Point) {
@@ -121,7 +115,7 @@ export class OldestShipsComponent implements OnInit{
   }
 
   public getLabelNbShips$(): Observable<string[]> {
-    return of(["Nb ships"]);
+    return of(['Nb ships']);
   }
 
   public getDataFOV$(): Observable<number[][]> {

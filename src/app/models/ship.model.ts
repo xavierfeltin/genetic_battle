@@ -6,6 +6,7 @@ import { MyMath } from '../tools/math.tools';
 import { NeuralNetwork } from '../ia/neural-network';
 import { Missile } from './missile.model';
 import { Scoring } from '../ia/scoring';
+import { Phenotype } from './phenotype.interface';
 
 export class Ship extends GameObject {
     // Constants
@@ -210,6 +211,18 @@ export class Ship extends GameObject {
             lifespan: Math.round(this.getAge() / 30) // in second
         };
         return score;
+    }
+
+    public getPhenotype(): Phenotype {
+        const phenotype = {
+            attractionShip: this.attractShip,
+            attractionHealth: this.attractHealth,
+            attractionMissile: this.attractMissile,
+            fireRate: this.fireRate,
+            radarLength: this.radarLength,
+            fovAngle: this.fov
+        };
+        return phenotype;
     }
 
     private getAccuracy(): number {

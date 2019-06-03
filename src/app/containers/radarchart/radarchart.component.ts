@@ -13,7 +13,7 @@ import { config } from 'rxjs';
   styleUrls: ['./radarchart.component.css'],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class RadarChartComponent implements OnInit {
+export class RadarChartComponent implements OnInit, OnChanges {
   @ViewChild('myRadarChart') private chartRef;
 
   @Input() data: number[][] = [];
@@ -80,6 +80,7 @@ export class RadarChartComponent implements OnInit {
 
   ngOnChanges(change: SimpleChanges) {
     if (change.data.previousValue && this.chart) {
+      this.chart.clear();
       this.updateSerie(change.data.currentValue);
     }
   }

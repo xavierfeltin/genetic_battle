@@ -13,15 +13,17 @@
         <th> Damage </th>
         <th> Accuracy </th>
       </tr>
-      <tr *ngFor="let score of scores" >
+      <ng-container *ngFor="let score of scores; index as i">
+      <tr *ngIf="i < nbRowsToDisplay">
         <td> {{score.id}} </td>
         <td> {{score.score.toFixed(2)}} </td>
         <td> {{score.generation}} </td>
-        <td> {{formatTime(score.lifespan)}} </td>
+        <td> {{score.lifespan}} </td>
         <td> {{score.nbHealthPack}} </td>
         <td> {{score.damageReceived}} </td>
         <td> {{score.accuracy.toFixed(2)}} </td>
       </tr>
+      </ng-container>
     </table>
   </diV>
 </div>

@@ -16,7 +16,8 @@ import { Configuration } from '../models/configuration.interface';
 import { FactoryADN, ADN } from '../ia/adn';
 import { FortuneWheelGA, Individual } from '../ia/ga';
 import { Scoring } from '../ia/scoring';
-//import * as seedrandom from 'seedrandom';
+import { Phenotype } from '../models/phenotype.interface';
+// import * as seedrandom from 'seedrandom';
 
 export class GameEngine {
   private static readonly NB_HEALTH_WHEN_DIE: number = 1;
@@ -25,7 +26,7 @@ export class GameEngine {
   private static readonly RATE_SPAWN_HEALTH: number = 0; // 0.01;
   private static readonly RATE_CLONE_SHIP: number = 0.005;
   private static readonly RATE_CROSSOVER_SHIP: number = 0.01;
-  private static readonly MAX_POPULATION = 100;
+  private static readonly MAX_POPULATION = 30;
   private static readonly GAME_TIMER = 45; // 60; // in seconds
 
   private canvas: HTMLCanvasElement;
@@ -70,11 +71,14 @@ export class GameEngine {
   // Output variables
   private oldestShip: Ship;
 
-  private _ships$ = new Subject<Ship[]>();
+  private _ships$ = new Subject<Phenotype[]>();
   public get ships$() { return this._ships$.asObservable() }
 
-  private _deadShips$ = new Subject<Ship[]>();
-  public get deadShips$() { return this._deadShips$.asObservable() }
+  private _shipsScoring$ = new Subject<Scoring[]>();
+  public get shipsScoring$() { return this._shipsScoring$.asObservable() }
+
+  private _deadShipsScoring$ = new Subject<Scoring[]>();
+  public get deadShipsScoring$() { return this._deadShipsScoring$.asObservable() }
 
   // private _nbShips$ = new Subject<number>();
   // public get nbShips$() { return this._nbShips$.asObservable() }
@@ -99,7 +103,7 @@ export class GameEngine {
   public get oldestShip$() { return this._oldestShip$.asObservable() }
   */
 
-  private _aliveOldestShip$ = new Subject<Ship>();
+  private _aliveOldestShip$ = new Subject<Phenotype>();
   public get aliveOldestShip$() { return this._aliveOldestShip$.asObservable() }
 
   private _elapsedTime$ = new Subject<number>();
@@ -113,7 +117,7 @@ export class GameEngine {
 
 
   constructor() {
-    //seedrandom('hello.', { global: true });
+    // seedrandom('hello.', { global: true });
 
     this.fps = 30;
     this.then = Date.now();
@@ -255,6 +259,8 @@ export class GameEngine {
 
   public initialize(ships: Ship[] = []) {
 
+    const phenotypes = [];
+    const scores = [];
     if (ships.length === 0) {
       for (let i = 0; i < this.nbStartingShips; i++) {
         const pos = new Vect2D(Math.random() * this.width, Math.random() * this.height);
@@ -265,18 +271,25 @@ export class GameEngine {
         ship.setBorders([0, this.width, 0, this.height]);
         ship.setTime(0, GameEngine.GAME_TIMER);
         this.ships.push(ship);
+        phenotypes.push(ship.getPhenotype());
       }
     } else {
       this.ships = ships;
+      for (const ship of this.ships) {
+        phenotypes.push(ship.getPhenotype());
+        scores.push(ship.getScore());
+      }
     }
 
     // this._nbShips$.next(this.ships.length);
-    this._ships$.next(this.ships);
-    this._deadShips$.next(this.deadShips);
+
+    this._ships$.next(phenotypes);
+    this._shipsScoring$.next(scores);
+    this._deadShipsScoring$.next(this.deadShips.map(ship => ship.getScore()));
 
     this.oldestShip = this.ships[0];
     // this._oldestShip$.next(this.oldestShip);
-    this._aliveOldestShip$.next(this.oldestShip);
+    this._aliveOldestShip$.next(this.oldestShip.getPhenotype());
 
     this.bots.push(new TestBot(0));
     this.bots.push(new TestBot(1));
@@ -377,10 +390,12 @@ export class GameEngine {
 
     // Manage ship actions
     const t = this.getElapsedTimeInSeconds();
+    const newShips = [];
     for (const ship of this.ships) {
       ship.setTime(t, GameEngine.GAME_TIMER);
 
       // Ship may fire this turn
+      this.configureContinuousEvolutionWithReference(this.ships);
       if (ship.fire(this.ships, this.missiles)) {
         const missile = this.missileFactory.create(this.generateId(), ship, ship.getFOVLen());
 
@@ -393,7 +408,14 @@ export class GameEngine {
         ship.reduceCoolDown();
       }
 
-      // this.continuousEvolutionWhenLiving(ship);
+      const newShip = this.continuousEvolutionWithReference(ship);
+      if (newShip !== null) {
+        newShips.push(newShip);
+      }
+    }
+
+    for (const ship of newShips) {
+      this.ships.push(ship);
     }
 
     for (const ship of this.ships) {
@@ -410,9 +432,9 @@ export class GameEngine {
         this.missiles.splice(i, 1);
       }
     }
-    //this._nbMissiles$.next(this.missiles.length);
-    //const Mcoordinates = this.missiles.map(missile => [missile.id, missile.getLife()]);
-    //this._missiles$.next(Mcoordinates);
+    // this._nbMissiles$.next(this.missiles.length);
+    // const Mcoordinates = this.missiles.map(missile => [missile.id, missile.getLife()]);
+    // this._missiles$.next(Mcoordinates);
 
     for (let i = this.health.length - 1; i >= 0; i--) {
       const healthModel = this.health[i];
@@ -420,28 +442,30 @@ export class GameEngine {
         this.health.splice(i, 1);
       }
     }
-    //this._nbHealth$.next(this.health.length);
-    //const Hcoordinates = this.health.map(health => [health.id, Math.round(health.pos.x), Math.round(health.pos.y), health.isToDelete()]);
-    //this._healths$.next(Hcoordinates);
+    // this._nbHealth$.next(this.health.length);
+    // const Hcoordinates = this.health.map(health => [health.id, Math.round(health.pos.x), Math.round(health.pos.y), health.isToDelete()]);
+    // this._healths$.next(Hcoordinates);
 
     // Manage ships (fire rate, dead ship, ....)
+    const phenotypes = [];
+    const scoring = [];
     for (let i = this.ships.length - 1; i >= 0; i--) {
-      const shipModel = this.ships[i];
-      shipModel.consumeFuel();
+      const ship = this.ships[i];
+      ship.consumeFuel();
 
-      if (shipModel.isDead()) {
+      if (ship.isDead()) {
         // Create healths pack
         const dispersion = Math.round(MyMath.map(this.nbHealthDestroyingShip, 0, 5, 0, 70));
         for (let j = 0; j < this.nbHealthDestroyingShip; j++) {
           const dX = MyMath.random(-dispersion, dispersion);
           const dY = MyMath.random(-dispersion, dispersion);
 
-          let x = shipModel.pos.x + dX;
-          if ( this.width - 20 < x) { x = this.width - 20;}
+          let x = ship.pos.x + dX;
+          if ( this.width - 20 < x) { x = this.width - 20; }
           if ( x < 0) { x = 0; }
 
-          let y = shipModel.pos.y + dY;
-          if ( this.height - 20 < y) { y = this.height - 20;}
+          let y = ship.pos.y + dY;
+          if ( this.height - 20 < y) { y = this.height - 20; }
           if ( y < 0) { y = 0; }
 
           const coord = new Vect2D(x, y);
@@ -451,9 +475,11 @@ export class GameEngine {
         const deleted = this.ships.splice(i, 1);
         this.deadShips.push(deleted[0]);
       } else {
-        shipModel.acc.mul(0);
-        shipModel.updateHeading();
-        shipModel.older();
+        ship.acc.mul(0);
+        ship.updateHeading();
+        ship.older();
+        phenotypes.push(ship.getPhenotype());
+        scoring.push(ship.getScore());
       }
     }
 
@@ -463,16 +489,17 @@ export class GameEngine {
         this.oldestShip = aliveOldestShip;
       }
       // this._oldestShip$.next(this.oldestShip);
-      this._aliveOldestShip$.next(aliveOldestShip);
+      this._aliveOldestShip$.next(aliveOldestShip.getPhenotype());
     }
 
     // this._nbShips$.next(this.ships.length);
     // const coordinates = this.ships.map(ship => [ship.id, Math.round(ship.pos.x), Math.round(ship.pos.y)]);
     // this._coordShips$.next(coordinates);
-    this._ships$.next(this.ships);
+    this._ships$.next(phenotypes);
+    this._shipsScoring$.next(scoring);
 
     if (this.deadShips.length > 0) {
-      this._deadShips$.next(this.deadShips);
+      this._deadShipsScoring$.next(this.deadShips.map(ship => ship.getScore()));
     }
 
     // this._getScores$.next(this.getScores(this.ships));
@@ -563,6 +590,7 @@ export class GameEngine {
 
   // Evolution performed while the ship is living
   // The ship is cloning itself or reproduce with another ship if meeting it
+  /*
   private continuousEvolutionWhenLiving(ship: Ship) {
     if (this.ships.length > GameEngine.MAX_POPULATION) {
       ship.setPartner(null); // if it fails, it fails
@@ -575,6 +603,7 @@ export class GameEngine {
         this.ships.push(copy);
       }
 
+      // To uncomment with collision management between ships to reactivate
       // Manage ship cross over
       if (ship.hasPartner()) {
         if (Math.random() < this.crossOverRate) {
@@ -587,51 +616,55 @@ export class GameEngine {
       }
     }
   }
+  */
+
+  private configureContinuousEvolutionWithReference(referenceShips: Ship[]) {
+    if (this.ships.length > GameEngine.MAX_POPULATION) {
+      return;
+    }
+
+    const refIndividuals = [];
+    for (const ship of referenceShips) {
+      const ind = {
+        adn: ship.getADN(),
+        fitness: ship.scoring()
+      };
+      refIndividuals.push(ind);
+    }
+    this.ga.populateReference(refIndividuals);
+  }
 
   // Evolution performed once the ship is dead
   // The ship is cloning itself if it was good enough
   // or a new ship is created based on two ships with a good score
-  private continuousEvolutionWhenDying(deadShips: Ship[], referenceShips: Ship[]): Ship[] {
-    const newShips = [];
+  private continuousEvolutionWithReference(shipToEvolve: Ship): Ship {
 
-    if (deadShips.length > 0) {
+    if (this.ships.length > GameEngine.MAX_POPULATION) {
+      return null;
+    }
 
-      const individuals = [];
-      for (let i = 0;  i < deadShips.length; i++) {
-        const ind = {
-          adn: deadShips[i].getADN(),
-          fitness: deadShips[i].scoring()
-        };
-        individuals.push(ind);
-      }
+    if (Math.random() < this.cloneRate) {
+      const ind = {
+        adn: shipToEvolve.getADN(),
+        fitness: shipToEvolve.scoring()
+      };
 
-      const refIndividuals = [];
-      for (let i = 0;  i < referenceShips.length; i++) {
-        const ind = {
-          adn: referenceShips[i].getADN(),
-          fitness: referenceShips[i].scoring()
-        };
-        refIndividuals.push(ind);
-      }
-
-      this.ga.populate(individuals);
-      this.ga.populateReference(refIndividuals);
+      this.ga.populate([ind]);
       this.ga.evolveFromReference();
       const newIndividuals = this.ga.getPopulation();
 
-      for (let i = 0;  i < deadShips.length; i++) {
-        const pos = new Vect2D(Math.random() * this.width, Math.random() * this.height);
-        const orientation = Math.random() * 360;
-        const ship = this.shipFactory.create(deadShips[i].id, deadShips[i].getGeneration() + 1);
-        ship.setADN(newIndividuals[i].adn);
-        ship.setPosition(pos);
-        ship.setOrientation(orientation);
-        ship.setBorders([0, this.width, 0, this.height]);
-        newShips.push(ship);
-      }
-    }
+      const orientation = Math.random() * 360;
+      const ship = this.shipFactory.create(this.generateId(), shipToEvolve.getGeneration() + 1);
+      ship.setADN(newIndividuals[0].adn);
+      ship.setPosition(shipToEvolve.pos);
+      ship.setOrientation(orientation);
+      ship.setBorders([0, this.width, 0, this.height]);
 
-    return newShips;
+      return ship;
+
+    } else {
+      return null;
+    }
   }
 
 
@@ -757,6 +790,8 @@ export class GameEngine {
       }
 
       // Check collision between ships for reproduction
+      // To uncomment to reactive this functionality
+      /*
       for (let i = 0; i < nShips - 1; i++) {
         const shipA = ships[i];
 
@@ -768,9 +803,10 @@ export class GameEngine {
           }
 
           // Collision is not possible if ships are going in opposite directions
-          this.detectCollision(shipA, shipB, previousCollision, firstCollision, newCollision, t /*, previousCollisions*/);
+          this.detectCollision(shipA, shipB, previousCollision, firstCollision, newCollision, t); // , previousCollisions);
         }
       }
+      */
 
       if (firstCollision.isEmpty()) {
         // No collision so the pod is following its path until the end of the turn
@@ -786,7 +822,7 @@ export class GameEngine {
 
         t = 1.0; // end of the turn
       } else {
-        let collisionTime = firstCollision.collTime;
+        const collisionTime = firstCollision.collTime;
         /*
         if (collisionTime === 0.0) {
             collisionTime = 0.0 ; // avoid infinity loop
@@ -841,15 +877,21 @@ export class GameEngine {
           const ship = firstCollision.objB as Ship;
           ship.updateLife(health.getEnergy(), Ship.DUE_TO_HEALTH_PACK);
 
-          const newShips = this.continuousEvolutionWhenDying([ship], this.ships);
-          newShips[0].id = this.generateId();
-          this.ships.push(newShips[0]);
+          // Uncomment to activate cloning when picking up a health pack
+          // const newShips = this.continuousEvolutionWhenDying([ship], this.ships);
+          // newShips[0].id = this.generateId();
+          // this.ships.push(newShips[0]);
 
-        } else if (firstCollision.objA instanceof Ship) {
+        }
+        /*
+        // Uncomment to reactivate cross over between ships
+        else if (firstCollision.objA instanceof Ship) {
           const shipA = firstCollision.objA as Ship;
           const shipB = firstCollision.objB as Ship; // Obj B is a ship
           shipA.setPartner(shipB);
+
         }
+        */
 
         t += collisionTime;
         previousCollision = firstCollision;
@@ -909,6 +951,6 @@ export class GameEngine {
   }
 
   private generateId(): number {
-    return new Date().getTime(); //.getUTCMilliseconds();
+    return new Date().getTime(); // .getUTCMilliseconds();
   }
 }

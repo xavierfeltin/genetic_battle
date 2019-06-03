@@ -5,6 +5,7 @@ import { Ship } from '../models/ship.model';
 import { throttleTime, bufferTime } from 'rxjs/operators';
 import { Point } from '../tools/statistics.tools';
 import { Scoring } from '../ia/scoring';
+import { Phenotype } from '../models/phenotype.interface';
 
 @Injectable({
   providedIn: 'root'
@@ -20,12 +21,16 @@ export class SimuInfoService {
     return this.game;
   }
 
-  public getShips(): Observable<Ship[]> {
+  public getShips(): Observable<Phenotype[]> {
     return this.game.ships$.pipe(throttleTime(1000));
   }
 
-  public getDeadShips(): Observable<(Ship[])[]> {
-    return this.game.deadShips$.pipe(bufferTime(1000));
+  public getShipsScoring(): Observable<Scoring[]> {
+    return this.game.shipsScoring$.pipe(throttleTime(1000));
+  }
+
+  public getDeadShipsScoring(): Observable<(Scoring[])[]> {
+    return this.game.deadShipsScoring$.pipe(bufferTime(1000));
   }
 
   /*
@@ -60,7 +65,7 @@ export class SimuInfoService {
   }
   */
 
-  public getAliveOldestShip(): Observable<Ship> {
+  public getAliveOldestShip(): Observable<Phenotype> {
     return this.game.aliveOldestShip$.pipe(throttleTime(1000));
   }
 

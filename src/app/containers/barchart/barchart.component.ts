@@ -73,6 +73,7 @@ export class BarChartComponent implements OnInit, OnChanges {
 
   ngOnChanges(change: SimpleChanges) {
     if (change.data.previousValue && this.chart) {
+      this.chart.clear();
       this.updateSerie(change.data.currentValue);
     }
   }

@@ -40,8 +40,7 @@ export class LineChartComponent implements OnInit, OnChanges {
     if (this.population !== undefined && this.population.length !== 0) {
       this.buildChart();
       this.isInit = true;
-    }
-    else {
+    } else {
       this.chart = new Chart(this.chartRef.nativeElement, {
         type: 'line',
         data: {
@@ -51,7 +50,7 @@ export class LineChartComponent implements OnInit, OnChanges {
         options: {
           responsive: true,
           elements: {
-            point:{
+            point: {
                 radius: 0
             }
           },
@@ -81,6 +80,7 @@ export class LineChartComponent implements OnInit, OnChanges {
     }
 
     if (change.population.previousValue) {
+      // this.chart.clear();
       this.updateSerie(change.population.currentValue);
     }
   }
@@ -91,7 +91,7 @@ export class LineChartComponent implements OnInit, OnChanges {
 
     popLabels = this.population[0].map(pop => pop.stamp);
     configuration = this.createDatasets(this.population, this.labels, this.colors);
-    
+
     this.chart = new Chart(this.chartRef.nativeElement, {
       type: 'line',
       data: {
@@ -100,8 +100,8 @@ export class LineChartComponent implements OnInit, OnChanges {
       },
       options: {
         elements: {
-          point:{
-              radius: 0
+          point: {
+            radius: 0
           }
         },
         legend: {
@@ -135,8 +135,7 @@ export class LineChartComponent implements OnInit, OnChanges {
         };
         datasets.push(conf);
       }
-    }
-    else {
+    } else {
       const conf = {
         label: '',
         data: [],
@@ -152,7 +151,7 @@ export class LineChartComponent implements OnInit, OnChanges {
     this.population = population;
     const nbSeries = this.population.length;
     const popLabels = this.population[0].map((pop: Point) => pop.stamp);
-    
+
     for (let i = 0; i < nbSeries; i++) {
       const serie = this.population[i].map((pop: Point) => pop.data.toPrecision(2));
       this.chart.data.datasets[i].data = serie;
@@ -160,15 +159,4 @@ export class LineChartComponent implements OnInit, OnChanges {
     }
     this.chart.update();
   }
-
-  /*
-  private updateSerie(population: Point[]) {
-    const labels = population.map(pop => pop.stamp);
-    const serie = population.map(pop => pop.data);
-
-    this.chart.data.datasets[0].data = serie;
-    this.chart.data.labels = labels;
-    this.chart.update();
-  }
-  */
 }

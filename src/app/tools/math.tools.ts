@@ -13,6 +13,7 @@ export class MyMath {
         const sec = elapsedTime % 60;
         const mn = Math.floor(elapsedTime / 60) % 60;
         const hh = Math.floor(elapsedTime / 3600);
+        /*
         let elaspedTime = hh.toLocaleString('en-US', {minimumIntegerDigits: 2, useGrouping: false})
         + ' : ' + mn.toLocaleString('en-US', {minimumIntegerDigits: 2, useGrouping: false})
         + ' : ' + sec.toLocaleString('en-US', {minimumIntegerDigits: 2, useGrouping: false});
@@ -22,5 +23,8 @@ export class MyMath {
         }
 
         return elaspedTime;
+        */
+
+        return Math.floor(hh) + ':' + Math.floor(mn) + ':' + Math.floor(sec);
     }
 }
