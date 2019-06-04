@@ -26,7 +26,7 @@ export class GameEngine {
   private static readonly RATE_SPAWN_HEALTH: number = 0; // 0.01;
   private static readonly RATE_CLONE_SHIP: number = 0.005;
   private static readonly RATE_CROSSOVER_SHIP: number = 0.01;
-  private static readonly MAX_POPULATION = 30;
+  private static readonly MAX_POPULATION = 20;
   private static readonly GAME_TIMER = 45; // 60; // in seconds
 
   private canvas: HTMLCanvasElement;
@@ -401,7 +401,8 @@ export class GameEngine {
 
         missile.setBorders([-50, 850, -50, 850]);
         missile.setPosition(ship.pos);
-        missile.setOrientation(ship.orientation);
+        const accuracy = MyMath.random(-ship.getFOV() / 2, ship.getFOV() / 2);
+        missile.setOrientation(ship.orientation + accuracy);
 
         this.missiles.push(missile);
       } else {

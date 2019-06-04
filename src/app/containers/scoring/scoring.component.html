@@ -8,10 +8,13 @@
         <th> ID </th>
         <th> Score </th>
         <th> Generation </th>
-        <th> lifespan </th>
+        <th> Lifespan </th>
         <th> Health Packs </th>
         <th> Damage </th>
-        <th> Accuracy </th>
+        <th> Touched Ennemies </th>
+        <th> Destroyed Missiles </th>
+        <th> Missiles Launched </th>
+        <th> Firing Accuracy </th>
       </tr>
       <ng-container *ngFor="let score of scores; index as i">
       <tr *ngIf="i < nbRowsToDisplay">
@@ -21,6 +24,9 @@
         <td> {{score.lifespan}} </td>
         <td> {{score.nbHealthPack}} </td>
         <td> {{score.damageReceived}} </td>
+        <td> {{score.touchedEnnemies}} </td>
+        <td> {{score.missileDestroyed}} </td>
+        <td> {{score.missileLaunched}} </td>
         <td> {{score.accuracy.toFixed(2)}} </td>
       </tr>
       </ng-container>
