@@ -26,7 +26,7 @@ export class GameEngine {
   private static readonly RATE_SPAWN_HEALTH: number = 0; // 0.01;
   private static readonly RATE_CLONE_SHIP: number = 0.005;
   private static readonly RATE_CROSSOVER_SHIP: number = 0.01;
-  private static readonly MAX_POPULATION = 20;
+  private static readonly MAX_POPULATION = 10;
   private static readonly GAME_TIMER = 45; // 60; // in seconds
 
   private canvas: HTMLCanvasElement;
@@ -486,7 +486,7 @@ export class GameEngine {
 
     const aliveOldestShip = this.getOldestShip(this.ships);
     if (aliveOldestShip !== null) {
-      if (this.oldestShip.getAge() < aliveOldestShip.getAge()) {
+      if (this.oldestShip.scoring() < aliveOldestShip.scoring()) {
         this.oldestShip = aliveOldestShip;
       }
       // this._oldestShip$.next(this.oldestShip);
@@ -620,19 +620,18 @@ export class GameEngine {
   */
 
   private configureContinuousEvolutionWithReference(referenceShips: Ship[]) {
-    if (this.ships.length > GameEngine.MAX_POPULATION) {
-      return;
-    }
+    if (this.ships.length < GameEngine.MAX_POPULATION) {
 
-    const refIndividuals = [];
-    for (const ship of referenceShips) {
-      const ind = {
-        adn: ship.getADN(),
-        fitness: ship.scoring()
-      };
-      refIndividuals.push(ind);
+      const refIndividuals = [];
+      for (const ship of referenceShips) {
+        const ind = {
+          adn: ship.getADN(),
+          fitness: ship.scoring()
+        };
+        refIndividuals.push(ind);
+      }
+      this.ga.populateReference(refIndividuals);
     }
-    this.ga.populateReference(refIndividuals);
   }
 
   // Evolution performed once the ship is dead
@@ -640,42 +639,41 @@ export class GameEngine {
   // or a new ship is created based on two ships with a good score
   private continuousEvolutionWithReference(shipToEvolve: Ship): Ship {
 
-    if (this.ships.length > GameEngine.MAX_POPULATION) {
-      return null;
-    }
+    if (this.ships.length < GameEngine.MAX_POPULATION) {
+      if (Math.random() < this.cloneRate) {
+        const ind = {
+          adn: shipToEvolve.getADN(),
+          fitness: shipToEvolve.scoring()
+        };
 
-    if (Math.random() < this.cloneRate) {
-      const ind = {
-        adn: shipToEvolve.getADN(),
-        fitness: shipToEvolve.scoring()
-      };
+        this.ga.populate([ind]);
+        this.ga.evolveFromReference();
+        const newIndividuals = this.ga.getPopulation();
 
-      this.ga.populate([ind]);
-      this.ga.evolveFromReference();
-      const newIndividuals = this.ga.getPopulation();
+        const orientation = Math.random() * 360;
+        const ship = this.shipFactory.create(this.generateId(), shipToEvolve.getGeneration() + 1);
+        ship.setADN(newIndividuals[0].adn);
+        ship.setPosition(shipToEvolve.pos);
+        ship.setOrientation(orientation);
+        ship.setBorders([0, this.width, 0, this.height]);
 
-      const orientation = Math.random() * 360;
-      const ship = this.shipFactory.create(this.generateId(), shipToEvolve.getGeneration() + 1);
-      ship.setADN(newIndividuals[0].adn);
-      ship.setPosition(shipToEvolve.pos);
-      ship.setOrientation(orientation);
-      ship.setBorders([0, this.width, 0, this.height]);
-
-      return ship;
-
+        return ship;
+      } else {
+        return null;
+      }
     } else {
       return null;
     }
   }
 
-
   private getOldestShip(ships: Ship[]): Ship {
     let result = null;
     for (const ship of ships) {
+      ship.setOldest(false);
       if (result === null) {
         result = ship;
         ship.setOldest(true);
-      } else if (result.getAge() < ship.getAge()) {
+      } else if (result.scoring() < ship.scoring()) {
         result.setOldest(false);
         ship.setOldest(true);
         result = ship;
@@ -861,7 +859,11 @@ export class GameEngine {
             ship.updateLife(missile.getEnergy(), Ship.DUE_TO_MISSILE);
 
             // update ships statistics
-            missile.getLauncher().ennemyDown();
+            if (ship.isDead()) {
+              missile.getLauncher().ennemyDown();
+            } else {
+              missile.getLauncher().ennemyWounded();
+            }
 
             if (firstCollision.objB.id === 0) {
               nbTouchShipA ++;

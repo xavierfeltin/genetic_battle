@@ -5,6 +5,7 @@ export interface Scoring {
     accuracy: number;
     missileLaunched: number;
     touchedEnnemies: number;
+    destroyedEnnemies: number;
     missileDestroyed: number;
     score: number;
     state: string;

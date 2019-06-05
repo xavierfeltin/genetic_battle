@@ -39,7 +39,7 @@ export class ScoringComponent implements OnInit, OnDestroy {
         let minScore = Infinity;
         let avgScore = 0;
 
-        for (let scoring of scores) {
+        for (const scoring of scores) {
           this.scores.push(scoring);
 
           if (scoring.score > maxScore) {

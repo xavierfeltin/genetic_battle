@@ -27,7 +27,7 @@ export class ShipRender {
 
         this.ctx.save(); // save current state
 
-        if (this.debugMode) {
+        if (this.debugMode && ship.isOldest) {
             this.drawMissileRadar(ship);
             this.drawFieldOfView(ship);
             this.drawCollisionBox(ship);
@@ -79,7 +79,7 @@ export class ShipRender {
     public drawCollisionBox(ship: Ship) {
         const xOrigin = ship.pos.x;
         const yOrigin = ship.pos.y;
-        
+
         this.ctx.beginPath();
         this.ctx.strokeStyle = 'rgba(50, 50, 50)';
         this.ctx.arc(xOrigin, yOrigin, ship.radius, 0, Math.PI * 2);

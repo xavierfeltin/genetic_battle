@@ -21,7 +21,7 @@ export class Ship extends GameObject {
     public static readonly DEFAULT_ENERGY_FUEL: number = 0;
     public static readonly DEFAULT_ENERGY_FIRE: number = 0; //-1;
 
-    private static readonly MAX_SPEED: number = 7;
+    private static readonly MAX_SPEED: number = 5;
     private static readonly MIN_SPEED: number = 2;
 
     public static readonly MIN_FIRE_RATE: number = 0;
@@ -30,7 +30,7 @@ export class Ship extends GameObject {
     private static readonly NB_GENES: number = 7;
     private static readonly NB_ATTRIBUTES: number = 6;
     private static readonly NB_NN_INPUT: number = 20;
-    private static readonly NN_HIDDEN_LAYERS: number[] = [20, 10];
+    private static readonly NN_HIDDEN_LAYERS: number[] = [8, 8, 8];
     private static readonly MIN_ADN_VALUE: number = -1;
     private static readonly MAX_ADN_VALUE: number = 1;
     private static readonly MIN_NN_VALUE: number = 0;
@@ -79,6 +79,7 @@ export class Ship extends GameObject {
     private missileAccuracy: number;
     private nbMissilesLaunched: number;
     private nbEnnemiesTouched: number;
+    private nbEnnemiesDestroyed: number;
     private nbMissilesDestroyed: number;
 
     // flags previous frame
@@ -123,6 +124,7 @@ export class Ship extends GameObject {
         this.nbReceivedDamage = 0;
         this.nbEnnemiesTouched = 0;
         this.nbMissilesDestroyed = 0;
+        this.nbEnnemiesDestroyed = 0;
         this.missileAccuracy = 1;
         this.nbMissilesLaunched = 0;
 
@@ -131,7 +133,6 @@ export class Ship extends GameObject {
         this.attractHealth = 0;
         this.attractMissile = 0;
         this.attractShip = 0;
-        //this.attractCenter = 0;
         this.setFOV((Ship.MIN_ANGLE_FOV + Ship.MAX_ANGLE_FOV) / 2 );
 
         const length = Math.round((Ship.MIN_LENGTH_RADAR + Ship.MAX_LENGTH_RADAR) / 2);
@@ -172,8 +173,14 @@ export class Ship extends GameObject {
         this.maxTimer = maxT;
     }
 
+    public ennemyWounded() {
+        this.nbEnnemiesTouched ++;
+        this.hasTouchedEnnemy = true;
+    }
+
     public ennemyDown() {
         this.nbEnnemiesTouched ++;
+        this.nbEnnemiesDestroyed ++;
         this.hasTouchedEnnemy = true;
     }
 
@@ -188,9 +195,10 @@ export class Ship extends GameObject {
 
     public scoring(): number {
         const score = (this.nbHealthPackPicked * 10)
-                     + (this.nbEnnemiesTouched * 5)
-                     + this.nbMissilesDestroyed;
-                    // + (this.getAccuracy() * 20)
+                     // + (this.nbEnnemiesTouched * 5)
+                     // + this.nbMissilesDestroyed;
+                     + this.nbEnnemiesDestroyed * 5
+                     + (this.getAccuracy() * 20);
                     // - (this.nbReceivedDamage * 2);
                     // + ((this.age / 30) * 5);
 
@@ -205,6 +213,7 @@ export class Ship extends GameObject {
             nbHealthPack: this.nbHealthPackPicked,
             damageReceived: this.nbReceivedDamage,
             touchedEnnemies: this.nbEnnemiesTouched,
+            destroyedEnnemies: this.nbEnnemiesDestroyed,
             missileDestroyed: this.nbMissilesDestroyed,
             missileLaunched: this.nbMissilesLaunched,
             accuracy: this.getAccuracy(),
@@ -240,13 +249,13 @@ export class Ship extends GameObject {
     }
 
     private matchAttributes(output: number[]) {
+        /*
         const min = this.isNeuroEvo ? Ship.MIN_ADN_VALUE : Ship.MIN_ADN_VALUE;
         const max = this.isNeuroEvo ? Ship.MAX_ADN_VALUE : Ship.MAX_ADN_VALUE;
 
         this.attractHealth = MyMath.map(output[0], min, max, Ship.MIN_ATTRACTION, Ship.MAX_ATTRACTION);
         this.attractMissile = MyMath.map(output[1], min, max, Ship.MIN_ATTRACTION, Ship.MAX_ATTRACTION);
         this.attractShip = MyMath.map(output[2], min, max, Ship.MIN_ATTRACTION, Ship.MAX_ATTRACTION);
-        //this.attractCenter = MyMath.map(output[2], min, max, Ship.MIN_ATTRACTION, Ship.MAX_ATTRACTION);
 
         const angle = MyMath.map(output[3], min, max, Ship.MIN_ANGLE_FOV, Ship.MAX_ANGLE_FOV);
         this.setFOV(Math.round(angle));
@@ -255,6 +264,34 @@ export class Ship extends GameObject {
 
         const length = Math.round(MyMath.map(output[5], min, max, Ship.MIN_LENGTH_RADAR, Ship.MAX_LENGTH_RADAR));
         this.setRadar(length);
+        */
+
+        this.attractHealth += (output[0] !== 0) ? ((output[0] < 0) ? -0.1 : 0.1 ) : 0;
+        this.attractHealth = Math.min(this.attractHealth, Ship.MAX_ATTRACTION);
+        this.attractHealth = Math.max(this.attractHealth, Ship.MIN_ATTRACTION);
+
+        this.attractMissile += (output[1] !== 0) ? ((output[1] < 0) ? -0.1 : 0.1 ) : 0;
+        this.attractMissile = Math.min(this.attractMissile, Ship.MAX_ATTRACTION);
+        this.attractMissile = Math.max(this.attractMissile, Ship.MIN_ATTRACTION);
+
+        this.attractShip += (output[2] !== 0) ? ((output[2] < 0) ? -0.1 : 0.1 ) : 0;
+        this.attractShip = Math.min(this.attractShip, Ship.MAX_ATTRACTION);
+        this.attractShip = Math.max(this.attractShip, Ship.MIN_ATTRACTION);
+
+        let delta = (output[3] !== 0) ? ((output[3] < 0) ? -5 : 5 ) : 0;
+        delta = (this.fov + delta > Ship.MAX_ANGLE_FOV) ? 0 : delta;
+        delta = (this.fov + delta < Ship.MIN_ANGLE_FOV) ? 0 : delta;
+        this.setFOV(Math.round(this.getFOV() + delta));
+
+        //this.fireRate = (output[4] <= 0) ? 0 : 100;
+        this.fireRate += (output[4] !== 0) ? ((output[4] < 0) ? -1 : 1 ) : 0;
+        this.fireRate = Math.min(this.fireRate, Ship.MAX_FIRE_RATE);
+        this.fireRate = Math.max(this.fireRate, Ship.MIN_FIRE_RATE);
+
+        delta = (output[5] !== 0) ? ((output[5] < 0) ? -2 : 2 ) : 0;
+        delta = (this.radarLength + delta > Ship.MAX_LENGTH_RADAR) ? 0 : delta;
+        delta = (this.radarLength + delta < Ship.MIN_LENGTH_RADAR) ? 0 : delta;
+        this.setRadar(this.radarLength + delta);
     }
 
     public expressADNNeuroEvo(missiles: GameObject[], healths: GameObject[], ships: GameObject[]) {
@@ -283,7 +320,6 @@ export class Ship extends GameObject {
         input.push(MyMath.map(this.attractMissile, Ship.MIN_ATTRACTION, Ship.MAX_ATTRACTION, Ship.MIN_NN_VALUE, Ship.MAX_ADN_VALUE));
         input.push(MyMath.map(this.attractShip, Ship.MIN_ATTRACTION, Ship.MAX_ATTRACTION, Ship.MIN_NN_VALUE, Ship.MAX_ADN_VALUE));
         input.push(MyMath.map(this.attractHealth, Ship.MIN_ATTRACTION, Ship.MAX_ATTRACTION, Ship.MIN_NN_VALUE, Ship.MAX_ADN_VALUE));
-        // input.push(MyMath.map(this.attractCenter, Ship.MIN_ATTRACTION, Ship.MAX_ATTRACTION, Ship.MIN_NN_VALUE, Ship.MAX_ADN_VALUE));
 
         input.push(MyMath.map(this.fov, Ship.MIN_ANGLE_FOV, Ship.MAX_ANGLE_FOV, Ship.MIN_NN_VALUE, Ship.MAX_ADN_VALUE));
         input.push(MyMath.map(this.radarLength, Ship.MIN_LENGTH_RADAR, Ship.MAX_LENGTH_RADAR, Ship.MIN_NN_VALUE, Ship.MAX_ADN_VALUE));
@@ -503,7 +539,7 @@ export class Ship extends GameObject {
         this.steer(missile, this.attractMissile);
         this.steer(health, this.attractHealth);
         this.steer(ship, this.attractShip);
-        this.boundaries(wArea, hArea)
+        this.boundaries(wArea, hArea);
 
         // Apply acceleration to velocity
         this.applyAcc();

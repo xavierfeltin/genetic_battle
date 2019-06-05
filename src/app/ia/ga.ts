@@ -116,27 +116,30 @@ export class FortuneWheelGA extends GeneticAlgorithm {
         });
 
         const scoreAvg = (this.refPopulation[0].fitness + this.refPopulation[this.refPopulation.length - 1].fitness) / 2;
-        this.refPopulation.push(this.best);
+        // this.refPopulation.push(this.best);
         this.computeProbas();
 
         for (const popInd of this.population) {
             let childADN: ADN = null;
+            /*
             if (this.best === null ||  this.best.fitness < popInd.fitness ) {
                 // only clone the bests
                 this.best = popInd;
                 childADN = popInd.adn;
                 this.computeProbas();
-            }
-            else if ((this.best.fitness * 0.5) < popInd.fitness) {
+            } else if ((this.best.fitness * 0.5) < popInd.fitness) {
                 childADN = popInd.adn;
             }
-            else {
+            */
+
+            if (scoreAvg < popInd.fitness) {
+                childADN = popInd.adn;
+            } else {
                 const parentA = this.pickOne(this.refPopulation);
                 const parentB = this.pickOne(this.refPopulation);
-                //const parentA = this.refPopulation[0];
-                //const parentB = this.refPopulation[1];
                 childADN = parentA.adn.crossOver(parentB.adn);
             }
+
             /*
             else if (popInd.fitness < scoreAvg ) {
                 // Indiv is coming from two good parents

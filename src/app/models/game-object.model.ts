@@ -82,8 +82,8 @@ export class GameObject {
         this.age ++;
     }
 
-    public setOldest(oldest: boolean) {
-        this.isOldest = oldest;
+    public setOldest(isOldest: boolean) {
+        this.isOldest = isOldest;
     }
 
     public move(t: number) {
