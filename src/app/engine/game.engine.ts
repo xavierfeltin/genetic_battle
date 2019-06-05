@@ -21,13 +21,16 @@ import { Phenotype } from '../models/phenotype.interface';
 
 export class GameEngine {
   private static readonly NB_HEALTH_WHEN_DIE: number = 1;
-  private static readonly NB_SHIPS: number = 10;
+  private static readonly NB_SHIPS: number = 80;
   private static readonly NB_INIT_HEALTH: number = 0; // 20;
   private static readonly RATE_SPAWN_HEALTH: number = 0; // 0.01;
   private static readonly RATE_CLONE_SHIP: number = 0.005;
   private static readonly RATE_CROSSOVER_SHIP: number = 0.01;
-  private static readonly MAX_POPULATION = 10;
+  private static readonly MAX_POPULATION = 80;
   private static readonly GAME_TIMER = 45; // 60; // in seconds
+  private static readonly NEURO_EVO_MODE = 'neuroevol';
+  private static readonly ALGO_EVO_MODE = 'geneticalgo';
+  private static readonly EVOLUTION_MODE = GameEngine.NEURO_EVO_MODE;
 
   private canvas: HTMLCanvasElement;
   private ctx: CanvasRenderingContext2D;
@@ -216,13 +219,19 @@ export class GameEngine {
     this.cloneRate = config.cloneRate ;
     this.crossOverRate = config.crossOverRate ;
 
-    if (config.resetSimulation) {
+    let needToReset = false;
+    const evolutionMode = this.shipFactory.getNeuroEvolution() ? GameEngine.NEURO_EVO_MODE : GameEngine.ALGO_EVO_MODE;
+    if (config.evolutionMode !== evolutionMode) {
+      this.shipFactory.setNeuroEvolution(config.evolutionMode === GameEngine.NEURO_EVO_MODE);
+      needToReset = true;
+    }
+
+    if (config.resetSimulation || needToReset) {
       this.reset(true);
       this.initialize();
     }
 
-    this.shipRenderer.setDebugMode(config.debugMode);
-    this.shipFactory.setNeuroEvolution(true);
+    this.shipRenderer.setDebugMode(config.debugMode);    
   }
 
   public getDefaultConfiguration(): Configuration {
@@ -238,6 +247,7 @@ export class GameEngine {
       cloneRate: GameEngine.RATE_CLONE_SHIP,
       crossOverRate: GameEngine.RATE_CROSSOVER_SHIP,
       mutationRate: ADN.MUTATION_RATE,
+      evolutionMode: GameEngine.EVOLUTION_MODE,
       resetSimulation: true,
       debugMode: ShipRender.DEBUG
     };

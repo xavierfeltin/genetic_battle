@@ -136,8 +136,17 @@
         A value is required.
       </ng-container>
     </span>
+    <br/>
+    <br/>
 
+    <label [for]="evolutionMode"> Evolution Mode: </label>
+    <span> <i> It will reset the simulation </i> </span>
+    <div>
+      <input type="radio" formControlName="evolutionMode" value="neuroevol" checked> <label> Neuro Evolution </label>
+      <input type="radio" formControlName="evolutionMode"  value="geneticalgo"> <label> Genetic Algorithm </label>
+    </div>    
   </fieldset>
+
   <div class="layout">
     <div>
       <label [for]="resetSimulation"> Reset simulation: </label>

@@ -43,6 +43,7 @@ export class OldestShipsComponent implements OnInit, OnDestroy {
   private subscription5: Subscription;
 
   private timer = '';
+  private time = 0;
 
   constructor(private service: SimuInfoService) { }
 
@@ -59,11 +60,15 @@ export class OldestShipsComponent implements OnInit, OnDestroy {
       this.dataOldestShips.push(data);
     });
 
-    this.subscription2 = this.service.getElapsedTimeInSeconds().subscribe((time: number) => this.timer = this.formatTime(time));
+    this.subscription2 = this.service.getElapsedTimeInSeconds().subscribe((time: number) => {
+      this.timer = this.formatTime(time);
+      this.time = time;
+    });
 
     this.subscription5 = this.service.getShips().subscribe(phenotypes => {
       const point: Point = {
         data: phenotypes.length,
+        timer:  this.time,
         stamp: this.timer // MyMath.formatTime(this.elapsedTime)
       };
       this.addData(point);
@@ -104,6 +109,11 @@ export class OldestShipsComponent implements OnInit, OnDestroy {
   }
 
   addData(point: Point) {
+    // Clear data if reset
+    if (this.population.length !== 0 && point.timer < this.population[this.population.length - 1].timer) {
+      this.population = [];
+    }
+
     this.population.push(point); //= [...this.population, point];
     if (this.population.length > OldestShipsComponent.MAX_POP) {
       const _ = this.population.shift();

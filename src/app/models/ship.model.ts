@@ -142,13 +142,14 @@ export class Ship extends GameObject {
 
         this.isNeuroEvo = isNeuroEvo;
         if (this.isNeuroEvo) {
-            this.nn = new NeuralNetwork(Ship.NB_NN_INPUT, Ship.NN_HIDDEN_LAYERS, Ship.NB_ATTRIBUTES);
+            this.nn = new NeuralNetwork(Ship.NB_NN_INPUT, Ship.NN_HIDDEN_LAYERS, Ship.NB_ATTRIBUTES);            
         }
         this.nbGenes = this.isNeuroEvo ? this.nn.getNbCoefficients() : Ship.NB_GENES;
         const minValue = Ship.MIN_ADN_VALUE * 1;
         const maxValue = Ship.MAX_ADN_VALUE * 1;
         this.generation = generation;
 
+        this.adnFactory.setIsHugeADN(this.isNeuroEvo); // will not change once the ship is created
         this.createADN(this.nbGenes, minValue, maxValue);
     }
 
@@ -249,6 +250,23 @@ export class Ship extends GameObject {
     }
 
     private matchAttributes(output: number[]) {
+        const min = this.isNeuroEvo ? Ship.MIN_ADN_VALUE : Ship.MIN_ADN_VALUE;
+        const max = this.isNeuroEvo ? Ship.MAX_ADN_VALUE : Ship.MAX_ADN_VALUE;
+
+        this.attractHealth = MyMath.map(output[0], min, max, Ship.MIN_ATTRACTION, Ship.MAX_ATTRACTION);
+        this.attractMissile = MyMath.map(output[1], min, max, Ship.MIN_ATTRACTION, Ship.MAX_ATTRACTION);
+        this.attractShip = MyMath.map(output[2], min, max, Ship.MIN_ATTRACTION, Ship.MAX_ATTRACTION);
+
+        const angle = MyMath.map(output[3], min, max, Ship.MIN_ANGLE_FOV, Ship.MAX_ANGLE_FOV);
+        this.setFOV(Math.round(angle));
+
+        this.fireRate = Math.round(MyMath.map(output[4], min, max, Ship.MIN_FIRE_RATE, Ship.MAX_FIRE_RATE));
+
+        const length = Math.round(MyMath.map(output[5], min, max, Ship.MIN_LENGTH_RADAR, Ship.MAX_LENGTH_RADAR));
+        this.setRadar(length);
+    }
+
+    private matchAttributesNeuroEvo(output: number[]) {
         /*
         const min = this.isNeuroEvo ? Ship.MIN_ADN_VALUE : Ship.MIN_ADN_VALUE;
         const max = this.isNeuroEvo ? Ship.MAX_ADN_VALUE : Ship.MAX_ADN_VALUE;
@@ -342,16 +360,7 @@ export class Ship extends GameObject {
 
         // Call NN with the current game state viewed by the ship
         const output = this.nn.feedForward(input);
-
-        /*
-        if (this.id === 0) {
-            debugger;
-            console.log(input);
-            console.log(output);
-        }
-        */
-
-        this.matchAttributes(output); // Match ouputs with ship attributes
+        this.matchAttributesNeuroEvo(output); // Match ouputs with ship attributes
     }
 
     public getADNFactory(): FactoryADN {
@@ -575,7 +584,7 @@ export class Ship extends GameObject {
             desired.limit(this.speed);
             const steer = Vect2D.sub(desired, this.velo);
             steer.limit(GameObject.MAX_FORCE);
-            //steer.mul(2);
+            steer.mul(3);
             this.applyForce(steer);
             return true;
         }
@@ -719,7 +728,7 @@ export class FactoryShip {
         this.energyFire = energy;
     }
 
-    public getNeuroEvolution(activate: boolean) {
+    public getNeuroEvolution() {
         return this.isNeuroEvolution;
     }
 

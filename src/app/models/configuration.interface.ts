@@ -10,6 +10,7 @@ export interface Configuration {
     cloneRate: number;
     crossOverRate: number;
     mutationRate: number;
+    evolutionMode: string;
     resetSimulation: boolean;
     debugMode: boolean;
 }

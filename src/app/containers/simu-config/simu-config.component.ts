@@ -31,7 +31,8 @@ export class SimuConfigComponent implements OnInit {
     simu_genetic: this.fb.group({
       cloneRate: ['', [Validators.pattern(this.floatPattern), Validators.required]],
       crossOverRate: ['', [Validators.pattern(this.floatPattern), Validators.required]],
-      mutationRate: ['', [Validators.pattern(this.floatPattern), Validators.required]]
+      mutationRate: ['', [Validators.pattern(this.floatPattern), Validators.required]],
+      evolutionMode: ['', Validators.required]
     })
   });
 
@@ -54,6 +55,7 @@ export class SimuConfigComponent implements OnInit {
     this.cloneRate.setValue(config.cloneRate);
     this.crossOverRate.setValue(config.crossOverRate);
     this.mutationRate.setValue(config.mutationRate);
+    this.evolutionMode.setValue(config.evolutionMode);
   }
 
   onSubmit() {
@@ -81,6 +83,7 @@ export class SimuConfigComponent implements OnInit {
       cloneRate: parseFloat(formValues.simu_genetic.cloneRate),
       crossOverRate: parseFloat(formValues.simu_genetic.crossOverRate),
       mutationRate: parseFloat(formValues.simu_genetic.mutationRate),
+      evolutionMode: formValues.simu_genetic.evolutionMode,
       resetSimulation: formValues.resetSimulation,
       debugMode: formValues.debugMode
     }
@@ -129,5 +132,9 @@ export class SimuConfigComponent implements OnInit {
 
   get mutationRate() {
     return this.formSimu.get('simu_genetic.mutationRate');
+  }
+
+  get evolutionMode() {
+    return this.formSimu.get('simu_genetic.evolutionMode');
   }
 }

@@ -67,16 +67,19 @@ export class ScoringComponent implements OnInit, OnDestroy {
         this.timer = this.formatTime(this.scores[0].stamp);
         const minPoint: Point = {
           data: minScore,
+          timer: this.scores[0].stamp,
           stamp: this.timer
         };
 
         const maxPoint: Point = {
           data: maxScore,
+          timer: this.scores[0].stamp,
           stamp: this.timer
         };
 
         const avgPoint: Point = {
           data: avgScore,
+          timer: this.scores[0].stamp,
           stamp: this.timer
         };
 
@@ -130,6 +133,14 @@ export class ScoringComponent implements OnInit, OnDestroy {
     }
 
     for (let i = 0; i < points.length; i++) {
+      // Clear data if reset
+      
+      if (population.length !== 0 
+        && population[i].length !== 0 
+        && points[i].timer < population[i][population[i].length - 1].timer) {
+        population[i] = [];
+      }
+
       if (population.length > 0 ) {
         newPopulation[i] = [...population[i], points[i]];
       } else {

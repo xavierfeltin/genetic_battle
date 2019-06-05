@@ -1,5 +1,6 @@
 export interface Point {
     data: number;
+    timer?: number;
     stamp: string;
 }
 
