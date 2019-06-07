@@ -1,7 +1,7 @@
 import { GameObject } from './game-object.model';
 
 export class Health extends GameObject {
-    public static readonly DEFAULT_HEALING: number = 100; // 5;
+    public static readonly DEFAULT_HEALING: number = 0; // 5;
 
     constructor(id: number, healing: number) {
         super(id);

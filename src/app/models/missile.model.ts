@@ -2,7 +2,7 @@ import { GameObject } from './game-object.model';
 import { Ship } from './ship.model';
 
 export class Missile extends GameObject {
-    public static readonly DEFAULT_DAMAGE: number = -40; // -40;
+    public static readonly DEFAULT_DAMAGE: number = -10; // -40;
     public static readonly DEFAULT_LIFE: number = 20;
 
     private readonly maxShipSpeed: number = 10;

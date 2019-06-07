@@ -4,6 +4,7 @@ export interface Individual {
     fitness?: number;
     proba?: number;
     adn: ADN;
+    id?: number;
 }
 
 export class GeneticAlgorithm {
@@ -116,7 +117,7 @@ export class FortuneWheelGA extends GeneticAlgorithm {
         });
 
         const scoreAvg = (this.refPopulation[0].fitness + this.refPopulation[this.refPopulation.length - 1].fitness) / 2;
-        // this.refPopulation.push(this.best);
+        this.refPopulation.push(this.best);
         this.computeProbas();
 
         for (const popInd of this.population) {
@@ -131,6 +132,11 @@ export class FortuneWheelGA extends GeneticAlgorithm {
                 childADN = popInd.adn;
             }
             */
+
+            if (this.best === null ||  this.best.fitness < popInd.fitness ) {
+                this.best = popInd;
+                this.computeProbas();
+            }
 
             if (scoreAvg < popInd.fitness) {
                 childADN = popInd.adn;
@@ -179,7 +185,7 @@ export class FortuneWheelGA extends GeneticAlgorithm {
         return population[i];
     }
 
-    private computeProbas() {
+    public computeProbas() {
         let minValue = Infinity;
         for (const pop of this.population) {
             if (pop.fitness < minValue) {

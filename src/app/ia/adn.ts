@@ -48,8 +48,8 @@ export class HugeADN extends ADN {
 
     public mutate() {
         const result = new HugeADN(this.genes.length, this.minimum, this.maximum, this.mutationRate);
-        
-        const maxGenesToMutate = this.genes.length * ADN.MUTATION_RATE;
+
+        const maxGenesToMutate = Math.round(Math.sqrt(this.genes.length)); // * ADN.MUTATION_RATE;
         const nbToMutate = Math.round(Math.random() * maxGenesToMutate);
 
         const indexes = [];
@@ -59,13 +59,13 @@ export class HugeADN extends ADN {
 
         for (let i = 0; i < this.genes.length; i++) {
             if (i in indexes) {
-                let pct = this.genes[i] * 0.5;
+                let pct = this.maximum * 1.0;
                 if (pct === 0) {
                     pct = 0.01;
                 }
                 result[i] = this.genes[i] + MyMath.random(-pct, pct);
-                result[i] = Math.max(result[i], this.minimum);
-                result[i] = Math.min(result[i], this.maximum);
+                // result[i] = Math.max(result[i], this.minimum);
+                // result[i] = Math.min(result[i], this.maximum);
             } else {
                 result[i] = this.genes[i];
             }
@@ -95,9 +95,9 @@ export class SmallADN extends ADN {
         super(nbGenes, min, max, mutationRate);
     }
 
-    public mutate() {        
+    public mutate() {
         const result = new SmallADN(this.genes.length, this.minimum, this.maximum, this.mutationRate);
-        
+
         const maxGenesToMutate = this.genes.length * ADN.MUTATION_RATE;
         const nbToMutate = Math.ceil(Math.random() * maxGenesToMutate);
 
@@ -111,7 +111,7 @@ export class SmallADN extends ADN {
                 let pct = this.maximum * 0.5;
                 if (pct === 0) {
                     pct = 0.01;
-                }     
+                }
 
                 result[i] = this.genes[i] + MyMath.random(-pct, pct);
                 result[i] = Math.max(result[i], this.minimum);

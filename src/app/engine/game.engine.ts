@@ -21,12 +21,12 @@ import { Phenotype } from '../models/phenotype.interface';
 
 export class GameEngine {
   private static readonly NB_HEALTH_WHEN_DIE: number = 1;
-  private static readonly NB_SHIPS: number = 80;
+  private static readonly NB_SHIPS: number = 20;
   private static readonly NB_INIT_HEALTH: number = 0; // 20;
   private static readonly RATE_SPAWN_HEALTH: number = 0; // 0.01;
-  private static readonly RATE_CLONE_SHIP: number = 0.005;
+  private static readonly RATE_CLONE_SHIP: number = 0.05;
   private static readonly RATE_CROSSOVER_SHIP: number = 0.01;
-  private static readonly MAX_POPULATION = 80;
+  private static readonly MAX_POPULATION = 20;
   private static readonly GAME_TIMER = 45; // 60; // in seconds
   private static readonly NEURO_EVO_MODE = 'neuroevol';
   private static readonly ALGO_EVO_MODE = 'geneticalgo';
@@ -231,7 +231,7 @@ export class GameEngine {
       this.initialize();
     }
 
-    this.shipRenderer.setDebugMode(config.debugMode);    
+    this.shipRenderer.setDebugMode(config.debugMode);
   }
 
   public getDefaultConfiguration(): Configuration {
@@ -400,7 +400,6 @@ export class GameEngine {
 
     // Manage ship actions
     const t = this.getElapsedTimeInSeconds();
-    const newShips = [];
     for (const ship of this.ships) {
       ship.setTime(t, GameEngine.GAME_TIMER);
 
@@ -411,22 +410,17 @@ export class GameEngine {
 
         missile.setBorders([-50, 850, -50, 850]);
         missile.setPosition(ship.pos);
-        const accuracy = MyMath.random(-ship.getFOV() / 2, ship.getFOV() / 2);
+        const accuracy = 0; // MyMath.random(-ship.getFOV() / 2, ship.getFOV() / 2);
         missile.setOrientation(ship.orientation + accuracy);
-
         this.missiles.push(missile);
       } else {
         ship.reduceCoolDown();
       }
-
-      const newShip = this.continuousEvolutionWithReference(ship);
-      if (newShip !== null) {
-        newShips.push(newShip);
-      }
     }
 
-    for (const ship of newShips) {
-      this.ships.push(ship);
+    const newShips = this.continuousEvolutionWithReference(this.ships);
+    for (const newShip of newShips) {
+      this.ships.push(newShip);
     }
 
     for (const ship of this.ships) {
@@ -647,33 +641,58 @@ export class GameEngine {
   // Evolution performed once the ship is dead
   // The ship is cloning itself if it was good enough
   // or a new ship is created based on two ships with a good score
-  private continuousEvolutionWithReference(shipToEvolve: Ship): Ship {
+  // private continuousEvolutionWithReference(shipToEvolve: Ship): Ship {
+  private continuousEvolutionWithReference(ships: Ship[]): Ship[] {
+    const isCloning = Math.random() < this.cloneRate;
+    const newShips = [];
+    if ((this.ships.length < GameEngine.MAX_POPULATION)) {
 
-    if (this.ships.length < GameEngine.MAX_POPULATION) {
-      if (Math.random() < this.cloneRate) {
-        const ind = {
-          adn: shipToEvolve.getADN(),
-          fitness: shipToEvolve.scoring()
-        };
+      // Select an individual to clone or reproduce
+      const individuals = [];
+      for (const pop of ships) {
 
-        this.ga.populate([ind]);
+        if (isCloning) {
+          const ind = {
+            id: pop.id,
+            adn: pop.getADN(),
+            fitness: pop.scoring()
+          };
+          individuals.push(ind);
+        }
+
+        const isReproducing = Math.random() < this.crossOverRate;
+        if (isReproducing && pop.hasPartner()) {
+          const id = this.generateId();
+          const orientation = Math.random() * 360;
+          const newShip = pop.reproduce(id, orientation);
+          newShips.push(newShip);
+        }
+        pop.setPartner(null); // reset ptoential partner each frame
+      }
+
+      if (isCloning) {
+        this.ga.populate(individuals);
+        this.ga.computeProbas();
+        const picked = this.ga.pickOne(individuals);
+        const pickedShip = ships.find((value: Ship, index: number, allShips: Ship[]) => {
+          return value.id === picked.id;
+        });
+
+        this.ga.populate([picked]);
         this.ga.evolveFromReference();
         const newIndividuals = this.ga.getPopulation();
 
         const orientation = Math.random() * 360;
-        const ship = this.shipFactory.create(this.generateId(), shipToEvolve.getGeneration() + 1);
+        const ship = this.shipFactory.create(this.generateId(), pickedShip.getGeneration() + 1, pickedShip.getParentID());
         ship.setADN(newIndividuals[0].adn);
-        ship.setPosition(shipToEvolve.pos);
+        ship.setPosition(pickedShip.pos);
         ship.setOrientation(orientation);
         ship.setBorders([0, this.width, 0, this.height]);
-
-        return ship;
-      } else {
-        return null;
+        newShips.push(ship);
       }
-    } else {
-      return null;
     }
+
+    return newShips;
   }
 
   private getOldestShip(ships: Ship[]): Ship {
@@ -799,8 +818,6 @@ export class GameEngine {
       }
 
       // Check collision between ships for reproduction
-      // To uncomment to reactive this functionality
-      /*
       for (let i = 0; i < nShips - 1; i++) {
         const shipA = ships[i];
 
@@ -815,7 +832,6 @@ export class GameEngine {
           this.detectCollision(shipA, shipB, previousCollision, firstCollision, newCollision, t); // , previousCollisions);
         }
       }
-      */
 
       if (firstCollision.isEmpty()) {
         // No collision so the pod is following its path until the end of the turn
@@ -895,16 +911,11 @@ export class GameEngine {
           // newShips[0].id = this.generateId();
           // this.ships.push(newShips[0]);
 
-        }
-        /*
-        // Uncomment to reactivate cross over between ships
-        else if (firstCollision.objA instanceof Ship) {
+        } else if (firstCollision.objA instanceof Ship) {
           const shipA = firstCollision.objA as Ship;
           const shipB = firstCollision.objB as Ship; // Obj B is a ship
           shipA.setPartner(shipB);
-
         }
-        */
 
         t += collisionTime;
         previousCollision = firstCollision;
