@@ -4,7 +4,6 @@ import { SimuInfoService } from '../../services/simu-info.service';
 import { of, Observable, Subscription } from 'rxjs';
 import { Point } from '../../tools/statistics.tools';
 import { MyMath } from '../../tools/math.tools';
-import { throttleTime } from 'rxjs/operators';
 
 @Component({
   selector: 'app-scoring',

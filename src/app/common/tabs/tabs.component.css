@@ -28,6 +28,6 @@
 
 .selected {
     font-style: bold;
-    color: blue;
+    color: rgb(114,147,203);
     border-bottom: solid;
 }

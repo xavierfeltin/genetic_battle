@@ -35,7 +35,7 @@ export class OldestShipsComponent implements OnInit, OnDestroy {
 
   private dataOldestShips: number[][] = [];
   private axisOldestShips: string[] = ['Missile Attraction', 'Health Attraction', 'Ship Attraction',
-                                       'Fire Rate', 'Radar Length', 'FOV Angle'];
+                                       'Fire Rate', 'Radar Radius', 'FOV Angle'];
   private titlesOldestShips: string[] = ['Alive Oldest Ship'];
 
   private subscription1: Subscription;
