@@ -16,8 +16,8 @@ export class SimuConfigComponent implements OnInit {
   simu: GameEngine;
   isValidFormSubmitted: boolean;
   formSimu = this.fb.group({
-    resetSimulation: [false, Validators.required],
-    debugMode: [false, Validators.required],
+    resetSimulation: ['', Validators.required],
+    debugMode: ['', Validators.required],
     simu_global: this.fb.group({
       nbStartingShips: ['', [Validators.pattern(this.integerPattern), Validators.required]],
       energyFuel: ['', [Validators.pattern(this.floatPattern), Validators.required]],
@@ -42,8 +42,8 @@ export class SimuConfigComponent implements OnInit {
     this.simu = this.service.getGame();
     const config = this.simu.getDefaultConfiguration();
 
-    this.formSimu.get('resetSimulation').setValue(config.resetSimulation);
-    this.formSimu.get('debugMode').setValue(config.debugMode);
+    this.resetSimulation.setValue(config.resetSimulation);
+    this.debugMode.setValue(config.debugMode);
     this.nbStartingShips.setValue(config.nbStartingShips);
     this.energyFuel.setValue(config.energyFuel);
     this.energyFire.setValue(config.energyFire);
@@ -136,5 +136,13 @@ export class SimuConfigComponent implements OnInit {
 
   get evolutionMode() {
     return this.formSimu.get('simu_genetic.evolutionMode');
+  }
+
+  get resetSimulation() {
+    return this.formSimu.get('resetSimulation');
+  }
+
+  get debugMode() {
+    return this.formSimu.get('debugMode');
   }
 }

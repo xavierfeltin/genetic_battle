@@ -27,7 +27,7 @@ export class LineChartComponent implements OnInit, OnChanges {
   @Input() labels: string[];
   @Input() title: string;
 
-  private chart: Chart;
+  public chart: Chart;
   private isInit: boolean = false;
 
   // from http://ksrowell.com/blog-visualizing-data/2012/02/02/optimal-colors-for-graphs/

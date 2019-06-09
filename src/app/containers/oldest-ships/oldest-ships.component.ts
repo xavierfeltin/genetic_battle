@@ -42,7 +42,7 @@ export class OldestShipsComponent implements OnInit, OnDestroy {
   private subscription2: Subscription;
   private subscription5: Subscription;
 
-  private timer = '';
+  public timer = '';
   private time = 0;
 
   constructor(private service: SimuInfoService) { }

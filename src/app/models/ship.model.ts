@@ -1,5 +1,4 @@
 import { GameObject } from './game-object.model';
-import { GameAction } from '../bot/bot';
 import { ADN, FactoryADN } from '../ia/adn';
 import { Vect2D } from './vect2D.model';
 import { MyMath } from '../tools/math.tools';
@@ -516,38 +515,6 @@ export class Ship extends GameObject {
 
     public getGeneration(): number {
         return this.generation;
-    }
-
-    public applyAction(action: GameAction) {
-        switch (action.moveAction) {
-            case Ship.TURN_LEFT: {
-                this.turnLeft();
-                break;
-            }
-            case Ship.TURN_RIGHT: {
-                this.turnRight();
-                break;
-            }
-            case Ship.MOVE_FORWARD: {
-                this.goForward();
-                break;
-            }
-        }
-
-        switch (action.changeFov) {
-            case Ship.EXTEND_FOV: {
-                this.improveFOV();
-                break;
-            }
-            case Ship.REDUCE_FOV: {
-                this.reduceFOV();
-                break;
-            }
-            case Ship.KEEP_FOV: {
-                this.keepFOV();
-                break;
-            }
-        }
     }
 
     public updateLife(energy: number, cause: number) {

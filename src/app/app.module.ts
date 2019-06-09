@@ -3,11 +3,7 @@ import { NgModule } from '@angular/core';
 import { NgxsModule } from '@ngxs/store';
 import { AppComponent } from './app.component';
 import { SceneComponent } from './containers/scene/scene.component';
-import { ShipState } from './states/ship.state';
-import { WorldState } from './states/world.state';
-import { GamedState } from './states/game.state';
 import { GameViewerComponent } from './containers/game-viewer/game-viewer.component';
-import { ShipComponent } from './containers/ship/ship.component';
 import { OldestShipsComponent } from './containers/oldest-ships/oldest-ships.component';
 import { SimuConfigComponent } from './containers/simu-config/simu-config.component';
 import { ReactiveFormsModule } from '@angular/forms';
@@ -23,7 +19,6 @@ import { ScoringComponent } from './containers/scoring/scoring.component';
     AppComponent,
     SceneComponent,
     GameViewerComponent,
-    ShipComponent,
     OldestShipsComponent,
     SimuConfigComponent,
     Tabs,
@@ -35,13 +30,7 @@ import { ScoringComponent } from './containers/scoring/scoring.component';
   ],
   imports: [
     BrowserModule,
-    ReactiveFormsModule,
-    NgxsModule.forRoot([
-      //States used in application
-      ShipState,
-      WorldState,
-      GamedState
-    ])
+    ReactiveFormsModule
   ],
   providers: [],
   bootstrap: [AppComponent]

@@ -1,6 +1,4 @@
 import { ShipRender } from './ship.engine';
-import { IBot } from './../bot/bot';
-import { TestBot } from './../bot/test';
 import { Collision } from './collision.engine';
 import { Ship, FactoryShip } from '../models/ship.model';
 import { Missile, FactoryMissile } from '../models/missile.model';
@@ -14,10 +12,9 @@ import { MyMath } from '../tools/math.tools';
 import { Subject } from 'rxjs';
 import { Configuration } from '../models/configuration.interface';
 import { FactoryADN, ADN } from '../ia/adn';
-import { FortuneWheelGA, Individual } from '../ia/ga';
+import { FortuneWheelGA } from '../ia/ga';
 import { Scoring } from '../ia/scoring';
 import { Phenotype } from '../models/phenotype.interface';
-// import * as seedrandom from 'seedrandom';
 
 export class GameEngine {
   private static readonly NB_HEALTH_WHEN_DIE: number = 1;
@@ -57,7 +54,6 @@ export class GameEngine {
   private deadShips: Ship[] = [];
   private missiles: Missile[] = [];
   private health: Health[] = [];
-  private bots: IBot[] = [];
   private game: Game;
 
   // Simulation variables
@@ -300,9 +296,6 @@ export class GameEngine {
     this.oldestShip = this.ships[0];
     // this._oldestShip$.next(this.oldestShip);
     this._aliveOldestShip$.next(this.oldestShip.getPhenotype());
-
-    this.bots.push(new TestBot(0));
-    this.bots.push(new TestBot(1));
 
     for (let i = 0; i < this.nbStartingHealth; i++) {
       this.createHealth(i);

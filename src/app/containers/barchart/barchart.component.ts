@@ -20,7 +20,7 @@ export class BarChartComponent implements OnInit, OnChanges {
   @Input() serieTitles: string[] = [];
   @Input() title: string;
 
-  private chart: Chart;
+  public chart: Chart;
 
   // from http://ksrowell.com/blog-visualizing-data/2012/02/02/optimal-colors-for-graphs/
   private colors: string[] = ['rgb(114,147,203)', 'rgb(225,151,76)', 'rgb(132,186,91)',
