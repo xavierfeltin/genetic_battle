@@ -8,7 +8,7 @@
     -->
     <div class="graphLayout">
         <app-linechart title="Nb of ships" [population]="getPopulation$() | async" labels="getLabelNbShips$() | async"> </app-linechart>
-        <app-radarchart title="Oldest ship alive's phenotype" [labels]="getLabelsOldestShips$() | async" [data]="getDataOldestShips$() | async"
+        <app-radarchart title="Best ship alive's phenotype" [labels]="getLabelsOldestShips$() | async" [data]="getDataOldestShips$() | async"
             [serieTitles]="getSerieTitlesOldestShips$() | async"> </app-radarchart>
         <app-barchart title="Ship attractions" [labels]="getLabelsShipAttractions$() | async"
             [data]="getDataShipAttractions$() | async" [serieTitles]="getSerieTitlesShipAttractions$() | async"> </app-barchart>
