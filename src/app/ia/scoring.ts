@@ -12,4 +12,5 @@ export interface Scoring {
     stamp: number; // in seconds
     generation?: number;
     lifespan?: number;
+    life?: number;
 }

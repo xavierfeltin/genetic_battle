@@ -25,6 +25,7 @@ export class ScoringComponent implements OnInit, OnDestroy {
   private deadMaxScore: number = -Infinity;
   private deadAvgScore: number = 0;
   private nbDeads: number = 0;
+  private time: number = 0;
   private timer: string = '';
   private readonly nbRowsToDisplay = 15;
 
@@ -64,22 +65,23 @@ export class ScoringComponent implements OnInit, OnDestroy {
           }
         });
 
-        this.timer = this.formatTime(this.scores[0].stamp);
+        this.time = this.scores[0].stamp;
+        this.timer = this.formatTime(this.time);
         const minPoint: Point = {
           data: minScore,
-          timer: this.scores[0].stamp,
+          timer: this.time,
           stamp: this.timer
         };
 
         const maxPoint: Point = {
           data: maxScore,
-          timer: this.scores[0].stamp,
+          timer: this.time,
           stamp: this.timer
         };
 
         const avgPoint: Point = {
           data: avgScore,
-          timer: this.scores[0].stamp,
+          timer: this.time,
           stamp: this.timer
         };
 
@@ -108,16 +110,19 @@ export class ScoringComponent implements OnInit, OnDestroy {
 
       const minPoint: Point = {
         data: this.deadMinScore === Infinity ? 0 : this.deadMinScore,
+        timer: this.time,
         stamp: this.timer
       };
 
       const maxPoint: Point = {
         data: this.deadMaxScore === -Infinity ? 0 : this.deadMaxScore,
+        timer: this.time,
         stamp: this.timer
       };
 
       const avgPoint: Point = {
         data: this.nbDeads !== 0 ? this.deadAvgScore / this.nbDeads : 0,
+        timer: this.time,
         stamp: this.timer
       };
 
@@ -139,6 +144,7 @@ export class ScoringComponent implements OnInit, OnDestroy {
         && population[i].length !== 0 
         && points[i].timer < population[i][population[i].length - 1].timer) {
         population[i] = [];
+        debugger;
       }
 
       if (population.length > 0 ) {

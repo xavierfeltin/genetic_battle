@@ -124,7 +124,7 @@ export class NeuralNetwork {
     for (let i = 0; i < neurons.rows; i++) {
       for (let j = 0; j < neurons.columns; j++) {
         const val = neurons.values[i][j];
-        neurons.values[i][j] = Activation.sigmoid(val);
+        neurons.values[i][j] = Activation.tanh(val);
       }
     }
   }

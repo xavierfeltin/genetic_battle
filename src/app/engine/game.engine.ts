@@ -24,7 +24,7 @@ export class GameEngine {
   private static readonly NB_SHIPS: number = 20;
   private static readonly NB_INIT_HEALTH: number = 0; // 20;
   private static readonly RATE_SPAWN_HEALTH: number = 0; // 0.01;
-  private static readonly RATE_CLONE_SHIP: number = 0.05;
+  private static readonly RATE_CLONE_SHIP: number = 0.03;
   private static readonly RATE_CROSSOVER_SHIP: number = 0.01;
   private static readonly MAX_POPULATION = 20;
   private static readonly GAME_TIMER = 45; // 60; // in seconds

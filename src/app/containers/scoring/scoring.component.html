@@ -1,37 +1,39 @@
 <div class="layout">
   <app-linechart class="chart" title="Living score evolution" [population]="getPopulation$() | async" [labels]="getLabels$() | async"> </app-linechart>
   <app-linechart class="chart" title="Dead score evolution" [population]="getDeadPopulation$() | async" [labels]="getLabels$() | async"> </app-linechart>
-
-  <diV>
-    <table>
-      <tr>
-        <th> ID </th>
-        <th> Score </th>
-        <th> N° Gen. </th>
-        <th> Lifespan </th>
-        <th> Nb H. Packs </th>
-        <th> Damage </th>
-        <th> T. Ennemies </th>
-        <th> D. Ennemies </th>
-        <th> D. Missiles </th>
-        <th> L. Missiles </th>
-        <th> Accuracy </th>
-      </tr>
-      <ng-container *ngFor="let score of scores; index as i">
-      <tr *ngIf="i < nbRowsToDisplay">
-        <td> {{score.id}} </td>
-        <td> {{score.score.toFixed(2)}} </td>
-        <td> {{score.generation}} </td>
-        <td> {{score.lifespan}} </td>
-        <td> {{score.nbHealthPack}} </td>
-        <td> {{score.damageReceived}} </td>
-        <td> {{score.touchedEnnemies}} </td>
-        <td> {{score.destroyedEnnemies}} </td>
-        <td> {{score.missileDestroyed}} </td>
-        <td> {{score.missileLaunched}} </td>
-        <td> {{score.accuracy.toFixed(2)}} </td>
-      </tr>
-      </ng-container>
-    </table>
-  </diV>
 </div>
+
+<diV>
+  <table>
+    <tr>
+      <th> ID </th>
+      <th> Score </th>
+      <th> N° Gen. </th>
+      <th> Lifespan </th>
+      <th> Life </th>
+      <th> Nb H. Packs </th>
+      <th> Damage </th>
+      <th> T. Ennemies </th>
+      <th> D. Ennemies </th>
+      <th> D. Missiles </th>
+      <th> L. Missiles </th>
+      <th> Accuracy </th>
+    </tr>
+    <ng-container *ngFor="let score of scores; index as i">
+    <tr *ngIf="i < nbRowsToDisplay">
+      <td> {{score.id}} </td>
+      <td> {{score.score.toFixed(2)}} </td>
+      <td> {{score.generation}} </td>
+      <td> {{score.lifespan}} </td>
+      <td> {{score.life}} </td>
+      <td> {{score.nbHealthPack}} </td>
+      <td> {{score.damageReceived}} </td>
+      <td> {{score.touchedEnnemies}} </td>
+      <td> {{score.destroyedEnnemies}} </td>
+      <td> {{score.missileDestroyed}} </td>
+      <td> {{score.missileLaunched}} </td>
+      <td> {{score.accuracy.toFixed(2)}} </td>
+    </tr>
+    </ng-container>
+  </table>
+</diV>

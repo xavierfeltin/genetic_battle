@@ -19,7 +19,7 @@ export class Ship extends GameObject {
 
     public static readonly MAX_LIFE: number = 100;
     public static readonly DEFAULT_ENERGY_FUEL: number = 0;
-    public static readonly DEFAULT_ENERGY_FIRE: number = 0; // -1;
+    public static readonly DEFAULT_ENERGY_FIRE: number = -2;
 
     private static readonly MAX_SPEED: number = 5;
     private static readonly MIN_SPEED: number = 2;
@@ -29,7 +29,7 @@ export class Ship extends GameObject {
 
     private static readonly NB_GENES: number = 7;
     private static readonly NB_ATTRIBUTES: number = 6;
-    private static readonly NB_NN_INPUT: number = 4;
+    private static readonly NB_NN_INPUT: number = 6;
     private static readonly NN_HIDDEN_LAYERS: number[] = [4, 4];
     private static readonly MIN_ADN_VALUE: number = -1;
     private static readonly MAX_ADN_VALUE: number = 1;
@@ -204,8 +204,8 @@ export class Ship extends GameObject {
         const score = (this.nbHealthPackPicked * 1)
                      // + (this.nbEnnemiesTouched * 5)
                      // + this.nbMissilesDestroyed;
-                     + this.nbEnnemiesDestroyed * 1
-                     - this.nbReceivedDamage;
+                      + this.nbEnnemiesDestroyed * 1
+                    // - this.nbReceivedDamage;
                     // + (this.getAccuracy() * 20);
                     // - (this.nbReceivedDamage * 2);
                     // + ((this.age / 30) * 5);
@@ -229,7 +229,8 @@ export class Ship extends GameObject {
             stamp: this.timer,
             state: this.isDead() ? 'Dead' : 'Alive',
             generation: this.generation,
-            lifespan: Math.round(this.getAge() / 30) // in second
+            lifespan: Math.round(this.getAge() / 30), // in second
+            life: this.life
         };
         return score;
     }
@@ -291,26 +292,26 @@ export class Ship extends GameObject {
         this.setRadar(length);
         */
 
-        const medianValue = 0.5; // 0
+        const medianValue = 0.3; // 0
 
-        this.attractHealth += (output[0] !== medianValue ) ? ((output[0] < medianValue) ? -0.05 : 0.05 ) : 0;
+        this.attractHealth += (output[0] < -medianValue || output[0] > medianValue) ? ((output[0] < -medianValue) ? -0.05 : 0.05 ) : 0;
         this.attractHealth = Math.min(this.attractHealth, Ship.MAX_ATTRACTION);
         this.attractHealth = Math.max(this.attractHealth, Ship.MIN_ATTRACTION);
 
-        this.attractMissile += (output[1] !== medianValue ) ? ((output[1] < medianValue ) ? -0.05 : 0.05 ) : 0;
+        this.attractMissile += (output[1] < -medianValue || output[1] > medianValue) ? ((output[1] < -medianValue ) ? -0.05 : 0.05 ) : 0;
         this.attractMissile = Math.min(this.attractMissile, Ship.MAX_ATTRACTION);
         this.attractMissile = Math.max(this.attractMissile, Ship.MIN_ATTRACTION);
 
-        this.attractShip += (output[2] !== medianValue ) ? ((output[2] < medianValue ) ? -0.05 : 0.05 ) : 0;
+        this.attractShip += (output[2] < -medianValue || output[2] > medianValue) ? ((output[2] < -medianValue ) ? -0.05 : 0.05 ) : 0;
         this.attractShip = Math.min(this.attractShip, Ship.MAX_ATTRACTION);
         this.attractShip = Math.max(this.attractShip, Ship.MIN_ATTRACTION);
 
-        let delta = (output[3] !== medianValue ) ? ((output[3] < medianValue ) ? -5 : 5 ) : 0;
+        let delta = (output[3] < -medianValue || output[3] > medianValue) ? ((output[3] < -medianValue ) ? -5 : 5 ) : 0;
         delta = (this.fov + delta > Ship.MAX_ANGLE_FOV) ? 0 : delta;
         delta = (this.fov + delta < Ship.MIN_ANGLE_FOV) ? 0 : delta;
         this.setFOV(Math.round(this.getFOV() + delta));
 
-        this.fireRate = (output[4] <= medianValue ) ? 0 : 100;
+        this.fireRate = (output[4] <= 0 ) ? 0 : 100;
         /*
         this.fireRate += (output[4] !== 0) ? ((output[4] < 0) ? -1 : 1 ) : 0;
         this.fireRate = Math.min(this.fireRate, Ship.MAX_FIRE_RATE);
@@ -329,6 +330,7 @@ export class Ship extends GameObject {
         const detectedShip = this.getClosestInSight(ships);
         const detectedHealth = this.getClosestInSight(healths);
         const detectedMissilesFOV = this.getClosestInSight(missiles);
+        const detectedShipRadar = this.getClosestOnRadar(ships);
 
         const fovSquared =  this.fovLength * this.fovLength;
 
@@ -336,36 +338,24 @@ export class Ship extends GameObject {
         // const distDetectedHealth = detectedHealth === null ? fovSquared : detectedHealth.pos.distance2(this.pos);
         // const distDetectedMissiles = detectedMissiles === null ? this.radarLenSquared : detectedMissiles.pos.distance2(this.pos);
         // const distDetectedMissilesInFOV = detectedMissilesFOV === null ? fovSquared : detectedMissilesFOV.pos.distance2(this.pos);
-        let distDetectedShip = detectedShip === null ? -1 : detectedShip.pos.distance(this.pos);
-        if (distDetectedShip > this.fovLength) {
-            distDetectedShip = -1;
-        } else {
-            distDetectedShip = MyMath.map(distDetectedShip, 0, this.fovLength, 1, 0);
-        }
-
-        let distDetectedHealth = detectedHealth === null ? -1 : detectedHealth.pos.distance(this.pos);
-        if (distDetectedHealth > this.fovLength) {
-            distDetectedHealth = -1;
-        } else {
-            distDetectedHealth = MyMath.map(distDetectedHealth, 0, this.fovLength, 1, 0);
-        }
-
-        let distDetectedMissiles = detectedMissiles === null ? -1 : detectedMissiles.pos.distance(this.pos);
-        if (distDetectedMissiles > this.radarLength) {
-            distDetectedMissiles = -1;
-        } else {
-            distDetectedMissiles = MyMath.map(distDetectedMissiles, 0, this.fovLength, 1, 0);
-        }
+        const maxDist = 800 * Math.sqrt(2);
+        const distDetectedShip = detectedShip === null ? -1 : MyMath.map(detectedShip.pos.distance(this.pos), 0, maxDist, 1, 0);
+        const distDetectedHealth = detectedHealth === null ? -1 : MyMath.map(detectedHealth.pos.distance(this.pos), 0, maxDist, 1, 0);
+        const distDetectedMissiles = detectedMissiles === null ? -1 : MyMath.map(detectedMissiles.pos.distance(this.pos), 0, maxDist, 1, 0);
+        const distDetectedShipRadar = detectedShipRadar === null ? -1 : MyMath.map(detectedShipRadar.pos.distance(this.pos), 0, maxDist, 1, 0);
+        const distDetectedMissileFOV = detectedMissilesFOV === null ? -1 : MyMath.map(detectedMissilesFOV.pos.distance(this.pos), 0, maxDist, 1, 0);
 
         // input.push(detectedMissiles === null ? 0 : 1);
         // input.push(detectedShip === null ? 0 : 1);
         // input.push(detectedHealth === null ? 0 : 1);
         // input.push(detectedMissilesFOV === null ? 0 : 1);
 
-        input.push(MyMath.map(distDetectedHealth, 0, fovSquared, Ship.MIN_NN_VALUE, Ship.MAX_ADN_VALUE));
-        input.push(MyMath.map(distDetectedShip, 0, fovSquared, Ship.MIN_NN_VALUE, Ship.MAX_ADN_VALUE));
-        input.push(MyMath.map(distDetectedMissiles, 0, this.radarLenSquared, Ship.MIN_NN_VALUE, Ship.MAX_ADN_VALUE));
+        input.push(distDetectedHealth); // MyMath.map(distDetectedHealth, 0, 800 * Math.sqrt(2), Ship.MIN_NN_VALUE, Ship.MAX_ADN_VALUE));
+        input.push(distDetectedShip); // MyMath.map(distDetectedShip, 0, 800 * Math.sqrt(2), Ship.MIN_NN_VALUE, Ship.MAX_ADN_VALUE));
+        input.push(distDetectedMissiles); // MyMath.map(distDetectedMissiles, 0, 800 * Math.sqrt(2), Ship.MIN_NN_VALUE, Ship.MAX_ADN_VALUE));
         // input.push(MyMath.map(distDetectedMissilesInFOV, 0, fovSquared, Ship.MIN_NN_VALUE, Ship.MAX_ADN_VALUE));
+        input.push(distDetectedShipRadar);
+        input.push(distDetectedMissileFOV);
 
         // input.push(MyMath.map(this.attractMissile, Ship.MIN_ATTRACTION, Ship.MAX_ATTRACTION, Ship.MIN_NN_VALUE, Ship.MAX_ADN_VALUE));
         // input.push(MyMath.map(this.attractShip, Ship.MIN_ATTRACTION, Ship.MAX_ATTRACTION, Ship.MIN_NN_VALUE, Ship.MAX_ADN_VALUE));
@@ -490,8 +480,14 @@ export class Ship extends GameObject {
     public canFire(ships: Ship[], missiles: Missile[]): boolean {
         const ship = this.getClosestInSight(ships);
         const missile = this.getClosestInSight(missiles);
-        return (ship !== null || missile !== null) && this.coolDown === 0;
-        // return this.coolDown === 0;
+        
+        if (this.isNeuroEvo) {
+            // NN decides if the ship should shoot or not
+            return this.coolDown === 0;
+        } else {
+            // AG is having more input information
+            return (ship !== null || missile !== null) && this.coolDown === 0;    
+        }
     }
 
     public reduceCoolDown() {

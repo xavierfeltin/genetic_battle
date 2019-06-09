@@ -24,9 +24,9 @@ export class Stat {
     public static countByClasses(data: number[], min: number, max: number, nbClasses: number, accuracy: number): number[] {
         const range = Math.abs(max - min);
         const step = Math.round((range / nbClasses) * (1 / accuracy)) * accuracy;
-        const classes = Array<number>(nbClasses);
+        const classes = [];
         for (let i = 0; i < nbClasses ; i++) {
-            classes[i] = 0;
+            classes.push(0);
         }
 
         // translate negative numbers to a positive range, min becoming 0
@@ -35,8 +35,12 @@ export class Stat {
             delta = -min;
         }
 
+        const deltaMinValue = Math.floor((min + delta) / step);
+
         for (const d of data) {
-            const index = Math.floor((d + delta) / step);
+            let index = Math.floor((d + delta) / step) - deltaMinValue;
+            // ex: for 10 classes, highest value 2.0, 2.0 / 0.4 = 10 but needs to be included to index 9, not a new class
+            index = Math.min(index, nbClasses-1); 
             classes[index]++;
         }
 
