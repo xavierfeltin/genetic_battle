@@ -373,7 +373,7 @@ export class Ship extends GameObject {
         // input.push(this.hasBeenHealed ? 1 : 0);
         // input.push(this.hasBeenShot ? 1 : 0);
         input.push(this.hasTouchedEnnemy ? 1 : 0);
-        // input.push(this.hasTouchedMissile ? 1 : 0);
+        input.push(this.hasTouchedMissile ? 1 : 0);
 
         // input.push(MyMath.map(this.velo.x, 0, Ship.MAX_SPEED, Ship.MIN_NN_VALUE, Ship.MAX_ADN_VALUE));
         // input.push(MyMath.map(this.velo.y, 0, Ship.MAX_SPEED, Ship.MIN_NN_VALUE, Ship.MAX_ADN_VALUE));
