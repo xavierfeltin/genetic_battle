@@ -293,19 +293,22 @@ export class Ship extends GameObject {
 
         const medianValue = 0.3; // 0
 
-        this.attractHealth += (output[0] < -medianValue || output[0] > medianValue) ? ((output[0] < -medianValue) ? -0.05 : 0.05 ) : 0;
-        this.attractHealth = Math.min(this.attractHealth, Ship.MAX_ATTRACTION);
+        let delta = (output[0] < -medianValue || output[0] > medianValue) ? ((output[0] < -medianValue) ? -0.05 : 0.05 ) : 0;
+        this.attractHealth += + delta;
+        this.attractHealth = Math.min(this.attractHealth + delta, Ship.MAX_ATTRACTION);
         this.attractHealth = Math.max(this.attractHealth, Ship.MIN_ATTRACTION);
 
-        this.attractMissile += (output[1] < -medianValue || output[1] > medianValue) ? ((output[1] < -medianValue ) ? -0.05 : 0.05 ) : 0;
+        delta = (output[1] < -medianValue || output[1] > medianValue) ? ((output[1] < -medianValue ) ? -0.05 : 0.05 ) : 0;
+        this.attractMissile += delta;
         this.attractMissile = Math.min(this.attractMissile, Ship.MAX_ATTRACTION);
         this.attractMissile = Math.max(this.attractMissile, Ship.MIN_ATTRACTION);
 
-        this.attractShip += (output[2] < -medianValue || output[2] > medianValue) ? ((output[2] < -medianValue ) ? -0.05 : 0.05 ) : 0;
+        delta = (output[2] < -medianValue || output[2] > medianValue) ? ((output[2] < -medianValue ) ? -0.05 : 0.05 ) : 0;
+        this.attractShip += delta;
         this.attractShip = Math.min(this.attractShip, Ship.MAX_ATTRACTION);
         this.attractShip = Math.max(this.attractShip, Ship.MIN_ATTRACTION);
 
-        let delta = (output[3] < -medianValue || output[3] > medianValue) ? ((output[3] < -medianValue ) ? -5 : 5 ) : 0;
+        delta = (output[3] < -medianValue || output[3] > medianValue) ? ((output[3] < -medianValue ) ? -5 : 5 ) : 0;
         delta = (this.fov + delta > Ship.MAX_ANGLE_FOV) ? 0 : delta;
         delta = (this.fov + delta < Ship.MIN_ANGLE_FOV) ? 0 : delta;
         this.setFOV(Math.round(this.getFOV() + delta));
@@ -698,6 +701,11 @@ export class Ship extends GameObject {
             if (object instanceof Missile) {
                 const m = object as Missile;
                 if (m.getLauncher().id === this.id) {
+                    continue;
+                }
+            } else if (object instanceof Ship) {
+                const s = object as Ship;
+                if (s.id === this.id) {
                     continue;
                 }
             }
