@@ -89,6 +89,14 @@ export class ScoringComponent implements OnInit, OnDestroy {
     });
 
     this.subscription2 = this.service.getDeadShipsScoring().subscribe(bufferedScores => {
+
+      if (this.deadPopulation.length !== 0
+        && this.deadPopulation[0].length !== 0
+        && this.time < this.deadPopulation[0][this.deadPopulation[0].length - 1].timer) {
+          debugger;
+        this.resetReferenceValues();
+      }
+
       for (const scores of bufferedScores) {
         if (scores.length !== 0) {
           this.nbDeads += scores.length;
@@ -142,11 +150,7 @@ export class ScoringComponent implements OnInit, OnDestroy {
       if (population.length !== 0
         && population[i].length !== 0
         && points[i].timer < population[i][population[i].length - 1].timer) {
-        population[i] = [];
-
-        if (i === 0) {
-          this.resetReferenceValues();
-        }
+        population[i] = [];        
       }
 
       if (population.length > 0 ) {
@@ -181,8 +185,8 @@ export class ScoringComponent implements OnInit, OnDestroy {
 
   private resetReferenceValues() {
     this.nbDeads = 0;
-    this.deadMaxScore = Infinity;
-    this.deadMinScore = -Infinity;
+    this.deadMaxScore = -Infinity;
+    this.deadMinScore = Infinity;
     this.deadAvgScore = 0;
   }
 
