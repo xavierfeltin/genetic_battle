@@ -203,7 +203,7 @@ export class Ship extends GameObject {
         const score = (this.nbHealthPackPicked * 1)
                      // + (this.nbEnnemiesTouched * 5)
                      // + this.nbMissilesDestroyed;
-                      + this.nbEnnemiesDestroyed * 1
+                      + this.nbEnnemiesDestroyed * 1;
                     // - this.nbReceivedDamage;
                     // + (this.getAccuracy() * 20);
                     // - (this.nbReceivedDamage * 2);
@@ -410,8 +410,10 @@ export class Ship extends GameObject {
 
     public reproduce(id: number, orientation: number): Ship {
         const adn = this.adn.crossOver(this.partner.adn);
+        adn.mutate();
+
         const ship = new Ship(id, this.generation + 1, this.energyFuel, this.energy, this.adnFactory, this.isNeuroEvo, this.parentID);
-        ship.setADN(adn.mutate());
+        ship.setADN(adn);
         ship.setPosition(this.pos);
         ship.setOrientation(orientation);
         ship.setBorders(this.getBorders());
@@ -482,13 +484,13 @@ export class Ship extends GameObject {
     public canFire(ships: Ship[], missiles: Missile[]): boolean {
         const ship = this.getClosestInSight(ships);
         const missile = this.getClosestInSight(missiles);
-        
+
         if (this.isNeuroEvo) {
             // NN decides if the ship should shoot or not
             return this.coolDown === 0;
         } else {
             // AG is having more input information
-            return (ship !== null || missile !== null) && this.coolDown === 0;    
+            return (ship !== null || missile !== null) && this.coolDown === 0;
         }
     }
 
@@ -558,7 +560,7 @@ export class Ship extends GameObject {
         let radar = missile === null ? Infinity : missile.pos.distance2(this.pos);
         let sight = missileSight === null ? Infinity : missileSight.pos.distance2(this.pos);
         if (sight < radar) {
-            this.steer(missileSight, this.attractMissile);    
+            this.steer(missileSight, this.attractMissile);
         } else {
             this.steer(missileSight, this.attractMissile);
         }
@@ -566,7 +568,7 @@ export class Ship extends GameObject {
         radar = healthRadar === null ? Infinity : healthRadar.pos.distance2(this.pos);
         sight = health === null ? Infinity : health.pos.distance2(this.pos);
         if (sight < radar) {
-            this.steer(health, this.attractHealth);    
+            this.steer(health, this.attractHealth);
         } else {
             this.steer(healthRadar, this.attractHealth);
         }
@@ -574,7 +576,7 @@ export class Ship extends GameObject {
         radar = shipRadar === null ? Infinity : shipRadar.pos.distance2(this.pos);
         sight = ship === null ? Infinity : ship.pos.distance2(this.pos);
         if (sight < radar) {
-            this.steer(ship, this.attractShip);    
+            this.steer(ship, this.attractShip);
         } else {
             this.steer(shipRadar, this.attractShip);
         }

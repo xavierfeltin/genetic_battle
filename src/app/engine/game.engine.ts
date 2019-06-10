@@ -22,7 +22,7 @@ export class GameEngine {
   private static readonly NB_INIT_HEALTH: number = 0; // 20;
   private static readonly RATE_SPAWN_HEALTH: number = 0; // 0.01;
   private static readonly RATE_CLONE_SHIP: number = 0.03;
-  private static readonly RATE_CROSSOVER_SHIP: number = 0.01;
+  private static readonly BREEDING_RATE_SHIP: number = 0.01;
   private static readonly MAX_POPULATION = 20;
   private static readonly GAME_TIMER = 45; // 60; // in seconds
   private static readonly NEURO_EVO_MODE = 'neuroevol';
@@ -58,11 +58,12 @@ export class GameEngine {
 
   // Simulation variables
   private nbStartingShips: number;
+  private maxShips: number;
   private nbStartingHealth: number;
   private rateHealth: number;
   private nbHealthDestroyingShip: number;
   private cloneRate: number;
-  private crossOverRate: number;
+  private breedingRate: number;
   private isNeuroEvolution: boolean;
 
   private ga: FortuneWheelGA;
@@ -79,41 +80,11 @@ export class GameEngine {
   private _deadShipsScoring$ = new Subject<Scoring[]>();
   public get deadShipsScoring$() { return this._deadShipsScoring$.asObservable() }
 
-  // private _nbShips$ = new Subject<number>();
-  // public get nbShips$() { return this._nbShips$.asObservable() }
-
-  /*
-  private _nbMissiles$ = new Subject<number>();
-  public get nbMissiles$() { return this._nbMissiles$.asObservable() }
-
-  private _nbHealth$ = new Subject<number>();
-  public get nbHealth$() { return this._nbHealth$.asObservable() }
-
-  private _coordShips$ = new Subject<number[][]>();
-  public get coordShips$() { return this._coordShips$.asObservable() }
-
-  private _missiles$ = new Subject<number[][]>();
-  public get missiles$() { return this._missiles$.asObservable() }
-
-  private _healths$ = new Subject<(number|boolean)[][]>();
-  public get healths$() { return this._healths$.asObservable() }
-
-  private _oldestShip$ = new Subject<Ship>();
-  public get oldestShip$() { return this._oldestShip$.asObservable() }
-  */
-
   private _aliveOldestShip$ = new Subject<Phenotype>();
   public get aliveOldestShip$() { return this._aliveOldestShip$.asObservable() }
 
   private _elapsedTime$ = new Subject<number>();
   public get elapsedTime$() { return this._elapsedTime$.asObservable() }
-
-  // private _generations$ = new Subject<number>();
-  // public get generations$() { return this._generations$.asObservable() }
-
-  // private _getScores$ = new Subject<Scoring[]>();
-  // public get getScore$() { return this._getScores$.asObservable() }
-
 
   constructor() {
     // seedrandom('hello.', { global: true });
@@ -136,11 +107,12 @@ export class GameEngine {
     this.oldestShip = null;
 
     this.nbStartingShips = GameEngine.NB_SHIPS;
+    this.maxShips = GameEngine.MAX_POPULATION;
     this.nbStartingHealth = GameEngine.NB_INIT_HEALTH;
     this.rateHealth = GameEngine.RATE_SPAWN_HEALTH;
     this.nbHealthDestroyingShip = GameEngine.NB_HEALTH_WHEN_DIE;
     this.cloneRate = GameEngine.RATE_CLONE_SHIP;
-    this.crossOverRate = GameEngine.RATE_CROSSOVER_SHIP;
+    this.breedingRate = GameEngine.BREEDING_RATE_SHIP;
 
     this.isNeuroEvolution = true;
     this.shipFactory.setNeuroEvolution(this.isNeuroEvolution);
@@ -209,11 +181,12 @@ export class GameEngine {
 
     // Simulation configuration
     this.nbStartingShips = config.nbStartingShips ;
+    this.maxShips = config.maxShips;
     this.nbStartingHealth = config.nbStartingHealth ;
     this.rateHealth = config.rateHealth ;
     this.nbHealthDestroyingShip = config.nbHealthDestroyingShip ;
     this.cloneRate = config.cloneRate ;
-    this.crossOverRate = config.crossOverRate ;
+    this.breedingRate = config.breedingRate ;
 
     let needToReset = false;
     const evolutionMode = this.shipFactory.getNeuroEvolution() ? GameEngine.NEURO_EVO_MODE : GameEngine.ALGO_EVO_MODE;
@@ -233,6 +206,7 @@ export class GameEngine {
   public getDefaultConfiguration(): Configuration {
     const config = {
       nbStartingShips: GameEngine.NB_SHIPS,
+      maxShips: GameEngine.MAX_POPULATION,
       energyFuel: Ship.DEFAULT_ENERGY_FUEL,
       energyFire: Ship.DEFAULT_ENERGY_FIRE,
       damageMissile: Missile.DEFAULT_DAMAGE,
@@ -241,8 +215,9 @@ export class GameEngine {
       nbHealthDestroyingShip: GameEngine.NB_HEALTH_WHEN_DIE,
       lifeFromHealth: Health.DEFAULT_HEALING,
       cloneRate: GameEngine.RATE_CLONE_SHIP,
-      crossOverRate: GameEngine.RATE_CROSSOVER_SHIP,
+      breedingRate: GameEngine.BREEDING_RATE_SHIP,
       mutationRate: ADN.MUTATION_RATE,
+      crossOverRate: ADN.CROSSOVER_RATE,
       evolutionMode: GameEngine.EVOLUTION_MODE,
       resetSimulation: true,
       debugMode: ShipRender.DEBUG
@@ -397,7 +372,6 @@ export class GameEngine {
       ship.setTime(t, GameEngine.GAME_TIMER);
 
       // Ship may fire this turn
-      this.configureContinuousEvolutionWithReference(this.ships);
       if (ship.fire(this.ships, this.missiles)) {
         const missile = this.missileFactory.create(this.generateId(), ship, ship.getFOVLen());
 
@@ -590,7 +564,7 @@ export class GameEngine {
   // The ship is cloning itself or reproduce with another ship if meeting it
   /*
   private continuousEvolutionWhenLiving(ship: Ship) {
-    if (this.ships.length > GameEngine.MAX_POPULATION) {
+    if (this.ships.length > this.maxShips) {
       ship.setPartner(null); // if it fails, it fails
     } else {
       // Ship may clone this turn
@@ -604,7 +578,7 @@ export class GameEngine {
       // To uncomment with collision management between ships to reactivate
       // Manage ship cross over
       if (ship.hasPartner()) {
-        if (Math.random() < this.crossOverRate) {
+        if (Math.random() < this.breedingRate) {
           const id = this.generateId();
           const orientation = Math.random() * 360;
           const newShip = ship.reproduce(id, orientation);
@@ -617,7 +591,7 @@ export class GameEngine {
   */
 
   private configureContinuousEvolutionWithReference(referenceShips: Ship[]) {
-    if (this.ships.length < GameEngine.MAX_POPULATION) {
+    if (this.ships.length < this.maxShips) {
 
       const refIndividuals = [];
       for (const ship of referenceShips) {
@@ -638,12 +612,15 @@ export class GameEngine {
   private continuousEvolutionWithReference(ships: Ship[]): Ship[] {
     const isCloning = Math.random() < this.cloneRate;
     const newShips = [];
-    if ((this.ships.length < GameEngine.MAX_POPULATION)) {
+    const deltaPop = this.maxShips - this.ships.length;
+    let nbMaxCrossingShips = isCloning ? deltaPop - 1 : deltaPop;
 
+    if (deltaPop > 0) {
       // Select an individual to clone or reproduce
       const individuals = [];
       for (const pop of ships) {
 
+        // Transform ships into individuals
         if (isCloning) {
           const ind = {
             id: pop.id,
@@ -653,14 +630,17 @@ export class GameEngine {
           individuals.push(ind);
         }
 
-        const isReproducing = Math.random() < this.crossOverRate;
-        if (isReproducing && pop.hasPartner()) {
-          const id = this.generateId();
-          const orientation = Math.random() * 360;
-          const newShip = pop.reproduce(id, orientation);
-          newShips.push(newShip);
+        if (nbMaxCrossingShips > 0) {
+          const isReproducing = Math.random() < this.breedingRate;
+          if (isReproducing && pop.hasPartner()) {
+            const id = this.generateId();
+            const orientation = Math.random() * 360;
+            const newShip = pop.reproduce(id, orientation);
+            newShips.push(newShip);
+          }
+          pop.setPartner(null); // reset ptoential partner each frame
+          nbMaxCrossingShips --;
         }
-        pop.setPartner(null); // reset ptoential partner each frame
       }
 
       if (isCloning) {

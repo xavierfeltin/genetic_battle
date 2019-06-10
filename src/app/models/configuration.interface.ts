@@ -1,5 +1,6 @@
 export interface Configuration {
     nbStartingShips: number;
+    maxShips: number;
     energyFuel: number;
     energyFire: number;
     damageMissile: number;
@@ -8,8 +9,9 @@ export interface Configuration {
     nbHealthDestroyingShip: number;
     lifeFromHealth: number;
     cloneRate: number;
-    crossOverRate: number;
+    breedingRate: number;
     mutationRate: number;
+    crossOverRate: number;
     evolutionMode: string;
     resetSimulation: boolean;
     debugMode: boolean;

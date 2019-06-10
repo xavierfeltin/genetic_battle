@@ -20,6 +20,7 @@ export class SimuConfigComponent implements OnInit {
     debugMode: ['', Validators.required],
     simu_global: this.fb.group({
       nbStartingShips: ['', [Validators.pattern(this.integerPattern), Validators.required]],
+      maxShips: ['', [Validators.pattern(this.integerPattern), Validators.required]],
       energyFuel: ['', [Validators.pattern(this.floatPattern), Validators.required]],
       energyFire: ['', [Validators.pattern(this.floatPattern), Validators.required]],
       damageMissile: ['', [Validators.pattern(this.integerPattern), Validators.required]],
@@ -30,8 +31,9 @@ export class SimuConfigComponent implements OnInit {
     }),
     simu_genetic: this.fb.group({
       cloneRate: ['', [Validators.pattern(this.floatPattern), Validators.required]],
-      crossOverRate: ['', [Validators.pattern(this.floatPattern), Validators.required]],
+      breedingRate: ['', [Validators.pattern(this.floatPattern), Validators.required]],
       mutationRate: ['', [Validators.pattern(this.floatPattern), Validators.required]],
+      crossOverRate: ['', [Validators.pattern(this.floatPattern), Validators.required]],
       evolutionMode: ['', Validators.required]
     })
   });
@@ -45,6 +47,7 @@ export class SimuConfigComponent implements OnInit {
     this.resetSimulation.setValue(config.resetSimulation);
     this.debugMode.setValue(config.debugMode);
     this.nbStartingShips.setValue(config.nbStartingShips);
+    this.maxShips.setValue(config.maxShips);
     this.energyFuel.setValue(config.energyFuel);
     this.energyFire.setValue(config.energyFire);
     this.damageMissile.setValue(config.damageMissile);
@@ -53,8 +56,9 @@ export class SimuConfigComponent implements OnInit {
     this.nbHealthDestroyingShip.setValue(config.nbHealthDestroyingShip);
     this.lifeFromHealth.setValue(config.lifeFromHealth);
     this.cloneRate.setValue(config.cloneRate);
-    this.crossOverRate.setValue(config.crossOverRate);
+    this.breedingRate.setValue(config.breedingRate);
     this.mutationRate.setValue(config.mutationRate);
+    this.crossOverRate.setValue(config.crossOverRate);
     this.evolutionMode.setValue(config.evolutionMode);
   }
 
@@ -73,6 +77,7 @@ export class SimuConfigComponent implements OnInit {
 
     const configuration: Configuration = {
       nbStartingShips: parseInt(formValues.simu_global.nbStartingShips),
+      maxShips: parseInt(formValues.simu_global.maxShips),
       energyFuel: parseFloat(formValues.simu_global.energyFuel),
       energyFire: parseFloat(formValues.simu_global.energyFire),
       damageMissile: parseInt(formValues.simu_global.damageMissile),
@@ -81,8 +86,9 @@ export class SimuConfigComponent implements OnInit {
       nbHealthDestroyingShip: parseInt(formValues.simu_global.nbHealthDestroyingShip),
       lifeFromHealth: parseInt(formValues.simu_global.lifeFromHealth),
       cloneRate: parseFloat(formValues.simu_genetic.cloneRate),
-      crossOverRate: parseFloat(formValues.simu_genetic.crossOverRate),
+      breedingRate: parseFloat(formValues.simu_genetic.breedingRate),
       mutationRate: parseFloat(formValues.simu_genetic.mutationRate),
+      crossOverRate: parseFloat(formValues.simu_genetic.crossOverRate),
       evolutionMode: formValues.simu_genetic.evolutionMode,
       resetSimulation: formValues.resetSimulation,
       debugMode: formValues.debugMode
@@ -92,6 +98,10 @@ export class SimuConfigComponent implements OnInit {
 
   get nbStartingShips() {
     return this.formSimu.get('simu_global.nbStartingShips');
+  }
+
+  get maxShips() {
+    return this.formSimu.get('simu_global.maxShips');
   }
 
   get energyFuel() {
@@ -124,6 +134,10 @@ export class SimuConfigComponent implements OnInit {
 
   get cloneRate() {
     return this.formSimu.get('simu_genetic.cloneRate');
+  }
+
+  get breedingRate() {
+    return this.formSimu.get('simu_genetic.breedingRate');
   }
 
   get crossOverRate() {

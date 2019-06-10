@@ -14,6 +14,18 @@
       </span>
       <br/>
 
+      <label [for]="maxShips"> Maximum ships: </label>
+      <input type="text" formControlName="maxShips" id="maxShips"/>
+      <span *ngIf="maxShips.errors && isValidFormSubmitted != null && !isValidFormSubmitted" [ngClass] = "'error'">
+        <ng-container *ngIf="maxShips.errors.pattern">
+          Should be an integer.
+        </ng-container>
+        <ng-container *ngIf="maxShips.errors.required">
+          A value is required.
+        </ng-container>
+      </span>
+      <br/>
+
       <label [for]="energyFuel">Energy to move: </label>
       <input type="text" formControlName="energyFuel"/>
       <span *ngIf="energyFuel.errors && isValidFormSubmitted != null && !isValidFormSubmitted" [ngClass] = "'error'">
@@ -76,7 +88,7 @@
       </span>
       <br/>
 
-      <label [for]="nbHealthDestroyingShip">Number of health from destroying a ship: </label>
+      <label [for]="nbHealthDestroyingShip">Number of health packs from destroying a ship: </label>
       <input type="text" formControlName="nbHealthDestroyingShip"/>
       <span *ngIf="nbHealthDestroyingShip.errors && isValidFormSubmitted != null && !isValidFormSubmitted" [ngClass] = "'error'">
         <ng-container *ngIf="nbHealthDestroyingShip.errors?.pattern">
@@ -114,13 +126,13 @@
     </span>
     <br/>
 
-    <label [for]="crossOverRate"> Cross over rate: </label>
-    <input type="text" formControlName="crossOverRate"/>
-    <span *ngIf="crossOverRate.errors && isValidFormSubmitted != null && !isValidFormSubmitted" [ngClass] = "'error'">
-      <ng-container *ngIf="crossOverRate.errors?.pattern">
+    <label [for]="breedingRate"> Breeding rate: </label>
+    <input type="text" formControlName="breedingRate"/>
+    <span *ngIf="breedingRate.errors && isValidFormSubmitted != null && !isValidFormSubmitted" [ngClass] = "'error'">
+      <ng-container *ngIf="breedingRate.errors?.pattern">
         Should be a float.
       </ng-container>
-      <ng-container *ngIf="crossOverRate.errors?.required">
+      <ng-container *ngIf="breedingRate.errors?.required">
         A value is required.
       </ng-container>
     </span>
@@ -137,6 +149,19 @@
       </ng-container>
     </span>
     <br/>
+
+    <label [for]="crossOverRate"> Cross over rate: </label>
+    <input type="text" formControlName="crossOverRate"/>
+    <span *ngIf="crossOverRate.errors && isValidFormSubmitted != null && !isValidFormSubmitted" [ngClass] = "'error'">
+      <ng-container *ngIf="crossOverRate.errors?.pattern">
+        Should be a float.
+      </ng-container>
+      <ng-container *ngIf="crossOverRate.errors?.required">
+        A value is required.
+      </ng-container>
+    </span>
+    <br/>
+
     <br/>
 
     <label [for]="evolutionMode"> Evolution Mode: </label>
@@ -144,7 +169,7 @@
     <div>
       <input type="radio" formControlName="evolutionMode" value="neuroevol" checked> <label> Neuro Evolution </label>
       <input type="radio" formControlName="evolutionMode"  value="geneticalgo"> <label> Genetic Algorithm </label>
-    </div>    
+    </div>
   </fieldset>
 
   <div class="layout">

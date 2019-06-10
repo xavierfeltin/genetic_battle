@@ -138,12 +138,15 @@ export class ScoringComponent implements OnInit, OnDestroy {
 
     for (let i = 0; i < points.length; i++) {
       // Clear data if reset
-      
-      if (population.length !== 0 
-        && population[i].length !== 0 
+
+      if (population.length !== 0
+        && population[i].length !== 0
         && points[i].timer < population[i][population[i].length - 1].timer) {
         population[i] = [];
-        debugger;
+
+        if (i === 0) {
+          this.resetReferenceValues();
+        }
       }
 
       if (population.length > 0 ) {
@@ -174,6 +177,13 @@ export class ScoringComponent implements OnInit, OnDestroy {
 
   public formatTime(elapsedTime: number, nbGeneration: number = -1): string {
     return MyMath.formatTime(elapsedTime, nbGeneration);
+  }
+
+  private resetReferenceValues() {
+    this.nbDeads = 0;
+    this.deadMaxScore = Infinity;
+    this.deadMinScore = -Infinity;
+    this.deadAvgScore = 0;
   }
 
   ngOnDestroy() {

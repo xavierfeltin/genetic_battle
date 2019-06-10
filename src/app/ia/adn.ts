@@ -1,17 +1,19 @@
 import { MyMath } from '../tools/math.tools';
+import { ThrowStmt } from '@angular/compiler';
 
 export class ADN {
     public static readonly MUTATION_RATE = 0.01;
-    public static readonly SWITCH_RATE = 0.5;
+    public static readonly CROSSOVER_RATE = 0.01;
 
     protected genes: number[];
     protected mutationRate: number;
+    protected crossOverRate: number;
 
     // Allowed range for each adn coefficients
     protected minimum: number;
     protected maximum: number;
 
-    constructor(nbGenes: number, min: number, max: number, mutationRate: number) {
+    constructor(nbGenes: number, min: number, max: number, mutationRate: number, crossOverRate: number) {
         this.minimum = min;
         this.maximum = max;
         this.mutationRate = mutationRate;
@@ -31,25 +33,25 @@ export class ADN {
     }
 
     public crossOver(adn: ADN): ADN {
-        const result = new ADN(this.genes.length, this.minimum, this.maximum, this.mutationRate);
+        const result = new ADN(this.genes.length, this.minimum, this.maximum, this.mutationRate, this.crossOverRate);
         return result;
     }
 
     public mutate() {
-        const result = new ADN(this.genes.length, this.minimum, this.maximum, this.mutationRate);
+        const result = new ADN(this.genes.length, this.minimum, this.maximum, this.mutationRate, this.crossOverRate);
         return result;
     }
 }
 
 export class HugeADN extends ADN {
-    constructor(nbGenes: number, min: number, max: number, mutationRate: number) {
-        super(nbGenes, min, max, mutationRate);
+    constructor(nbGenes: number, min: number, max: number, mutationRate: number, crossOverRate: number) {
+        super(nbGenes, min, max, mutationRate, crossOverRate);
     }
 
     public mutate() {
-        const result = new HugeADN(this.genes.length, this.minimum, this.maximum, this.mutationRate);
+        const result = new HugeADN(this.genes.length, this.minimum, this.maximum, this.mutationRate, this.crossOverRate);
 
-        const maxGenesToMutate = Math.round(Math.sqrt(this.genes.length)); // * ADN.MUTATION_RATE;
+        const maxGenesToMutate = Math.round(this.genes.length * this.mutationRate); // * ADN.MUTATION_RATE;
         const nbToMutate = Math.round(Math.random() * maxGenesToMutate);
 
         const indexes = [];
@@ -75,11 +77,11 @@ export class HugeADN extends ADN {
     }
 
     public crossOver(adn: ADN): ADN {
-        const result = new HugeADN(this.genes.length, this.minimum, this.maximum, this.mutationRate);
+        const result = new HugeADN(this.genes.length, this.minimum, this.maximum, this.mutationRate, this.crossOverRate);
 
         for (let i = 0; i < result.genes.length; i++) {
             const probaSwitch = Math.random();
-            if (probaSwitch <= ADN.SWITCH_RATE) {
+            if (probaSwitch <= this.crossOverRate) {
                 result.genes[i] = adn.getGenes()[i];
             } else {
                 result.genes[i] = this.genes[i];
@@ -91,14 +93,14 @@ export class HugeADN extends ADN {
 }
 
 export class SmallADN extends ADN {
-    constructor(nbGenes: number, min: number, max: number, mutationRate: number) {
-        super(nbGenes, min, max, mutationRate);
+    constructor(nbGenes: number, min: number, max: number, mutationRate: number, crossOverRate: number) {
+        super(nbGenes, min, max, mutationRate, crossOverRate);
     }
 
     public mutate() {
-        const result = new SmallADN(this.genes.length, this.minimum, this.maximum, this.mutationRate);
+        const result = new SmallADN(this.genes.length, this.minimum, this.maximum, this.mutationRate, this.crossOverRate);
 
-        const maxGenesToMutate = this.genes.length * ADN.MUTATION_RATE;
+        const maxGenesToMutate = Math.round(this.genes.length * this.mutationRate);
         const nbToMutate = Math.ceil(Math.random() * maxGenesToMutate);
 
         const indexes = [];
@@ -125,8 +127,18 @@ export class SmallADN extends ADN {
     }
 
     public crossOver(adn: ADN): ADN {
-        const result = new SmallADN(this.genes.length, this.minimum, this.maximum, this.mutationRate);
+        const result = new SmallADN(this.genes.length, this.minimum, this.maximum, this.mutationRate, this.crossOverRate);
 
+        const probaSwitch = Math.random();
+        for (let i = 0; i < this.genes.length; i++) {
+            if (probaSwitch <= this.crossOverRate) {
+                result.genes[i] = adn.getGenes()[i];
+            } else {
+                result.genes[i] = this.genes[i];
+            }
+        }
+
+        /*
         const median = Math.floor(result.genes.length / 2);
         const isOdd = (result.genes.length % 2) === 0;
 
@@ -143,6 +155,7 @@ export class SmallADN extends ADN {
         for (let i = index; i < result.genes.length; i++) {
             result.genes[i] = this.genes[i];
         }
+        */
 
         return result;
     }
@@ -150,10 +163,12 @@ export class SmallADN extends ADN {
 
 export class FactoryADN {
     private mutationRate: number;
+    private crossOverRate: number;
     private isHugeADN: boolean;
 
-    public constructor(rate: number = ADN.MUTATION_RATE, isHugeADN: boolean = true) {
-        this.mutationRate = rate;
+    public constructor(mutationRate: number = ADN.MUTATION_RATE, crossOverRate: number = ADN.CROSSOVER_RATE, isHugeADN: boolean = true) {
+        this.mutationRate = mutationRate;
+        this.crossOverRate = crossOverRate;
         this.isHugeADN = isHugeADN;
     }
 
@@ -163,6 +178,14 @@ export class FactoryADN {
 
     public setMutationRate(rate: number) {
         this.mutationRate = rate;
+    }
+
+    public getCrossOverRate(): number {
+        return this.crossOverRate;
+    }
+
+    public setCrossOverRate(rate: number) {
+        this.crossOverRate = rate;
     }
 
     public getIsHugeADN(): boolean {
@@ -175,10 +198,9 @@ export class FactoryADN {
 
     public create(nbGenes: number, min: number, max: number): ADN {
         if (this.isHugeADN) {
-            return new HugeADN(nbGenes, min, max, this.mutationRate);
-        }
-        else {
-            return new SmallADN(nbGenes, min, max, this.mutationRate);
+            return new HugeADN(nbGenes, min, max, this.mutationRate, this.crossOverRate);
+        } else {
+            return new SmallADN(nbGenes, min, max, this.mutationRate, this.crossOverRate);
         }
     }
 }
