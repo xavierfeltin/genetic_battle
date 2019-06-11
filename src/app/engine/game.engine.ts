@@ -153,8 +153,10 @@ export class GameEngine {
     if (config.energyFire !== this.shipFactory.getEnergyFire()
       || config.energyFuel !== this.shipFactory.getEnergyFuel()
       || (this.ships.length  > 0
-          && config.mutationRate !== this.ships[0].getADNFactory().getMutationRate())) {
+          && ( config.mutationRate !== this.ships[0].getADNFactory().getMutationRate()
+               || config.crossOverRate !== this.ships[0].getADNFactory().getCrossOverRate()))) {
 
+      // Update configuration for future ships
       if (config.energyFire !== this.shipFactory.getEnergyFire()) {
         this.shipFactory.setEnergyFire(config.energyFire);
       }
@@ -163,18 +165,32 @@ export class GameEngine {
         this.shipFactory.setEnergyFuel(config.energyFuel);
       }
 
+      const adnFactory = this.shipFactory.getADNFactory();
+      if (config.mutationRate !== adnFactory.getMutationRate()) {
+        adnFactory.setMutationRate(config.mutationRate);
+      }
+
+      if (config.crossOverRate !== adnFactory.getCrossOverRate()) {
+        adnFactory.setCrossOverRate(config.crossOverRate);
+      }
+
+      // Update configuration for current ships
       for (const ship of this.ships) {
-        if (config.energyFire !== this.shipFactory.getEnergyFire()) {
+        if (config.energyFire !== ship.getEnergyFire()) {
           ship.setEnergy(config.energyFire);
         }
 
-        if (config.energyFuel !== this.shipFactory.getEnergyFuel()) {
+        if (config.energyFuel !== ship.getEnergyFuel()) {
           ship.setEnergyFuel(config.energyFuel);
         }
 
         // ADN configuration
         if (config.mutationRate !== ship.getADNFactory().getMutationRate()) {
           ship.getADNFactory().setMutationRate(config.mutationRate);
+        }
+
+        if (config.crossOverRate !== ship.getADNFactory().getCrossOverRate()) {
+          ship.getADNFactory().setCrossOverRate(config.crossOverRate);
         }
       }
     }

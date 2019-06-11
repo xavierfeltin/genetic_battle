@@ -246,6 +246,8 @@ export class Ship extends GameObject {
         return phenotype;
     }
 
+
+
     private getAccuracy(): number {
         if (this.nbMissilesLaunched === 0) { return 0; }
         return this.nbEnnemiesTouched  / this.nbMissilesLaunched;
@@ -308,7 +310,7 @@ export class Ship extends GameObject {
         this.attractShip = Math.min(this.attractShip, Ship.MAX_ATTRACTION);
         this.attractShip = Math.max(this.attractShip, Ship.MIN_ATTRACTION);
 
-        delta = (output[3] < -medianValue || output[3] > medianValue) ? ((output[3] < -medianValue ) ? -5 : 5 ) : 0;
+        delta = (output[3] < -medianValue || output[3] > medianValue) ? ((output[3] < -medianValue ) ? -1 : 1 ) : 0;
         delta = (this.fov + delta > Ship.MAX_ANGLE_FOV) ? 0 : delta;
         delta = (this.fov + delta < Ship.MIN_ANGLE_FOV) ? 0 : delta;
         this.setFOV(Math.round(this.getFOV() + delta));
@@ -320,7 +322,7 @@ export class Ship extends GameObject {
         this.fireRate = Math.max(this.fireRate, Ship.MIN_FIRE_RATE);
         */
 
-        delta = (output[5] !== medianValue ) ? ((output[5] < medianValue ) ? -2 : 2 ) : 0;
+        delta = (output[5] !== medianValue ) ? ((output[5] < medianValue ) ? -1 : 1 ) : 0;
         delta = (this.radarLength + delta > Ship.MAX_LENGTH_RADAR) ? 0 : delta;
         delta = (this.radarLength + delta < Ship.MIN_LENGTH_RADAR) ? 0 : delta;
         this.setRadar(this.radarLength + delta);
@@ -588,6 +590,10 @@ export class Ship extends GameObject {
 
         // Apply acceleration to velocity
         this.applyAcc();
+
+        if (this.velo.x !== 0 && this.velo.y !== 0) {
+            this.updateLife(this.energyFuel, Ship.DUE_TO_OTHER); // moving consumes energy
+        }
     }
 
     private resetStates() {
@@ -737,6 +743,14 @@ export class Ship extends GameObject {
     public isOnRadar(distanceSquared: number): boolean {
         return distanceSquared <= this.radarLenSquared;
     }
+
+    public getEnergyFire(): number {
+        return this.energy;
+    }
+
+    public getEnergyFuel(): number {
+        return this.energyFuel;
+    }
 }
 
 export class FactoryShip {
@@ -775,6 +789,10 @@ export class FactoryShip {
 
     public setNeuroEvolution(activate: boolean) {
         this.isNeuroEvolution = activate;
+    }
+
+    public getADNFactory(): FactoryADN {
+        return this.adnFactory;
     }
 
     public create(id: number, generation: number, parentID: number = -1): Ship {
