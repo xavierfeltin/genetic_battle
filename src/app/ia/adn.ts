@@ -3,7 +3,7 @@ import { ThrowStmt } from '@angular/compiler';
 
 export class ADN {
     public static readonly MUTATION_RATE = 0.01;
-    public static readonly CROSSOVER_RATE = 0.01;
+    public static readonly CROSSOVER_RATE = 0.9;
 
     protected genes: number[];
     protected mutationRate: number;
@@ -82,9 +82,9 @@ export class HugeADN extends ADN {
         for (let i = 0; i < result.genes.length; i++) {
             const probaSwitch = Math.random();
             if (probaSwitch <= this.crossOverRate) {
-                result.genes[i] = adn.getGenes()[i];
-            } else {
                 result.genes[i] = this.genes[i];
+            } else {
+                result.genes[i] = adn.getGenes()[i];
             }
         }
 
@@ -126,36 +126,22 @@ export class SmallADN extends ADN {
         return result;
     }
 
+    /**
+     * Cross over between two ADN
+     * Calling ADN is the reference for the crossOver rate
+     * @param adn second parent adn
+     */
     public crossOver(adn: ADN): ADN {
         const result = new SmallADN(this.genes.length, this.minimum, this.maximum, this.mutationRate, this.crossOverRate);
 
-        const probaSwitch = Math.random();
         for (let i = 0; i < this.genes.length; i++) {
+            const probaSwitch = Math.random();
             if (probaSwitch <= this.crossOverRate) {
-                result.genes[i] = adn.getGenes()[i];
-            } else {
                 result.genes[i] = this.genes[i];
+            } else {
+                result.genes[i] = adn.getGenes()[i];
             }
         }
-
-        /*
-        const median = Math.floor(result.genes.length / 2);
-        const isOdd = (result.genes.length % 2) === 0;
-
-        for (let i = 0; i < median; i++) {
-            result.genes[i] = this.genes[i];
-        }
-
-        let index = median;
-        if (isOdd) {
-            result.genes[median] = (Math.random() < 0.5) ? this.genes[median] : adn.getGenes()[median];
-            index++;
-        }
-
-        for (let i = index; i < result.genes.length; i++) {
-            result.genes[i] = this.genes[i];
-        }
-        */
 
         return result;
     }

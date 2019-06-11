@@ -150,7 +150,7 @@
     </span>
     <br/>
 
-    <label [for]="crossOverRate"> Cross over rate: </label>
+    <label [for]="crossOverRate"> Cross over rate (% kept from best): </label>
     <input type="text" formControlName="crossOverRate"/>
     <span *ngIf="crossOverRate.errors && isValidFormSubmitted != null && !isValidFormSubmitted" [ngClass] = "'error'">
       <ng-container *ngIf="crossOverRate.errors?.pattern">

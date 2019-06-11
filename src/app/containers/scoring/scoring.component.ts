@@ -93,7 +93,6 @@ export class ScoringComponent implements OnInit, OnDestroy {
       if (this.deadPopulation.length !== 0
         && this.deadPopulation[0].length !== 0
         && this.time < this.deadPopulation[0][this.deadPopulation[0].length - 1].timer) {
-          debugger;
         this.resetReferenceValues();
       }
 
@@ -150,7 +149,7 @@ export class ScoringComponent implements OnInit, OnDestroy {
       if (population.length !== 0
         && population[i].length !== 0
         && points[i].timer < population[i][population[i].length - 1].timer) {
-        population[i] = [];        
+        population[i] = [];
       }
 
       if (population.length > 0 ) {

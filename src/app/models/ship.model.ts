@@ -414,10 +414,10 @@ export class Ship extends GameObject {
     }
 
     public reproduce(id: number, orientation: number): Ship {
-        const adn = this.adn.crossOver(this.partner.adn);
+        const adn = (this.scoring() > this.partner.scoring()) ? this.adn.crossOver(this.partner.adn) : this.partner.adn.crossOver(this.adn);
         adn.mutate();
 
-        const ship = new Ship(id, this.generation + 1, this.energyFuel, this.energy, this.adnFactory, this.isNeuroEvo, this.parentID);
+        const ship = new Ship(id, this.generation + 1, this.energyFuel, this.energy, this.adnFactory, this.isNeuroEvo, this.id);
         ship.setADN(adn);
         ship.setPosition(this.pos);
         ship.setOrientation(orientation);
@@ -458,10 +458,10 @@ export class Ship extends GameObject {
     public getHealthAttraction(): number { return this.attractHealth; }
     public getShipsAttraction(): number { return this.attractShip; }
     public getMissileshAttraction(): number { return this.attractMissile; }
-    //public getCenterAttraction(): number { return this.attractCenter; }
+    // public getCenterAttraction(): number { return this.attractCenter; }
 
     public clone(id: number, orientation: number): Ship {
-        const ship = new Ship(id, this.generation + 1, this.energyFuel, this.energy, this.adnFactory, this.isNeuroEvo);
+        const ship = new Ship(id, this.generation + 1, this.energyFuel, this.energy, this.adnFactory, this.isNeuroEvo, this.id);
         ship.setPosition(this.pos);
         ship.setOrientation(orientation);
         ship.setADN(this.adn.mutate());
@@ -472,7 +472,7 @@ export class Ship extends GameObject {
     }
 
     public copy(): Ship {
-        const ship = new Ship(this.id, this.generation, this.energyFuel, this.energy, this.adnFactory, this.isNeuroEvo);
+        const ship = new Ship(this.id, this.generation, this.energyFuel, this.energy, this.adnFactory, this.isNeuroEvo, this.parentID);
         ship.age = this.age;
         ship.life = this.life;
         ship.nbChildren = this.nbChildren;

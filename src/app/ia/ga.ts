@@ -143,7 +143,7 @@ export class FortuneWheelGA extends GeneticAlgorithm {
             } else {
                 const parentA = this.pickOne(this.refPopulation);
                 const parentB = this.pickOne(this.refPopulation);
-                childADN = parentA.adn.crossOver(parentB.adn);
+                childADN = (parentA.fitness > parentB.fitness) ? parentA.adn.crossOver(parentB.adn) : parentB.adn.crossOver(parentA.adn);
             }
 
             /*

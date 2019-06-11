@@ -420,9 +420,6 @@ export class GameEngine {
         this.missiles.splice(i, 1);
       }
     }
-    // this._nbMissiles$.next(this.missiles.length);
-    // const Mcoordinates = this.missiles.map(missile => [missile.id, missile.getLife()]);
-    // this._missiles$.next(Mcoordinates);
 
     for (let i = this.health.length - 1; i >= 0; i--) {
       const healthModel = this.health[i];
@@ -430,9 +427,6 @@ export class GameEngine {
         this.health.splice(i, 1);
       }
     }
-    // this._nbHealth$.next(this.health.length);
-    // const Hcoordinates = this.health.map(health => [health.id, Math.round(health.pos.x), Math.round(health.pos.y), health.isToDelete()]);
-    // this._healths$.next(Hcoordinates);
 
     // Manage ships (fire rate, dead ship, ....)
     const phenotypes = [];
@@ -476,21 +470,16 @@ export class GameEngine {
       if (this.oldestShip.scoring() < aliveOldestShip.scoring()) {
         this.oldestShip = aliveOldestShip;
       }
-      // this._oldestShip$.next(this.oldestShip);
+
       this._aliveOldestShip$.next(aliveOldestShip.getPhenotype());
     }
 
-    // this._nbShips$.next(this.ships.length);
-    // const coordinates = this.ships.map(ship => [ship.id, Math.round(ship.pos.x), Math.round(ship.pos.y)]);
-    // this._coordShips$.next(coordinates);
     this._ships$.next(phenotypes);
     this._shipsScoring$.next(scoring);
 
     if (this.deadShips.length > 0) {
       this._deadShipsScoring$.next(this.deadShips.map(ship => ship.getScore()));
     }
-
-    // this._getScores$.next(this.getScores(this.ships));
   }
 
   private renderGame() {
@@ -501,110 +490,6 @@ export class GameEngine {
     this.drawMissiles();
     this.drawHealth();
   }
-
-  /*
-  private evolute(ships: Ship[]): Ship[] {
-    const ga = new FortuneWheelGA();
-
-    const individuals = new Array<Individual>(ships.length);
-    for (let i = 0;  i < ships.length; i++) {
-      const ind = {
-        adn: ships[i].getADN(),
-        fitness: ships[i].scoring()
-      };
-      individuals[i] = ind;
-    }
-
-    ga.populate(individuals);
-    ga.evolve();
-    const newIndividuals = ga.getPopulation();
-
-    const newShips = new Array<Ship>(ships.length);
-    for (let i = 0;  i < ships.length; i++) {
-      const pos = new Vect2D(Math.random() * this.width, Math.random() * this.height);
-      const orientation = Math.random() * 360;
-      const ship = this.shipFactory.create(i);
-      ship.setADN(newIndividuals[i].adn);
-      ship.setPosition(pos);
-      ship.setOrientation(orientation);
-      ship.setBorders([0, this.width, 0, this.height]);
-      newShips[i] = ship;
-    }
-
-    return newShips;
-  }
-  */
-
-  /**
-   * Return the minimal score, the average score and the highest
-   * Warning use only score and generation property of these scorings
-   * @param ships
-   */
-  /*
-  private getScores(ships: Ship[]): Scoring[] {
-    let maxScore = -Infinity;
-    let minScore = Infinity;
-    let avgScore = 0;
-
-    for (const ship of ships) {
-      const shipScore = ship.getScore();
-      if (shipScore.score > maxScore) {
-        maxScore = shipScore.score;
-      }
-      else if (shipScore.score <  minScore) {
-        minScore = shipScore.score;
-      }
-      avgScore += shipScore.score;
-    }
-
-    const currentTime = this.getElapsedTimeInSeconds();
-    const minScoring = ships[0].getScore();
-    minScoring.score = minScore;
-    minScoring.generation = currentTime;
-
-    const maxScoring = ships[0].getScore();
-    maxScoring.score = maxScore;
-    maxScoring.generation = currentTime;
-
-    const avgScoring = ships[0].getScore();
-    avgScoring.score = avgScore;
-    avgScoring.generation = currentTime;
-
-    const scorings = [];
-    scorings.push(minScoring, avgScoring, maxScoring);
-    return scorings;
-  }
-  */
-
-  // Evolution performed while the ship is living
-  // The ship is cloning itself or reproduce with another ship if meeting it
-  /*
-  private continuousEvolutionWhenLiving(ship: Ship) {
-    if (this.ships.length > this.maxShips) {
-      ship.setPartner(null); // if it fails, it fails
-    } else {
-      // Ship may clone this turn
-      if (Math.random() < this.cloneRate) {
-        const orientation = Math.random() * 360;
-        const id = this.generateId();
-        const copy = ship.clone(id, orientation);
-        this.ships.push(copy);
-      }
-
-      // To uncomment with collision management between ships to reactivate
-      // Manage ship cross over
-      if (ship.hasPartner()) {
-        if (Math.random() < this.breedingRate) {
-          const id = this.generateId();
-          const orientation = Math.random() * 360;
-          const newShip = ship.reproduce(id, orientation);
-          this.ships.push(newShip);
-        }
-        ship.setPartner(null); // if it fails, it fails
-      }
-    }
-  }
-  */
 
   private configureContinuousEvolutionWithReference(referenceShips: Ship[]) {
     if (this.ships.length < this.maxShips) {
@@ -672,7 +557,7 @@ export class GameEngine {
         const newIndividuals = this.ga.getPopulation();
 
         const orientation = Math.random() * 360;
-        const ship = this.shipFactory.create(this.generateId(), pickedShip.getGeneration() + 1, pickedShip.getParentID());
+        const ship = this.shipFactory.create(this.generateId(), pickedShip.getGeneration() + 1, pickedShip.id);
         ship.setADN(newIndividuals[0].adn);
         ship.setPosition(pickedShip.pos);
         ship.setOrientation(orientation);
