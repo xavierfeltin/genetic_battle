@@ -534,9 +534,9 @@ export class GameEngine {
         if (nbMaxCrossingShips > 0) {
           const isReproducing = Math.random() < this.breedingRate;
           if (isReproducing && pop.hasPartner()) {
-            const id = this.generateId();
+            const newId = this.generateId();
             const orientation = Math.random() * 360;
-            const newShip = pop.reproduce(id, orientation);
+            const newShip = pop.reproduce(newId, orientation);
             newShips.push(newShip);
           }
           pop.setPartner(null); // reset ptoential partner each frame
@@ -557,7 +557,7 @@ export class GameEngine {
         const newIndividuals = this.ga.getPopulation();
 
         const orientation = Math.random() * 360;
-        const ship = this.shipFactory.create(this.generateId(), pickedShip.getGeneration() + 1, pickedShip.id);
+        const ship = this.shipFactory.create(this.generateId(), pickedShip.getGeneration() + 1, [pickedShip.id]);
         ship.setADN(newIndividuals[0].adn);
         ship.setPosition(pickedShip.pos);
         ship.setOrientation(orientation);
@@ -698,7 +698,7 @@ export class GameEngine {
         for (let j = i + 1; j < nShips; j++) {
           const shipB = ships[j];
 
-          if (shipA.hasPartner() || shipB.hasPartner() || shipA.isDead() || shipB.isDead()) {
+          if (shipA.hasPartner() || shipB.hasPartner() || shipA.isDead() || shipB.isDead() || shipA.isFamily(shipB)) {
             continue;
           }
 

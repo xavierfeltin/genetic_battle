@@ -91,17 +91,17 @@ export class Ship extends GameObject {
     private maxTimer: number;
 
     // IA / AG
-    private parentID: number;
+    private parentsID: number[];
     private nbGenes: number;
     private isNeuroEvo: boolean;
     private nn: NeuralNetwork; // for neuroevolution
     private generation: number;
 
     constructor(id: number, generation: number, energyFuel: number,
-                energyFire: number, adnFactory: FactoryADN, isNeuroEvo: boolean = false, parentID: number = -1) {
+                energyFire: number, adnFactory: FactoryADN, isNeuroEvo: boolean = false, parentsID: number[] = [-1]) {
         super(id);
 
-        this.parentID = parentID;
+        this.parentsID = [...parentsID];
         this.centerObject = new GameObject(-1);
         this.centerObject.setPosition(new Vect2D(this.xMax / 2, this.yMax / 2));
         this.centerObject.setVelocity(new Vect2D(0, 0));
@@ -195,15 +195,15 @@ export class Ship extends GameObject {
         return this.adn;
     }
 
-    public getParentID(): number {
-        return this.parentID;
+    public getParentsID(): number[] {
+        return this.parentsID;
     }
 
     public scoring(): number {
         const score = (this.nbHealthPackPicked * 1)
+                    + this.nbEnnemiesDestroyed * this.getAccuracy();
                      // + (this.nbEnnemiesTouched * 5)
                      // + this.nbMissilesDestroyed;
-                      + this.nbEnnemiesDestroyed * 1;
                     // - this.nbReceivedDamage;
                     // + (this.getAccuracy() * 20);
                     // - (this.nbReceivedDamage * 2);
@@ -396,28 +396,36 @@ export class Ship extends GameObject {
         return this.adnFactory;
     }
 
-    public setPartner(ship: Ship) {
-        if (ship === null) {
-            this.partner = ship;
-        } else {
-            let isCloseFamily = (ship.parentID === this.parentID) && this.parentID !== -1 ;
-            isCloseFamily = isCloseFamily || this.id === ship.parentID;
-            isCloseFamily = isCloseFamily || ship.id === this.parentID;
-            if (!isCloseFamily) {
-                this.partner = ship;
+    public isFamily(ship) {
+        let found = false;
+        let i = 0;
+        while (!found && i < this.parentsID.length) {
+            found = found || this.parentsID[i] === ship.id;
+            let j = 0;
+            while (!found && j < ship.parentsID.length) {
+                found = found || (ship.parentsID[j] === this.parentsID[i] && this.parentsID[i] !== -1);
+                found = found || this.id === ship.parentsID[j];
+                j++;
             }
+            i++;
         }
+        return found;
+    }
+
+    public setPartner(ship: Ship) {
+        this.partner = ship;
     }
 
     public hasPartner(): boolean {
         return this.partner !== null;
     }
 
-    public reproduce(id: number, orientation: number): Ship {
+    public reproduce(newId: number, orientation: number): Ship {
         const adn = (this.scoring() > this.partner.scoring()) ? this.adn.crossOver(this.partner.adn) : this.partner.adn.crossOver(this.adn);
         adn.mutate();
 
-        const ship = new Ship(id, this.generation + 1, this.energyFuel, this.energy, this.adnFactory, this.isNeuroEvo, this.id);
+        const ship = new Ship(newId, this.generation + 1, this.energyFuel, this.energy,
+            this.adnFactory, this.isNeuroEvo, [this.id, this.partner.id]);
         ship.setADN(adn);
         ship.setPosition(this.pos);
         ship.setOrientation(orientation);
@@ -461,7 +469,7 @@ export class Ship extends GameObject {
     // public getCenterAttraction(): number { return this.attractCenter; }
 
     public clone(id: number, orientation: number): Ship {
-        const ship = new Ship(id, this.generation + 1, this.energyFuel, this.energy, this.adnFactory, this.isNeuroEvo, this.id);
+        const ship = new Ship(id, this.generation + 1, this.energyFuel, this.energy, this.adnFactory, this.isNeuroEvo, [this.id]);
         ship.setPosition(this.pos);
         ship.setOrientation(orientation);
         ship.setADN(this.adn.mutate());
@@ -472,7 +480,7 @@ export class Ship extends GameObject {
     }
 
     public copy(): Ship {
-        const ship = new Ship(this.id, this.generation, this.energyFuel, this.energy, this.adnFactory, this.isNeuroEvo, this.parentID);
+        const ship = new Ship(this.id, this.generation, this.energyFuel, this.energy, this.adnFactory, this.isNeuroEvo, this.parentsID);
         ship.age = this.age;
         ship.life = this.life;
         ship.nbChildren = this.nbChildren;
@@ -795,7 +803,7 @@ export class FactoryShip {
         return this.adnFactory;
     }
 
-    public create(id: number, generation: number, parentID: number = -1): Ship {
-        return new Ship(id, generation, this.energyFuel, this.energyFire, this.adnFactory, this.isNeuroEvolution, parentID);
+    public create(id: number, generation: number, parentsID: number[] = [-1]): Ship {
+        return new Ship(id, generation, this.energyFuel, this.energyFire, this.adnFactory, this.isNeuroEvolution, parentsID);
     }
 }
