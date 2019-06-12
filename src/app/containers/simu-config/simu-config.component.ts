@@ -12,8 +12,9 @@ import { Configuration } from '../../models/configuration.interface';
 export class SimuConfigComponent implements OnInit {
   integerPattern = '^-?[0-9]+';
   floatPattern = '^-?[0-9]+.?[0-9]*';
-
   simu: GameEngine;
+  defaultConfig: Configuration;
+
   isValidFormSubmitted: boolean;
   formSimu = this.fb.group({
     resetSimulation: ['', Validators.required],
@@ -29,41 +30,49 @@ export class SimuConfigComponent implements OnInit {
       nbHealthDestroyingShip: ['', [Validators.pattern(this.integerPattern), Validators.required]],
       lifeFromHealth: ['', [Validators.pattern(this.integerPattern), Validators.required]]
     }),
+    /*
     simu_genetic: this.fb.group({
       cloneRate: ['', [Validators.pattern(this.floatPattern), Validators.required]],
       breedingRate: ['', [Validators.pattern(this.floatPattern), Validators.required]],
       mutationRate: ['', [Validators.pattern(this.floatPattern), Validators.required]],
       crossOverRate: ['', [Validators.pattern(this.floatPattern), Validators.required]],
       evolutionMode: ['', Validators.required]
-    })
+    }),
+    */
+    simu_genetic: this.fb.group(
+      this.generateFbGroupNeuroEvo()
+    )
   });
 
   constructor(private fb: FormBuilder, private service: SimuInfoService) { }
 
   ngOnInit() {
     this.simu = this.service.getGame();
-    const config = this.simu.getDefaultConfiguration();
+    this.defaultConfig = this.simu.getDefaultConfiguration();
 
-    this.resetSimulation.setValue(config.resetSimulation);
-    this.debugMode.setValue(config.debugMode);
-    this.nbStartingShips.setValue(config.nbStartingShips);
-    this.maxShips.setValue(config.maxShips);
-    this.energyFuel.setValue(config.energyFuel);
-    this.energyFire.setValue(config.energyFire);
-    this.damageMissile.setValue(config.damageMissile);
-    this.nbStartingHealth.setValue(config.nbStartingHealth);
-    this.rateHealth.setValue(config.rateHealth);
-    this.nbHealthDestroyingShip.setValue(config.nbHealthDestroyingShip);
-    this.lifeFromHealth.setValue(config.lifeFromHealth);
-    this.cloneRate.setValue(config.cloneRate);
-    this.breedingRate.setValue(config.breedingRate);
-    this.mutationRate.setValue(config.mutationRate);
-    this.crossOverRate.setValue(config.crossOverRate);
-    this.evolutionMode.setValue(config.evolutionMode);
+    this.resetSimulation.setValue(this.defaultConfig.resetSimulation);
+    this.debugMode.setValue(this.defaultConfig.debugMode);
+    this.nbStartingShips.setValue(this.defaultConfig.nbStartingShips);
+    this.maxShips.setValue(this.defaultConfig.maxShips);
+    this.energyFuel.setValue(this.defaultConfig.energyFuel);
+    this.energyFire.setValue(this.defaultConfig.energyFire);
+    this.damageMissile.setValue(this.defaultConfig.damageMissile);
+    this.nbStartingHealth.setValue(this.defaultConfig.nbStartingHealth);
+    this.rateHealth.setValue(this.defaultConfig.rateHealth);
+    this.nbHealthDestroyingShip.setValue(this.defaultConfig.nbHealthDestroyingShip);
+    this.lifeFromHealth.setValue(this.defaultConfig.lifeFromHealth);
+    this.cloneRate.setValue(this.defaultConfig.cloneRate);
+    this.breedingRate.setValue(this.defaultConfig.breedingRate);
+    this.mutationRate.setValue(this.defaultConfig.mutationRate);
+    this.crossOverRate.setValue(this.defaultConfig.crossOverRate);
+    this.evolutionMode.setValue(this.defaultConfig.evolutionMode);
+
+    // TODO: init for inputs neuro Evo
   }
 
   onSubmit() {
     if (this.formSimu.invalid) {
+      console.log('invalid form !');
       this.isValidFormSubmitted = false;
       return;
     }
@@ -92,8 +101,59 @@ export class SimuConfigComponent implements OnInit {
       evolutionMode: formValues.simu_genetic.evolutionMode,
       resetSimulation: formValues.resetSimulation,
       debugMode: formValues.debugMode
-    }
+    };
     return configuration;
+  }
+
+  public getActivateNeuroEvoInputs(): {} {
+    const inputs = {
+      activateFlagDetectedMissileFOV: 'FOV has detected missile',
+      activateFlagDetectedShipFOV: 'FOV has detected ship',
+      activateFlagDetectedHealthFOV: 'FOV has detected health',
+      activateFlagDetectedMissileRadar: 'Radar has detected missile',
+      activateFlagDetectedHealthRadar: 'Radar has detected health',
+      activateFlagDetectedShipRadar: 'Radar has detected ship',
+      activateDistanceDetectedMissileFOV: 'Distance missile on FOV',
+      activateDistanceDetectedShipFOV: 'Distance ship on FOV',
+      activateDistanceDetectedHealthFOV: 'Distance health on FOV',
+      activateDistanceDetectedMissileRadar: 'Distance missile on Radar',
+      activateDistanceDetectedHealthRadar: 'Distance health on Radar',
+      activateDistanceDetectedShipRadar: 'Distance ship on Radar',
+      activateAttractionMissile: 'Attraction to missiles',
+      activateAttractionShip: 'Attraction to ships',
+      activateAttractionHealth: 'Attraction to health',
+      activateFOVAngle: 'FOV angle',
+      activateRadarRadius: 'Radiar radius',
+      activateFireRate: 'Fire rate',
+      activateLife: 'Remaining life',
+      activateMaxSpeed: 'Top ship speed',
+      activateFlagHasFired: 'Has fired',
+      activateFlagHasBeenHealed: 'Has been healed',
+      activateFlagHasBeenShot: 'Has been shot',
+      activateFlagTouchedEnnemy: 'Has touched ennemy',
+      activateFlagTouchedMissile: 'Has touched missile',
+      activateVelocity: 'Ship velocity',
+      activatePosition: 'Ship position'
+    };
+    return inputs;
+  }
+
+  public generateFbGroupNeuroEvo(): {} {
+    const inputs = this.getActivateNeuroEvoInputs();
+    const fbGroup = {
+      cloneRate: ['', [Validators.pattern(this.floatPattern), Validators.required]],
+      breedingRate: ['', [Validators.pattern(this.floatPattern), Validators.required]],
+      mutationRate: ['', [Validators.pattern(this.floatPattern), Validators.required]],
+      crossOverRate: ['', [Validators.pattern(this.floatPattern), Validators.required]],
+      evolutionMode: ['', Validators.required]
+    };
+
+    for (const key in inputs) {
+      if (inputs.hasOwnProperty(key)) {
+        fbGroup[key] = [false, Validators.required];
+      }
+    }
+    return fbGroup;
   }
 
   get nbStartingShips() {

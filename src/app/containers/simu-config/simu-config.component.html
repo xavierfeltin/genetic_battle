@@ -1,184 +1,190 @@
-<form class="layout" [formGroup]="formSimu" (ngSubmit)="onSubmit()">
-  <fieldset formGroupName="simu_global">
-    <legend> Global </legend>
-      <h4> Ships </h4>
-      <label [for]="nbStartingShips"> Number of ships: </label>
-      <input type="text" formControlName="nbStartingShips" id="nbStartingShips"/>
-      <span *ngIf="nbStartingShips.errors && isValidFormSubmitted != null && !isValidFormSubmitted" [ngClass] = "'error'">
-        <ng-container *ngIf="nbStartingShips.errors.pattern">
-          Should be an integer.
-        </ng-container>
-        <ng-container *ngIf="nbStartingShips.errors.required">
-          A value is required.
-        </ng-container>
-      </span>
-      <br/>
-
-      <label [for]="maxShips"> Maximum ships: </label>
-      <input type="text" formControlName="maxShips" id="maxShips"/>
-      <span *ngIf="maxShips.errors && isValidFormSubmitted != null && !isValidFormSubmitted" [ngClass] = "'error'">
-        <ng-container *ngIf="maxShips.errors.pattern">
-          Should be an integer.
-        </ng-container>
-        <ng-container *ngIf="maxShips.errors.required">
-          A value is required.
-        </ng-container>
-      </span>
-      <br/>
-
-      <label [for]="energyFuel">Energy to move: </label>
-      <input type="text" formControlName="energyFuel"/>
-      <span *ngIf="energyFuel.errors && isValidFormSubmitted != null && !isValidFormSubmitted" [ngClass] = "'error'">
-        <ng-container *ngIf="energyFuel.errors?.pattern">
-          Should be a float.
-        </ng-container>
-        <ng-container *ngIf="energyFuel.errors?.required">
-          A value is required.
-        </ng-container>
-      </span>
-      <br/>
-
-      <label [for]="energyFire">Energy to fire: </label>
-      <input type="text" formControlName="energyFire"/>
-      <span *ngIf="energyFire.errors && isValidFormSubmitted != null && !isValidFormSubmitted" [ngClass] = "'error'">
-        <ng-container *ngIf="energyFire.errors?.pattern">
-          Should be a float.
-        </ng-container>
-        <ng-container *ngIf="energyFire.errors?.required">
-          A value is required.
-        </ng-container>
-      </span>
-      <br/>
-
-      <h4> Missiles </h4>
-      <label [for]="damageMissile">Damage from missiles: </label>
-      <input type="text" formControlName="damageMissile"/>
-      <span *ngIf="damageMissile.errors && isValidFormSubmitted != null && !isValidFormSubmitted" [ngClass] = "'error'">
-        <ng-container *ngIf="damageMissile.errors?.pattern">
-          Should be an integer.
-        </ng-container>
-        <ng-container *ngIf="damageMissile.errors?.required">
-          A value is required.
-        </ng-container>
-      </span>
-      <br/>
-
-      <h4> Health </h4>
-      <label [for]="nbStartingHealth">Number of health packs: </label>
-      <input type="text" formControlName="nbStartingHealth"/>
-      <span *ngIf="nbStartingHealth.errors && isValidFormSubmitted != null && !isValidFormSubmitted" [ngClass] = "'error'">
-        <ng-container *ngIf="nbStartingHealth.errors?.pattern">
-          Should be an integer.
-        </ng-container>
-        <ng-container *ngIf="nbStartingHealth.errors?.required">
-          A value is required.
-        </ng-container>
-      </span>
-      <br/>
-
-      <label [for]="rateHealth">Rate of health packs spawing: </label>
-      <input type="text" formControlName="rateHealth"/>
-      <span *ngIf="rateHealth.errors && isValidFormSubmitted != null && !isValidFormSubmitted" [ngClass] = "'error'">
-        <ng-container *ngIf="rateHealth.errors?.pattern">
-          Should be a float.
-        </ng-container>
-        <ng-container *ngIf="rateHealth.errors?.required">
-          A value is required.
-        </ng-container>
-      </span>
-      <br/>
-
-      <label [for]="nbHealthDestroyingShip">Number of health packs from destroying a ship: </label>
-      <input type="text" formControlName="nbHealthDestroyingShip"/>
-      <span *ngIf="nbHealthDestroyingShip.errors && isValidFormSubmitted != null && !isValidFormSubmitted" [ngClass] = "'error'">
-        <ng-container *ngIf="nbHealthDestroyingShip.errors?.pattern">
-          Should be an integer.
-        </ng-container>
-        <ng-container *ngIf="nbHealthDestroyingShip.errors?.required">
-          A value is required.
-        </ng-container>
-      </span>
-      <br/>
-
-      <label [for]="lifeFromHealth">Life from health pack: </label>
-      <input type="text" formControlName="lifeFromHealth"/>
-      <span *ngIf="lifeFromHealth.errors && isValidFormSubmitted != null && !isValidFormSubmitted" [ngClass] = "'error'">
-        <ng-container *ngIf="lifeFromHealth.errors?.pattern">
-          Should be an integer.
-        </ng-container>
-        <ng-container *ngIf="lifeFromHealth.errors?.required">
-          A value is required.
-        </ng-container>
-      </span>
-  </fieldset>
-
-  <fieldset formGroupName="simu_genetic">
-    <legend> Genetic </legend>
-    <label [for]="cloneRate"> Clone rate: </label>
-    <input type="text" formControlName="cloneRate"/>
-    <span *ngIf="cloneRate.errors && isValidFormSubmitted != null && !isValidFormSubmitted" [ngClass] = "'error'">
-      <ng-container *ngIf="cloneRate.errors?.pattern">
-        Should be a float.
-      </ng-container>
-      <ng-container *ngIf="cloneRate.errors?.required">
-        A value is required.
-      </ng-container>
-    </span>
-    <br/>
-
-    <label [for]="breedingRate"> Breeding rate: </label>
-    <input type="text" formControlName="breedingRate"/>
-    <span *ngIf="breedingRate.errors && isValidFormSubmitted != null && !isValidFormSubmitted" [ngClass] = "'error'">
-      <ng-container *ngIf="breedingRate.errors?.pattern">
-        Should be a float.
-      </ng-container>
-      <ng-container *ngIf="breedingRate.errors?.required">
-        A value is required.
-      </ng-container>
-    </span>
-    <br/>
-
-    <label [for]="mutationRate"> Mutation rate: </label>
-    <input type="text" formControlName="mutationRate"/>
-    <span *ngIf="mutationRate.errors && isValidFormSubmitted != null && !isValidFormSubmitted" [ngClass] = "'error'">
-      <ng-container *ngIf="mutationRate.errors?.pattern">
-        Should be a float.
-      </ng-container>
-      <ng-container *ngIf="mutationRate.errors?.required">
-        A value is required.
-      </ng-container>
-    </span>
-    <br/>
-
-    <label [for]="crossOverRate"> Cross over rate (% kept from best): </label>
-    <input type="text" formControlName="crossOverRate"/>
-    <span *ngIf="crossOverRate.errors && isValidFormSubmitted != null && !isValidFormSubmitted" [ngClass] = "'error'">
-      <ng-container *ngIf="crossOverRate.errors?.pattern">
-        Should be a float.
-      </ng-container>
-      <ng-container *ngIf="crossOverRate.errors?.required">
-        A value is required.
-      </ng-container>
-    </span>
-    <br/>
-
-    <br/>
-
-    <label [for]="evolutionMode"> Evolution Mode: </label>
-    <span> <i> It will reset the simulation </i> </span>
-    <div>
-      <input type="radio" formControlName="evolutionMode" value="neuroevol" checked> <label> Neuro Evolution </label>
-      <input type="radio" formControlName="evolutionMode"  value="geneticalgo"> <label> Genetic Algorithm </label>
-    </div>
-  </fieldset>
-
+<form [formGroup]="formSimu" (ngSubmit)="onSubmit()">
   <div class="layout">
-    <div>
-      <label [for]="resetSimulation"> Reset simulation: </label>
-      <input type="checkbox" formControlName="resetSimulation"/>
+    <fieldset formGroupName="simu_global">
+      <legend> Global </legend>
+        <h4> Ships </h4>
+        <label [for]="nbStartingShips"> Number of ships: </label>
+        <input type="text" formControlName="nbStartingShips" id="nbStartingShips"/>
+        <span *ngIf="nbStartingShips.errors && isValidFormSubmitted != null && !isValidFormSubmitted" [ngClass] = "'error'">
+          <ng-container *ngIf="nbStartingShips.errors.pattern">
+            Should be an integer.
+          </ng-container>
+          <ng-container *ngIf="nbStartingShips.errors.required">
+            A value is required.
+          </ng-container>
+        </span>
+        <br/>
+
+        <label [for]="maxShips"> Maximum ships: </label>
+        <input type="text" formControlName="maxShips" id="maxShips"/>
+        <span *ngIf="maxShips.errors && isValidFormSubmitted != null && !isValidFormSubmitted" [ngClass] = "'error'">
+          <ng-container *ngIf="maxShips.errors.pattern">
+            Should be an integer.
+          </ng-container>
+          <ng-container *ngIf="maxShips.errors.required">
+            A value is required.
+          </ng-container>
+        </span>
+        <br/>
+
+        <label [for]="energyFuel">Energy to move: </label>
+        <input type="text" formControlName="energyFuel"/>
+        <span *ngIf="energyFuel.errors && isValidFormSubmitted != null && !isValidFormSubmitted" [ngClass] = "'error'">
+          <ng-container *ngIf="energyFuel.errors?.pattern">
+            Should be a float.
+          </ng-container>
+          <ng-container *ngIf="energyFuel.errors?.required">
+            A value is required.
+          </ng-container>
+        </span>
+        <br/>
+
+        <label [for]="energyFire">Energy to fire: </label>
+        <input type="text" formControlName="energyFire"/>
+        <span *ngIf="energyFire.errors && isValidFormSubmitted != null && !isValidFormSubmitted" [ngClass] = "'error'">
+          <ng-container *ngIf="energyFire.errors?.pattern">
+            Should be a float.
+          </ng-container>
+          <ng-container *ngIf="energyFire.errors?.required">
+            A value is required.
+          </ng-container>
+        </span>
+        <br/>
+
+        <h4> Missiles </h4>
+        <label [for]="damageMissile">Damage from missiles: </label>
+        <input type="text" formControlName="damageMissile"/>
+        <span *ngIf="damageMissile.errors && isValidFormSubmitted != null && !isValidFormSubmitted" [ngClass] = "'error'">
+          <ng-container *ngIf="damageMissile.errors?.pattern">
+            Should be an integer.
+          </ng-container>
+          <ng-container *ngIf="damageMissile.errors?.required">
+            A value is required.
+          </ng-container>
+        </span>
+        <br/>
+
+        <h4> Health </h4>
+        <label [for]="nbStartingHealth">Number of health packs: </label>
+        <input type="text" formControlName="nbStartingHealth"/>
+        <span *ngIf="nbStartingHealth.errors && isValidFormSubmitted != null && !isValidFormSubmitted" [ngClass] = "'error'">
+          <ng-container *ngIf="nbStartingHealth.errors?.pattern">
+            Should be an integer.
+          </ng-container>
+          <ng-container *ngIf="nbStartingHealth.errors?.required">
+            A value is required.
+          </ng-container>
+        </span>
+        <br/>
+
+        <label [for]="rateHealth">Rate of health packs spawing: </label>
+        <input type="text" formControlName="rateHealth"/>
+        <span *ngIf="rateHealth.errors && isValidFormSubmitted != null && !isValidFormSubmitted" [ngClass] = "'error'">
+          <ng-container *ngIf="rateHealth.errors?.pattern">
+            Should be a float.
+          </ng-container>
+          <ng-container *ngIf="rateHealth.errors?.required">
+            A value is required.
+          </ng-container>
+        </span>
+        <br/>
+
+        <label [for]="nbHealthDestroyingShip">Number of health packs from destroying a ship: </label>
+        <input type="text" formControlName="nbHealthDestroyingShip"/>
+        <span *ngIf="nbHealthDestroyingShip.errors && isValidFormSubmitted != null && !isValidFormSubmitted" [ngClass] = "'error'">
+          <ng-container *ngIf="nbHealthDestroyingShip.errors?.pattern">
+            Should be an integer.
+          </ng-container>
+          <ng-container *ngIf="nbHealthDestroyingShip.errors?.required">
+            A value is required.
+          </ng-container>
+        </span>
+        <br/>
+
+        <label [for]="lifeFromHealth">Life from health pack: </label>
+        <input type="text" formControlName="lifeFromHealth"/>
+        <span *ngIf="lifeFromHealth.errors && isValidFormSubmitted != null && !isValidFormSubmitted" [ngClass] = "'error'">
+          <ng-container *ngIf="lifeFromHealth.errors?.pattern">
+            Should be an integer.
+          </ng-container>
+          <ng-container *ngIf="lifeFromHealth.errors?.required">
+            A value is required.
+          </ng-container>
+        </span>
+    </fieldset>
+
+    <fieldset formGroupName="simu_genetic">
+      <legend> Genetic </legend>
+      <label [for]="cloneRate"> Clone rate: </label>
+      <input type="text" formControlName="cloneRate"/>
+      <span *ngIf="cloneRate.errors && isValidFormSubmitted != null && !isValidFormSubmitted" [ngClass] = "'error'">
+        <ng-container *ngIf="cloneRate.errors?.pattern">
+          Should be a float.
+        </ng-container>
+        <ng-container *ngIf="cloneRate.errors?.required">
+          A value is required.
+        </ng-container>
+      </span>
       <br/>
-      <label [for]="debugMode"> Debug mode: </label>
-      <input type="checkbox" formControlName="debugMode"/>
+
+      <label [for]="breedingRate"> Breeding rate: </label>
+      <input type="text" formControlName="breedingRate"/>
+      <span *ngIf="breedingRate.errors && isValidFormSubmitted != null && !isValidFormSubmitted" [ngClass] = "'error'">
+        <ng-container *ngIf="breedingRate.errors?.pattern">
+          Should be a float.
+        </ng-container>
+        <ng-container *ngIf="breedingRate.errors?.required">
+          A value is required.
+        </ng-container>
+      </span>
+      <br/>
+
+      <label [for]="mutationRate"> Mutation rate: </label>
+      <input type="text" formControlName="mutationRate"/>
+      <span *ngIf="mutationRate.errors && isValidFormSubmitted != null && !isValidFormSubmitted" [ngClass] = "'error'">
+        <ng-container *ngIf="mutationRate.errors?.pattern">
+          Should be a float.
+        </ng-container>
+        <ng-container *ngIf="mutationRate.errors?.required">
+          A value is required.
+        </ng-container>
+      </span>
+      <br/>
+
+      <label [for]="crossOverRate"> Cross over rate (% kept from best): </label>
+      <input type="text" formControlName="crossOverRate"/>
+      <span *ngIf="crossOverRate.errors && isValidFormSubmitted != null && !isValidFormSubmitted" [ngClass] = "'error'">
+        <ng-container *ngIf="crossOverRate.errors?.pattern">
+          Should be a float.
+        </ng-container>
+        <ng-container *ngIf="crossOverRate.errors?.required">
+          A value is required.
+        </ng-container>
+      </span>
+      <br/>
+      <br/>
+
+      <label [for]="evolutionMode"> Evolution Mode: </label>
+      <span> <i> It will reset the simulation </i> </span>
+      <div>
+        <div> <input type="radio" formControlName="evolutionMode" value="neuroevol" checked> <label> Neuro Evolution </label> </div>
+        <div> <input type="radio" formControlName="evolutionMode"  value="geneticalgo"> <label> Genetic Algorithm </label> </div>
+      </div>
+      <br/>
+      <br/>
+
+      <div class="layoutInputs">
+        <ng-container  *ngFor="let nnInput of getActivateNeuroEvoInputs() | keyvalue">
+          <div> <input type="checkbox" formControlName="{{nnInput.key}}"> <label> {{nnInput.value}} </label> </div>
+        </ng-container>
+      </div>
+    </fieldset>
+  </div>
+
+  <div class="layoutInputs">
+    <div>
+      <div><input type="checkbox" formControlName="resetSimulation"/> <label [for]="resetSimulation"> Reset simulation </label></div>
+      <div><input type="checkbox" formControlName="debugMode"/> <label [for]="debugMode"> Debug mode </label></div>
     </div>
     <div>
       <button type="submit"> Apply </button>
