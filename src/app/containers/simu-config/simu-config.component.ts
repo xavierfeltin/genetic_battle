@@ -16,39 +16,33 @@ export class SimuConfigComponent implements OnInit {
   defaultConfig: Configuration;
 
   isValidFormSubmitted: boolean;
-  formSimu = this.fb.group({
-    resetSimulation: ['', Validators.required],
-    debugMode: ['', Validators.required],
-    simu_global: this.fb.group({
-      nbStartingShips: ['', [Validators.pattern(this.integerPattern), Validators.required]],
-      maxShips: ['', [Validators.pattern(this.integerPattern), Validators.required]],
-      energyFuel: ['', [Validators.pattern(this.floatPattern), Validators.required]],
-      energyFire: ['', [Validators.pattern(this.floatPattern), Validators.required]],
-      damageMissile: ['', [Validators.pattern(this.integerPattern), Validators.required]],
-      nbStartingHealth: ['', [Validators.pattern(this.integerPattern), Validators.required]],
-      rateHealth: ['', [Validators.pattern(this.floatPattern), Validators.required]],
-      nbHealthDestroyingShip: ['', [Validators.pattern(this.integerPattern), Validators.required]],
-      lifeFromHealth: ['', [Validators.pattern(this.integerPattern), Validators.required]]
-    }),
-    /*
-    simu_genetic: this.fb.group({
-      cloneRate: ['', [Validators.pattern(this.floatPattern), Validators.required]],
-      breedingRate: ['', [Validators.pattern(this.floatPattern), Validators.required]],
-      mutationRate: ['', [Validators.pattern(this.floatPattern), Validators.required]],
-      crossOverRate: ['', [Validators.pattern(this.floatPattern), Validators.required]],
-      evolutionMode: ['', Validators.required]
-    }),
-    */
-    simu_genetic: this.fb.group(
-      this.generateFbGroupNeuroEvo()
-    )
-  });
+  formSimu: FormGroup = null;
 
-  constructor(private fb: FormBuilder, private service: SimuInfoService) { }
+  constructor(private fb: FormBuilder, private service: SimuInfoService) {
+  }
 
   ngOnInit() {
     this.simu = this.service.getGame();
     this.defaultConfig = this.simu.getDefaultConfiguration();
+
+    this.formSimu = this.fb.group({
+      resetSimulation: ['', Validators.required],
+      debugMode: ['', Validators.required],
+      simu_global: this.fb.group({
+        nbStartingShips: ['', [Validators.pattern(this.integerPattern), Validators.required]],
+        maxShips: ['', [Validators.pattern(this.integerPattern), Validators.required]],
+        energyFuel: ['', [Validators.pattern(this.floatPattern), Validators.required]],
+        energyFire: ['', [Validators.pattern(this.floatPattern), Validators.required]],
+        damageMissile: ['', [Validators.pattern(this.integerPattern), Validators.required]],
+        nbStartingHealth: ['', [Validators.pattern(this.integerPattern), Validators.required]],
+        rateHealth: ['', [Validators.pattern(this.floatPattern), Validators.required]],
+        nbHealthDestroyingShip: ['', [Validators.pattern(this.integerPattern), Validators.required]],
+        lifeFromHealth: ['', [Validators.pattern(this.integerPattern), Validators.required]]
+      }),
+      simu_genetic: this.fb.group(
+        this.generateFbGroupNeuroEvo()
+      )
+    });
 
     this.resetSimulation.setValue(this.defaultConfig.resetSimulation);
     this.debugMode.setValue(this.defaultConfig.debugMode);
@@ -67,7 +61,12 @@ export class SimuConfigComponent implements OnInit {
     this.crossOverRate.setValue(this.defaultConfig.crossOverRate);
     this.evolutionMode.setValue(this.defaultConfig.evolutionMode);
 
-    // TODO: init for inputs neuro Evo
+    const neuroEvoInputs = this.getActivateNeuroEvoInputs();
+    // tslint:disable-next-line:forin
+    for (const name in neuroEvoInputs) {
+      const key = 'simu_genetic.' + name;
+      this.formSimu.get(key).setValue(this.defaultConfig.neuroInvoInputs[name].status);
+    }
   }
 
   onSubmit() {
@@ -76,13 +75,34 @@ export class SimuConfigComponent implements OnInit {
       this.isValidFormSubmitted = false;
       return;
     }
-    this.isValidFormSubmitted = true;
     const formValues = this.formSimu.value;
+
+    const neuroInvoInputs = this.getActivateNeuroEvoInputs();
+    let isOneValueChecked = false;
+    // tslint:disable-next-line:forin
+    for (const key in neuroInvoInputs) {
+      isOneValueChecked = formValues.simu_genetic[key];
+      if (isOneValueChecked) { break; }
+    }
+
+    if (!isOneValueChecked) {
+      console.log('invalid form - check at least one input for neuro evolution!');
+      this.isValidFormSubmitted = false;
+      return;
+    }
+
+    this.isValidFormSubmitted = true;
     const configuration = this.fromFormToConfiguration(formValues);
     this.simu.setConfigucation(configuration);
   }
 
   private fromFormToConfiguration(formValues: any): Configuration {
+    const neuroInvoInputs = this.getActivateNeuroEvoInputs();
+    const configInputs = {};
+    // tslint:disable-next-line:forin
+    for (const key in neuroInvoInputs) {
+      configInputs[key] = formValues.simu_genetic[key];
+    }
 
     const configuration: Configuration = {
       nbStartingShips: parseInt(formValues.simu_global.nbStartingShips),
@@ -100,46 +120,18 @@ export class SimuConfigComponent implements OnInit {
       crossOverRate: parseFloat(formValues.simu_genetic.crossOverRate),
       evolutionMode: formValues.simu_genetic.evolutionMode,
       resetSimulation: formValues.resetSimulation,
-      debugMode: formValues.debugMode
+      debugMode: formValues.debugMode,
+      neuroInvoInputs: configInputs
     };
+
     return configuration;
   }
 
   public getActivateNeuroEvoInputs(): {} {
-    const inputs = {
-      activateFlagDetectedMissileFOV: 'FOV has detected missile',
-      activateFlagDetectedShipFOV: 'FOV has detected ship',
-      activateFlagDetectedHealthFOV: 'FOV has detected health',
-      activateFlagDetectedMissileRadar: 'Radar has detected missile',
-      activateFlagDetectedHealthRadar: 'Radar has detected health',
-      activateFlagDetectedShipRadar: 'Radar has detected ship',
-      activateDistanceDetectedMissileFOV: 'Distance missile on FOV',
-      activateDistanceDetectedShipFOV: 'Distance ship on FOV',
-      activateDistanceDetectedHealthFOV: 'Distance health on FOV',
-      activateDistanceDetectedMissileRadar: 'Distance missile on Radar',
-      activateDistanceDetectedHealthRadar: 'Distance health on Radar',
-      activateDistanceDetectedShipRadar: 'Distance ship on Radar',
-      activateAttractionMissile: 'Attraction to missiles',
-      activateAttractionShip: 'Attraction to ships',
-      activateAttractionHealth: 'Attraction to health',
-      activateFOVAngle: 'FOV angle',
-      activateRadarRadius: 'Radiar radius',
-      activateFireRate: 'Fire rate',
-      activateLife: 'Remaining life',
-      activateMaxSpeed: 'Top ship speed',
-      activateFlagHasFired: 'Has fired',
-      activateFlagHasBeenHealed: 'Has been healed',
-      activateFlagHasBeenShot: 'Has been shot',
-      activateFlagTouchedEnnemy: 'Has touched ennemy',
-      activateFlagTouchedMissile: 'Has touched missile',
-      activateVelocity: 'Ship velocity',
-      activatePosition: 'Ship position'
-    };
-    return inputs;
+    return this.defaultConfig.neuroInvoInputs;
   }
 
   public generateFbGroupNeuroEvo(): {} {
-    const inputs = this.getActivateNeuroEvoInputs();
     const fbGroup = {
       cloneRate: ['', [Validators.pattern(this.floatPattern), Validators.required]],
       breedingRate: ['', [Validators.pattern(this.floatPattern), Validators.required]],
@@ -148,10 +140,10 @@ export class SimuConfigComponent implements OnInit {
       evolutionMode: ['', Validators.required]
     };
 
+    const inputs = this.getActivateNeuroEvoInputs();
+    // tslint:disable-next-line:forin
     for (const key in inputs) {
-      if (inputs.hasOwnProperty(key)) {
-        fbGroup[key] = [false, Validators.required];
-      }
+      fbGroup[key] = [false, Validators.required];
     }
     return fbGroup;
   }

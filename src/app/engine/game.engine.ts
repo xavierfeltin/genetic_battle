@@ -15,6 +15,7 @@ import { FactoryADN, ADN } from '../ia/adn';
 import { FortuneWheelGA } from '../ia/ga';
 import { Scoring } from '../ia/scoring';
 import { Phenotype } from '../models/phenotype.interface';
+import { ShipNeurEvo } from '../models/shipNeuroEvo.model';
 
 export class GameEngine {
   private static readonly NB_HEALTH_WHEN_DIE: number = 1;
@@ -211,6 +212,17 @@ export class GameEngine {
       needToReset = true;
     }
 
+    let isInputNeuroEvoDifferent = false;
+    const currentShipNeuroEvo = this.shipFactory.getShipNeuroEvo();
+    const inputs = currentShipNeuroEvo.getInputs();
+    for (const key in inputs) {
+      if (inputs[key].status !== config.neuroInvoInputs[key]) {
+        isInputNeuroEvoDifferent = true;
+        currentShipNeuroEvo.activateInput(key, config.neuroInvoInputs[key]);
+      }
+    }
+    needToReset = needToReset || isInputNeuroEvoDifferent;
+
     if (config.resetSimulation || needToReset) {
       this.reset(true);
       this.initialize();
@@ -236,7 +248,8 @@ export class GameEngine {
       crossOverRate: ADN.CROSSOVER_RATE,
       evolutionMode: GameEngine.EVOLUTION_MODE,
       resetSimulation: true,
-      debugMode: ShipRender.DEBUG
+      debugMode: ShipRender.DEBUG,
+      neuroInvoInputs: ShipNeurEvo.DEFAULT_INPUT_CONFIGURATION
     };
     return config;
   }

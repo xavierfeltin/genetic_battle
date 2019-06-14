@@ -15,4 +15,5 @@ export interface Configuration {
     evolutionMode: string;
     resetSimulation: boolean;
     debugMode: boolean;
+    neuroInvoInputs: {};
 }

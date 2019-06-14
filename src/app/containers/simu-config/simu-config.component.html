@@ -174,8 +174,8 @@
       <br/>
 
       <div class="layoutInputs">
-        <ng-container  *ngFor="let nnInput of getActivateNeuroEvoInputs() | keyvalue">
-          <div> <input type="checkbox" formControlName="{{nnInput.key}}"> <label> {{nnInput.value}} </label> </div>
+        <ng-container  *ngFor="let nnInput of this.defaultConfig.neuroInvoInputs | keyvalue">
+          <div> <input type="checkbox" formControlName="{{nnInput.key}}" [checked]="nnInput.value.status"> <label> {{nnInput.value.description}} </label> </div>
         </ng-container>
       </div>
     </fieldset>
