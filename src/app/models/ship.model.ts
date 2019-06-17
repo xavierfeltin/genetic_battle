@@ -20,6 +20,7 @@ export class Ship extends GameObject {
     public static readonly MAX_LIFE: number = 100;
     public static readonly DEFAULT_ENERGY_FUEL: number = 0;
     public static readonly DEFAULT_ENERGY_FIRE: number = -2;
+    public static readonly DEFAULT_NN_HIDDEN_LAYERS: number[] = [4, 4];
 
     private static readonly MAX_SPEED: number = 5;
     private static readonly MIN_SPEED: number = 2;
@@ -97,6 +98,7 @@ export class Ship extends GameObject {
     private nn: NeuralNetwork; // for neuroevolution
     private generation: number;
     private inputsNeuroEvo: ShipNeurEvo;
+    private neuronalNetworkStructure: number[];
 
     // Sensors
     private detectedMissileOnFOV: Missile;
@@ -115,7 +117,7 @@ export class Ship extends GameObject {
 
     constructor(id: number, generation: number, energyFuel: number,
                 energyFire: number, adnFactory: FactoryADN, isNeuroEvo: boolean = false,
-                neuroEvoInputs: ShipNeurEvo, parentsID: number[] = [-1]) {
+                neuroEvoInputs: ShipNeurEvo, nnStructure: number[], parentsID: number[] = [-1]) {
         super(id);
 
         this.parentsID = [...parentsID];
@@ -161,8 +163,9 @@ export class Ship extends GameObject {
         this.isNeuroEvo = isNeuroEvo;
         this.inputsNeuroEvo = neuroEvoInputs;
         const activeInputs = this.inputsNeuroEvo.getActiveInputNames();
+        this.neuronalNetworkStructure = nnStructure;
         if (this.isNeuroEvo) {
-            this.nn = new NeuralNetwork(activeInputs.length, Ship.NN_HIDDEN_LAYERS, Ship.NB_ATTRIBUTES);
+            this.nn = new NeuralNetwork(activeInputs.length, this.neuronalNetworkStructure, Ship.NB_ATTRIBUTES);
         }
         this.nbGenes = this.isNeuroEvo ? this.nn.getNbCoefficients() : Ship.NB_GENES;
         const minValue = Ship.MIN_ADN_VALUE * 1;
@@ -823,13 +826,16 @@ export class FactoryShip {
     private adnFactory: FactoryADN;
     private isNeuroEvolution: boolean;
     private shipNeuroEvo: ShipNeurEvo;
+    private neuronalNetworkStructure: number[];
 
     public constructor(adnFactory: FactoryADN, energyFuel: number = Ship.DEFAULT_ENERGY_FUEL,
-                       energyFire: number = Ship.DEFAULT_ENERGY_FIRE, isNeuroEvolution: boolean = false) {
+                       energyFire: number = Ship.DEFAULT_ENERGY_FIRE, isNeuroEvolution: boolean = false,
+                       nnStruture: number[] = Ship.DEFAULT_NN_HIDDEN_LAYERS) {
         this.energyFuel = energyFuel;
         this.energyFire = energyFire;
         this.adnFactory = adnFactory;
         this.isNeuroEvolution = isNeuroEvolution;
+        this.neuronalNetworkStructure = nnStruture;
         this.shipNeuroEvo = new ShipNeurEvo();
     }
 
@@ -860,12 +866,22 @@ export class FactoryShip {
     public getADNFactory(): FactoryADN {
         return this.adnFactory;
     }
+
     public getShipNeuroEvo(): ShipNeurEvo {
         return this.shipNeuroEvo;
     }
 
+    public getNeuronalNetworkStructure(): number[] {
+        return this.neuronalNetworkStructure;
+    }
+
+    public setNeuronalNetworkStructure(nnStructure: number[]) {
+        this.neuronalNetworkStructure = nnStructure;
+    }
+
     public create(id: number, generation: number, parentsID: number[] = [-1]): Ship {
         return new Ship(id, generation, this.energyFuel, this.energyFire,
-                        this.adnFactory, this.isNeuroEvolution, this.shipNeuroEvo, parentsID);
+                        this.adnFactory, this.isNeuroEvolution, this.shipNeuroEvo,
+                        this.neuronalNetworkStructure, parentsID);
     }
 }

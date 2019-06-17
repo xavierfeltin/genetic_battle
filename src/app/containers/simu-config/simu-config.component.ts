@@ -12,6 +12,7 @@ import { Configuration } from '../../models/configuration.interface';
 export class SimuConfigComponent implements OnInit {
   integerPattern = '^-?[0-9]+';
   floatPattern = '^-?[0-9]+.?[0-9]*';
+  hiddenLayerPattern = '^([0-9]+;)*([0-9]+)';
   simu: GameEngine;
   defaultConfig: Configuration;
 
@@ -60,6 +61,7 @@ export class SimuConfigComponent implements OnInit {
     this.mutationRate.setValue(this.defaultConfig.mutationRate);
     this.crossOverRate.setValue(this.defaultConfig.crossOverRate);
     this.evolutionMode.setValue(this.defaultConfig.evolutionMode);
+    this.nnStructure.setValue(this.defaultConfig.nnStructure.join(';'));
 
     const neuroEvoInputs = this.getActivateNeuroEvoInputs();
     // tslint:disable-next-line:forin
@@ -119,6 +121,7 @@ export class SimuConfigComponent implements OnInit {
       mutationRate: parseFloat(formValues.simu_genetic.mutationRate),
       crossOverRate: parseFloat(formValues.simu_genetic.crossOverRate),
       evolutionMode: formValues.simu_genetic.evolutionMode,
+      nnStructure: formValues.simu_genetic.nnStructure.split(';').map(str => parseInt(str)),
       resetSimulation: formValues.resetSimulation,
       debugMode: formValues.debugMode,
       neuroInvoInputs: configInputs
@@ -137,7 +140,8 @@ export class SimuConfigComponent implements OnInit {
       breedingRate: ['', [Validators.pattern(this.floatPattern), Validators.required]],
       mutationRate: ['', [Validators.pattern(this.floatPattern), Validators.required]],
       crossOverRate: ['', [Validators.pattern(this.floatPattern), Validators.required]],
-      evolutionMode: ['', Validators.required]
+      evolutionMode: ['', Validators.required],
+      nnStructure: ['', [Validators.pattern(this.hiddenLayerPattern), Validators.required]]
     };
 
     const inputs = this.getActivateNeuroEvoInputs();
@@ -202,6 +206,10 @@ export class SimuConfigComponent implements OnInit {
 
   get evolutionMode() {
     return this.formSimu.get('simu_genetic.evolutionMode');
+  }
+
+  get nnStructure() {
+    return this.formSimu.get('simu_genetic.nnStructure');
   }
 
   get resetSimulation() {

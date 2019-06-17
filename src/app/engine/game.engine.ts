@@ -212,6 +212,12 @@ export class GameEngine {
       needToReset = true;
     }
 
+    const nnStructure = this.shipFactory.getNeuronalNetworkStructure();
+    if (JSON.stringify(config.nnStructure) !== JSON.stringify(nnStructure)) {
+      this.shipFactory.setNeuronalNetworkStructure(config.nnStructure);
+      needToReset = true;
+    }
+
     let isInputNeuroEvoDifferent = false;
     const currentShipNeuroEvo = this.shipFactory.getShipNeuroEvo();
     const inputs = currentShipNeuroEvo.getInputs();
@@ -247,6 +253,7 @@ export class GameEngine {
       mutationRate: ADN.MUTATION_RATE,
       crossOverRate: ADN.CROSSOVER_RATE,
       evolutionMode: GameEngine.EVOLUTION_MODE,
+      nnStructure: Ship.DEFAULT_NN_HIDDEN_LAYERS,
       resetSimulation: true,
       debugMode: ShipRender.DEBUG,
       neuroInvoInputs: ShipNeurEvo.DEFAULT_INPUT_CONFIGURATION

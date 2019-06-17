@@ -13,6 +13,7 @@ export interface Configuration {
     mutationRate: number;
     crossOverRate: number;
     evolutionMode: string;
+    nnStructure: number[];
     resetSimulation: boolean;
     debugMode: boolean;
     neuroInvoInputs: {};

@@ -173,7 +173,19 @@
       <br/>
       <br/>
 
-      <div class="layoutInputs">
+      <div class="layoutInputs" *ngIf="this.formSimu.value.simu_genetic.evolutionMode === 'neuroevol'">
+        <label [for]="nnStructure"> Perceptron structure (hidden layers): </label>
+        <input type="text" formControlName="nnStructure"/>
+        <span *ngIf="nnStructure.errors && isValidFormSubmitted != null && !isValidFormSubmitted" [ngClass] = "'error'">
+          <ng-container *ngIf="crossOverRate.errors?.pattern">
+            Should be formatted X;X;X(...).
+          </ng-container>
+          <ng-container *ngIf="nnStructure.errors?.required">
+            A value is required.
+          </ng-container>
+        </span>
+        <br/>
+
         <ng-container  *ngFor="let nnInput of this.defaultConfig.neuroInvoInputs | keyvalue">
           <div> <input type="checkbox" formControlName="{{nnInput.key}}" [checked]="nnInput.value.status"> <label> {{nnInput.value.description}} </label> </div>
         </ng-container>
