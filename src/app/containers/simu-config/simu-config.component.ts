@@ -72,11 +72,26 @@ export class SimuConfigComponent implements OnInit {
   }
 
   onSubmit() {
+    let isFormOk = false;
     if (this.formSimu.invalid) {
-      console.log('invalid form !');
-      this.isValidFormSubmitted = false;
+      console.log('The form has invalid element:');
+      for (const name in this.formSimu.controls) {
+        if (this.formSimu.controls[name].invalid) {
+          console.log('  - ' + name);
+          // Ignore neuro evolution fields if not setting a neuro evolution simulation
+          if (name === 'simu_genetic' && this.formSimu.value.simu_genetic.evolutionMode === 'geneticalgo') {
+            isFormOk = true;
+          }
+        }
+      }
+
+      this.isValidFormSubmitted = isFormOk;
+    }
+
+    if (!isFormOk) {
       return;
     }
+
     const formValues = this.formSimu.value;
 
     const neuroInvoInputs = this.getActivateNeuroEvoInputs();

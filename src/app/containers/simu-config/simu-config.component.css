@@ -20,7 +20,8 @@ label {
 input {
     display: inline-block;
     vertical-align: baseline;
-    width: 50px;
+    width: 70px;
+    height: 15px;
     margin: 1px;
 }
 

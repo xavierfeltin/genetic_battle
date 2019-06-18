@@ -164,8 +164,8 @@
       <br/>
       <br/>
 
+      <p> <i> The following configuration will force a reset on the simulation </i> </p>
       <label [for]="evolutionMode"> Evolution Mode: </label>
-      <span> <i> It will reset the simulation </i> </span>
       <div>
         <div> <input type="radio" formControlName="evolutionMode" value="neuroevol" checked> <label> Neuro Evolution </label> </div>
         <div> <input type="radio" formControlName="evolutionMode"  value="geneticalgo"> <label> Genetic Algorithm </label> </div>
@@ -174,11 +174,11 @@
       <br/>
 
       <div class="layoutInputs" *ngIf="this.formSimu.value.simu_genetic.evolutionMode === 'neuroevol'">
-        <label [for]="nnStructure"> Perceptron structure (hidden layers): </label>
-        <input type="text" formControlName="nnStructure"/>
+        <label [for]="nnStructure"> Perceptron structure (Layer1;Layer2;...): </label>
+        <input type="text" size="50" formControlName="nnStructure"/>
         <span *ngIf="nnStructure.errors && isValidFormSubmitted != null && !isValidFormSubmitted" [ngClass] = "'error'">
-          <ng-container *ngIf="crossOverRate.errors?.pattern">
-            Should be formatted X;X;X(...).
+          <ng-container *ngIf="nnStructure.errors?.pattern">
+            Should be formatted Integer;Integer;...
           </ng-container>
           <ng-container *ngIf="nnStructure.errors?.required">
             A value is required.
