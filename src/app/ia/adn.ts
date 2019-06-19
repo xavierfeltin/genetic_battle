@@ -17,6 +17,7 @@ export class ADN {
         this.minimum = min;
         this.maximum = max;
         this.mutationRate = mutationRate;
+        this.crossOverRate = crossOverRate;
 
         this.genes = [];
         for (let i = 0; i < nbGenes; i++) {
@@ -24,11 +25,11 @@ export class ADN {
         }
     }
 
-    public getGenes() {
+    public getGenes(): number[] {
         return this.genes;
     }
 
-    public getSize() {
+    public getSize(): number {
         return this.genes.length;
     }
 

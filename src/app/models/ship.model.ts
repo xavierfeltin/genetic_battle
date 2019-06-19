@@ -478,7 +478,7 @@ export class Ship extends GameObject {
         adn.mutate();
 
         const ship = new Ship(newId, this.generation + 1, this.energyFuel, this.energy,
-            this.adnFactory, this.isNeuroEvo, this.inputsNeuroEvo, [this.id, this.partner.id]);
+            this.adnFactory, this.isNeuroEvo, this.inputsNeuroEvo, this.neuronalNetworkStructure, [this.id, this.partner.id]);
         ship.setADN(adn);
         ship.setPosition(this.pos);
         ship.setOrientation(orientation);
@@ -523,7 +523,7 @@ export class Ship extends GameObject {
 
     public clone(id: number, orientation: number): Ship {
         const ship = new Ship(id, this.generation + 1, this.energyFuel, this.energy,
-                            this.adnFactory, this.isNeuroEvo, this.inputsNeuroEvo, [this.id]);
+                            this.adnFactory, this.isNeuroEvo, this.inputsNeuroEvo, this.neuronalNetworkStructure, [this.id]);
         ship.setPosition(this.pos);
         ship.setOrientation(orientation);
         ship.setADN(this.adn.mutate());
@@ -535,7 +535,7 @@ export class Ship extends GameObject {
 
     public copy(): Ship {
         const ship = new Ship(this.id, this.generation, this.energyFuel, this.energy,
-                            this.adnFactory, this.isNeuroEvo, this.inputsNeuroEvo, this.parentsID);
+                            this.adnFactory, this.isNeuroEvo, this.inputsNeuroEvo, this.neuronalNetworkStructure, this.parentsID);
         ship.age = this.age;
         ship.life = this.life;
         ship.nbChildren = this.nbChildren;
