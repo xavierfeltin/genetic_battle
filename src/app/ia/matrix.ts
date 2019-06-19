@@ -47,7 +47,6 @@ export class Matrix {
         for (let i = 0; i < this.rows; i++) {
             const line = new Array<number>(this.columns);
             line.fill(0, 0, this.columns);
-            //this.values.fill(line, 0, r);
             this.values.push(line);
         }
 
@@ -124,6 +123,24 @@ export class Matrix {
                 this.values[i][j] = values[i * j];
             }
         }
+    }
+
+    public getValueAt(row: number, column: number): number {
+        if (row < 0 || column < 0 || row >= this.rows || column >= this.columns) {
+            console.error('Try to access a data outside of the matrix row: ' + row + ', column: ' + column);
+            return null;
+        }
+
+        return this.values[row][column];
+    }
+
+    public setValueAt(value: number, row: number, column: number) {
+        if (row < 0 || column < 0 || row >= this.rows || column >= this.columns) {
+            console.error('Try to access a data outside of the matrix row: ' + row + ', column: ' + column);
+            return;
+        }
+
+        this.values[row][column] = value;
     }
 
     public hadamard(m: Matrix) {

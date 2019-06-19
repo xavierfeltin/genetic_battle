@@ -16,6 +16,7 @@ import { FortuneWheelGA } from '../ia/ga';
 import { Scoring } from '../ia/scoring';
 import { Phenotype } from '../models/phenotype.interface';
 import { ShipNeurEvo } from '../models/shipNeuroEvo.model';
+import { Matrix } from '../ia/matrix';
 
 export class GameEngine {
   private static readonly NB_HEALTH_WHEN_DIE: number = 1;
@@ -605,7 +606,7 @@ export class GameEngine {
     return result;
   }
 
-  private detectCollision(objA: GameObject, objB: GameObject, previousCollision: Collision,
+  private detectCollision(objA: GameObject, objB: GameObject, indexA: number, indexB: number, previousCollision: Collision,
                           firstCollision: Collision, newCollision: Collision, t: number,
                           /*previousCollisions: {}*/) {
     // Collision is not possible if ships are going in opposite directions
@@ -617,7 +618,7 @@ export class GameEngine {
             || (objB.pos.y < objA.pos.y && objB.velo.y < 0.0 && objA.velo.y > 0.0)) {
       collision = Collision.createEmptyCollision();
     } else {
-      collision = Collision.getCollsion(objB, objA);
+      collision = Collision.getCollsion(objB, objA, indexA, indexB);
     }
 
     if (!collision.isEmpty()) {
@@ -633,7 +634,7 @@ export class GameEngine {
                 || (collision.objB === previousCollision.objA
                   && collision.objA === previousCollision.objB
                   && collision.collTime === previousCollision.collTime))) {
-          const emptyCollision = new Collision(null, null, -1.0);
+          const emptyCollision = new Collision(null, null, -1, -1, -1.0);
           newCollision.setCollision(emptyCollision);
       } else {
         newCollision.setCollision(collision);
@@ -653,6 +654,8 @@ export class GameEngine {
     const nShips = ships.length;
     const nMissiles = missiles.length;
     const nHealth = healths.length;
+
+    const matrixShipColl = new Matrix(nShips, nShips);
 
     let previousCollision = Collision.createEmptyCollision();
     // let previousCollisions = {};
@@ -678,7 +681,7 @@ export class GameEngine {
           }
 
           // Collision is not possible if ships are going in opposite directions
-          this.detectCollision(ship, missile, previousCollision, firstCollision, newCollision, t /*, previousCollisions*/);
+          this.detectCollision(ship, missile, i, j, previousCollision, firstCollision, newCollision, t /*, previousCollisions*/);
         }
 
         for (let j = i + 1; j < nMissiles; j++) {
@@ -691,7 +694,7 @@ export class GameEngine {
           }
 
           // Collision is not possible if otherMissiles are going in opposite directions
-          this.detectCollision(otherMissile, missile, previousCollision, firstCollision, newCollision, t /*, previousCollisions*/);
+          this.detectCollision(otherMissile, missile, i, j, previousCollision, firstCollision, newCollision, t /*, previousCollisions*/);
         }
       }
 
@@ -707,7 +710,7 @@ export class GameEngine {
           }
 
           // Collision is not possible if ships are going in opposite directions
-          this.detectCollision(ship, health, previousCollision, firstCollision, newCollision, t /*, previousCollisions*/);
+          this.detectCollision(ship, health, i, j, previousCollision, firstCollision, newCollision, t /*, previousCollisions*/);
         }
       }
 
@@ -718,17 +721,18 @@ export class GameEngine {
         for (let j = i + 1; j < nShips; j++) {
           const shipB = ships[j];
 
-          if (shipA.hasPartner() || shipB.hasPartner() || shipA.isDead() || shipB.isDead() || shipA.isFamily(shipB)) {
+          if (shipA.hasPartner() || shipB.hasPartner() || shipA.isDead()
+              || shipB.isDead() || shipA.isFamily(shipB) || matrixShipColl.getValueAt(i, j) === 1) {
             continue;
           }
 
           // Collision is not possible if ships are going in opposite directions
-          this.detectCollision(shipA, shipB, previousCollision, firstCollision, newCollision, t); // , previousCollisions);
+          this.detectCollision(shipA, shipB, i, j, previousCollision, firstCollision, newCollision, t); // , previousCollisions);
         }
       }
 
       if (firstCollision.isEmpty()) {
-        // No collision so the pod is following its path until the end of the turn
+        // No collision so the ship is following its path until the end of the turn
         for (let i = 0; i < nShips; i++) {
           ships[i].move(1.0 - t);
         }
@@ -809,34 +813,11 @@ export class GameEngine {
           const shipA = firstCollision.objA as Ship;
           const shipB = firstCollision.objB as Ship; // Obj B is a ship
           shipA.setPartner(shipB);
+          matrixShipColl.setValueAt(1, firstCollision.idA, firstCollision.idB);
         }
 
         t += collisionTime;
         previousCollision = firstCollision;
-
-        /*
-        if (firstCollision !== null) {
-          const keyA = firstCollision.objA.id + '_' + firstCollision.objA.constructor.name;
-          const keyB = firstCollision.objA.id + '_' + firstCollision.objA.constructor.name;
-          if (keyA in previousCollisions) {
-            if (!(previousCollisions[keyA].includes(keyB))) {
-              previousCollisions[keyA].push(keyB);
-            }
-          }
-          else {
-            previousCollisions[keyA] = [];
-          }
-
-          if (keyB in previousCollisions) {
-            if (!(previousCollisions[keyB].includes(keyA))) {
-              previousCollisions[keyB].push(keyA);
-            }
-          }
-          else {
-            previousCollisions[keyB] = [];
-          }
-        }
-        */
       }
     }
   }

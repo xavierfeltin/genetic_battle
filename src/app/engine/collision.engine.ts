@@ -5,15 +5,19 @@ export class Collision {
     public collTime: number;
     public objA: GameObject = null;
     public objB: GameObject = null;
+    public idA = -1;
+    public idB = -1;
 
-    public constructor(A: GameObject, B: GameObject, t: number) {
+    public constructor(A: GameObject, B: GameObject, indexA: number, indexB: number,  t: number) {
         this.collTime = t;
         this.objA = A;
         this.objB = B;
+        this.idA = indexA;
+        this.idB = indexB;
     }
 
     public static createEmptyCollision() {
-        return new Collision(null, null, -1.0);
+        return new Collision(null, null, -1, -1, -1.0);
     }
 
     private static get_closest(vOther: Vect2D, vA: Vect2D, vB: Vect2D): Vect2D {
@@ -43,7 +47,7 @@ export class Collision {
         return new Vect2D(closestPointX, closestPointY);
     }
 
-    public static getCollsion(objA: GameObject, objB: GameObject): Collision {
+    public static getCollsion(objA: GameObject, objB: GameObject, indexA: number, indexB: number): Collision {
         // Use square distance to avoid using root function
         const distanceToOther = objA.pos.distance2(objB.pos);
         const radii = (objA.radius + objB.radius);
@@ -51,7 +55,7 @@ export class Collision {
 
         if (distanceToOther <= radiiSquared) {
             // Units are already in contact so there is an immediate collision
-            return new Collision(objA, objB, 0.0);
+            return new Collision(objA, objB, indexA, indexB, 0.0);
         }
 
         // Optimisation : units with the same vector speed will never collide
@@ -110,7 +114,7 @@ export class Collision {
                 return Collision.createEmptyCollision(); // no taking into account late collision
             }
 
-            return new Collision(objA, objB, t);
+            return new Collision(objA, objB, indexA, indexB, t);
         } else {
             return Collision.createEmptyCollision();
         }
@@ -120,6 +124,8 @@ export class Collision {
         this.collTime = collision.collTime;
         this.objA = collision.objA;
         this.objB = collision.objB;
+        this.idA = collision.idA;
+        this.idB = collision.idB;
     }
 
     public isEmpty(): boolean {

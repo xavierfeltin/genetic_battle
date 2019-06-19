@@ -72,7 +72,7 @@ export class SimuConfigComponent implements OnInit {
   }
 
   onSubmit() {
-    let isFormOk = false;
+    let isFormOk = !this.formSimu.invalid;
     if (this.formSimu.invalid) {
       console.log('The form has invalid element:');
       for (const name in this.formSimu.controls) {
