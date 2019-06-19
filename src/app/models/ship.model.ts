@@ -706,32 +706,6 @@ export class Ship extends GameObject {
         }
     }
 
-    private turnLeft() {
-        this.orientation -= 3;
-        this.orientation = this.orientation % 360;
-    }
-
-    private turnRight() {
-        this.orientation += 3;
-        this.orientation = this.orientation % 360;
-    }
-
-    private goForward() {
-        return;
-    }
-
-    private improveFOV() {
-        this.fov = Math.min(this.fov + 1, Ship.MAX_ANGLE_FOV);
-    }
-
-    private reduceFOV() {
-        this.fov = Math.max(this.fov - 1, Ship.MIN_ANGLE_FOV);
-    }
-
-    private keepFOV() {
-        return;
-    }
-
     private getClosestInSight(objects: GameObject[]): GameObject {
         let minDistance = NaN;
         let target = null;

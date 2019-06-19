@@ -1,6 +1,6 @@
 .layout {
     display: grid;
-    grid-template-columns: 30% 70%;
+    grid-template-columns: 1fr 2fr;
     margin: 5px 0px 5px 10px;
 }
 
@@ -21,6 +21,14 @@ input {
     display: inline-block;
     vertical-align: baseline;
     width: 70px;
+    height: 15px;
+    margin: 1px;
+}
+
+.inputCoeff {
+    display: inline-block;
+    vertical-align: baseline;
+    width: 20px;
     height: 15px;
     margin: 1px;
 }
