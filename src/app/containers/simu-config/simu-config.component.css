@@ -31,6 +31,9 @@ input {
     width: 20px;
     height: 15px;
     margin: 1px;
+    border-style: none;
+    border-bottom-style: solid;
+    border-bottom-color: lightgray;
 }
 
 button {
