@@ -17,4 +17,5 @@ export interface Configuration {
     resetSimulation: boolean;
     debugMode: boolean;
     neuroInvoInputs: {};
+    scoringCoeffs: {};
 }

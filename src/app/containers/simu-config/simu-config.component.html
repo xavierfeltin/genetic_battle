@@ -164,13 +164,17 @@
       <br/>
 
       <br/>
-      Fitness = <input class="inputCoeff" type="text"/> Nb picked health + <input class="inputCoeff" type="text"/> Nb destroyed ships + <input class="inputCoeff" type="text"/> Nb destroyed missiles + <input class="inputCoeff" type="text"/> Nb missiles launched
-      + <input class="inputCoeff" type="text"/> Damage received + <input class="inputCoeff" type="text"/> Lifespan + <input class="inputCoeff" type="text"/> Accuracy + <input class="inputCoeff" type="text"/> Nb destroyed ships * Acc
-      + <input class="inputCoeff" type="text"/> Nb destroyed missiles * Acc + <input class="inputCoeff" type="text"/> Nb missiles launched * Acc
+      Fitness function:
+      <div class="equation">
+        <ng-container *ngFor="let coeff of this.defaultConfig.scoringCoeffs | keyvalue;  let i = index">
+          <input type="text" class="inputCoeff" formControlName="{{coeff.key}}" [value]="coeff.value.value"> x {{coeff.value.description}}
+          <ng-container *ngIf="i < (nbScoringCoeffs - 1)"> + </ng-container>
+        </ng-container>
+      </div>
       <br/>
       <br/>
 
-      <p> <i> The following configuration will force a reset on the simulation </i> </p>
+      <p> <i> The following parameters will force a reset of the simulation </i> </p>
       <label [for]="evolutionMode"> Evolution Mode: </label>
       <div>
         <div> <input type="radio" formControlName="evolutionMode" value="neuroevol" checked> <label> Neuro Evolution </label> </div>

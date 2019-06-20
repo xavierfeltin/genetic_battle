@@ -17,6 +17,7 @@ import { Scoring } from '../ia/scoring';
 import { Phenotype } from '../models/phenotype.interface';
 import { ShipNeurEvo } from '../models/shipNeuroEvo.model';
 import { Matrix } from '../ia/matrix';
+import { ShipScoring } from '../models/shipScoring.model';
 
 export class GameEngine {
   private static readonly NB_HEALTH_WHEN_DIE: number = 1;
@@ -151,9 +152,22 @@ export class GameEngine {
       }
     }
 
+    // Scoring configuration
+    debugger; // to do : pb reaffectation coefficients for scoring
+    const currentShipScoringCoefficients = this.shipFactory.getShipScoringCoefficients();
+    const coeffs = currentShipScoringCoefficients.getCoefficients();
+    let hasScoringCoeffsChanged = false;
+    for (const key in coeffs) {
+      if (coeffs[key].value !== config.scoringCoeffs[key]) {
+        currentShipScoringCoefficients.setCoefficient(key, config.scoringCoeffs[key]);
+        hasScoringCoeffsChanged = true;
+      }
+    }
+
     // Ship configuration
     if (config.energyFire !== this.shipFactory.getEnergyFire()
       || config.energyFuel !== this.shipFactory.getEnergyFuel()
+      || hasScoringCoeffsChanged
       || (this.ships.length  > 0
           && ( config.mutationRate !== this.ships[0].getADNFactory().getMutationRate()
                || config.crossOverRate !== this.ships[0].getADNFactory().getCrossOverRate()))) {
@@ -193,6 +207,10 @@ export class GameEngine {
 
         if (config.crossOverRate !== ship.getADNFactory().getCrossOverRate()) {
           ship.getADNFactory().setCrossOverRate(config.crossOverRate);
+        }
+
+        if (hasScoringCoeffsChanged) {
+          ship.setScoringCoefficients(currentShipScoringCoefficients);
         }
       }
     }
@@ -257,7 +275,8 @@ export class GameEngine {
       nnStructure: Ship.DEFAULT_NN_HIDDEN_LAYERS,
       resetSimulation: true,
       debugMode: ShipRender.DEBUG,
-      neuroInvoInputs: ShipNeurEvo.DEFAULT_INPUT_CONFIGURATION
+      neuroInvoInputs: ShipNeurEvo.DEFAULT_INPUT_CONFIGURATION,
+      scoringCoeffs: ShipScoring.DEFAULT_SCORING_CONFIGURATION
     };
     return config;
   }

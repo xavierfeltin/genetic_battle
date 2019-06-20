@@ -63,6 +63,13 @@ export class SimuConfigComponent implements OnInit {
     this.evolutionMode.setValue(this.defaultConfig.evolutionMode);
     this.nnStructure.setValue(this.defaultConfig.nnStructure.join(';'));
 
+    const scoringCoeffs = this.getScoringCoefficients();
+    // tslint:disable-next-line:forin
+    for (const name in scoringCoeffs) {
+      const key = 'simu_genetic.' + name;
+      this.formSimu.get(key).setValue(this.defaultConfig.scoringCoeffs[name].value);
+    }
+
     const neuroEvoInputs = this.getActivateNeuroEvoInputs();
     // tslint:disable-next-line:forin
     for (const name in neuroEvoInputs) {
@@ -114,6 +121,13 @@ export class SimuConfigComponent implements OnInit {
   }
 
   private fromFormToConfiguration(formValues: any): Configuration {
+    const scoringCoeffs = this.getScoringCoefficients();
+    const configCoefficients = {};
+    // tslint:disable-next-line:forin
+    for (const key in scoringCoeffs) {
+      configCoefficients[key] = parseFloat(formValues.simu_genetic[key]);
+    }
+
     const neuroInvoInputs = this.getActivateNeuroEvoInputs();
     const configInputs = {};
     // tslint:disable-next-line:forin
@@ -139,7 +153,8 @@ export class SimuConfigComponent implements OnInit {
       nnStructure: formValues.simu_genetic.nnStructure.split(';').map(str => parseInt(str)),
       resetSimulation: formValues.resetSimulation,
       debugMode: formValues.debugMode,
-      neuroInvoInputs: configInputs
+      neuroInvoInputs: configInputs,
+      scoringCoeffs: configCoefficients
     };
 
     return configuration;
@@ -148,6 +163,15 @@ export class SimuConfigComponent implements OnInit {
   public getActivateNeuroEvoInputs(): {} {
     return this.defaultConfig.neuroInvoInputs;
   }
+
+  public getScoringCoefficients(): {} {
+    return this.defaultConfig.scoringCoeffs;
+  }
+
+  public get nbScoringCoeffs(): number {
+    return Object.keys(this.defaultConfig.scoringCoeffs).length;
+  }
+
 
   public generateFbGroupNeuroEvo(): {} {
     const fbGroup = {
@@ -158,6 +182,12 @@ export class SimuConfigComponent implements OnInit {
       evolutionMode: ['', Validators.required],
       nnStructure: ['', [Validators.pattern(this.hiddenLayerPattern), Validators.required]]
     };
+
+    const coeffs = this.getScoringCoefficients();
+    // tslint:disable-next-line:forin
+    for (const key in coeffs) {
+      fbGroup[key] = ['', [Validators.pattern(this.floatPattern), Validators.required]];
+    }
 
     const inputs = this.getActivateNeuroEvoInputs();
     // tslint:disable-next-line:forin

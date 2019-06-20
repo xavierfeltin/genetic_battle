@@ -7,6 +7,7 @@ import { Missile } from './missile.model';
 import { Scoring } from '../ia/scoring';
 import { Phenotype } from './phenotype.interface';
 import { ShipNeurEvo } from './shipNeuroEvo.model';
+import { ShipScoring } from './shipScoring.model';
 
 export class Ship extends GameObject {
     // Constants
@@ -60,6 +61,7 @@ export class Ship extends GameObject {
     private nbClones: number;
     private nbChildren: number;
     private adnFactory: FactoryADN;
+    private scoringCoefficients: ShipScoring;
 
     // Variables to pilot a ship
     private attractHealth: number;
@@ -117,7 +119,8 @@ export class Ship extends GameObject {
 
     constructor(id: number, generation: number, energyFuel: number,
                 energyFire: number, adnFactory: FactoryADN, isNeuroEvo: boolean = false,
-                neuroEvoInputs: ShipNeurEvo, nnStructure: number[], parentsID: number[] = [-1]) {
+                scoringCoefficients: ShipScoring, neuroEvoInputs: ShipNeurEvo,
+                nnStructure: number[], parentsID: number[] = [-1]) {
         super(id);
 
         this.parentsID = [...parentsID];
@@ -160,6 +163,7 @@ export class Ship extends GameObject {
 
         this.fireRate = Math.round((Ship.MIN_FIRE_RATE + Ship.MAX_FIRE_RATE) / 2);
 
+        this.scoringCoefficients =  scoringCoefficients;
         this.isNeuroEvo = isNeuroEvo;
         this.inputsNeuroEvo = neuroEvoInputs;
         const activeInputs = this.inputsNeuroEvo.getActiveInputNames();
@@ -202,6 +206,14 @@ export class Ship extends GameObject {
         this.adn = adn;
         if (!this.isNeuroEvo) {
             this.expressADN();
+        }
+    }
+
+    public setScoringCoefficients(scoringCoeffs: ShipScoring) {
+        const coeffs = scoringCoeffs.getCoefficients();
+        // tslint:disable-next-line:forin
+        for (const key in coeffs) {
+            this.scoringCoefficients.setCoefficient(key, coeffs[key].value);
         }
     }
 
@@ -478,7 +490,8 @@ export class Ship extends GameObject {
         adn.mutate();
 
         const ship = new Ship(newId, this.generation + 1, this.energyFuel, this.energy,
-            this.adnFactory, this.isNeuroEvo, this.inputsNeuroEvo, this.neuronalNetworkStructure, [this.id, this.partner.id]);
+            this.adnFactory, this.isNeuroEvo, this.scoringCoefficients, this.inputsNeuroEvo,
+            this.neuronalNetworkStructure, [this.id, this.partner.id]);
         ship.setADN(adn);
         ship.setPosition(this.pos);
         ship.setOrientation(orientation);
@@ -523,7 +536,8 @@ export class Ship extends GameObject {
 
     public clone(id: number, orientation: number): Ship {
         const ship = new Ship(id, this.generation + 1, this.energyFuel, this.energy,
-                            this.adnFactory, this.isNeuroEvo, this.inputsNeuroEvo, this.neuronalNetworkStructure, [this.id]);
+                            this.adnFactory, this.isNeuroEvo, this.scoringCoefficients,
+                            this.inputsNeuroEvo, this.neuronalNetworkStructure, [this.id]);
         ship.setPosition(this.pos);
         ship.setOrientation(orientation);
         ship.setADN(this.adn.mutate());
@@ -535,7 +549,8 @@ export class Ship extends GameObject {
 
     public copy(): Ship {
         const ship = new Ship(this.id, this.generation, this.energyFuel, this.energy,
-                            this.adnFactory, this.isNeuroEvo, this.inputsNeuroEvo, this.neuronalNetworkStructure, this.parentsID);
+                            this.adnFactory, this.isNeuroEvo, this.scoringCoefficients,
+                            this.inputsNeuroEvo, this.neuronalNetworkStructure, this.parentsID);
         ship.age = this.age;
         ship.life = this.life;
         ship.nbChildren = this.nbChildren;
@@ -798,6 +813,7 @@ export class FactoryShip {
     private energyFuel: number;
     private energyFire: number;
     private adnFactory: FactoryADN;
+    private scoringCoefficients: ShipScoring;
     private isNeuroEvolution: boolean;
     private shipNeuroEvo: ShipNeurEvo;
     private neuronalNetworkStructure: number[];
@@ -808,6 +824,7 @@ export class FactoryShip {
         this.energyFuel = energyFuel;
         this.energyFire = energyFire;
         this.adnFactory = adnFactory;
+        this.scoringCoefficients = new ShipScoring();
         this.isNeuroEvolution = isNeuroEvolution;
         this.neuronalNetworkStructure = nnStruture;
         this.shipNeuroEvo = new ShipNeurEvo();
@@ -841,6 +858,10 @@ export class FactoryShip {
         return this.adnFactory;
     }
 
+    public getShipScoringCoefficients(): ShipScoring {
+        return this.scoringCoefficients;
+    }
+
     public getShipNeuroEvo(): ShipNeurEvo {
         return this.shipNeuroEvo;
     }
@@ -855,7 +876,7 @@ export class FactoryShip {
 
     public create(id: number, generation: number, parentsID: number[] = [-1]): Ship {
         return new Ship(id, generation, this.energyFuel, this.energyFire,
-                        this.adnFactory, this.isNeuroEvolution, this.shipNeuroEvo,
-                        this.neuronalNetworkStructure, parentsID);
+                        this.adnFactory, this.isNeuroEvolution, this.scoringCoefficients,
+                        this.shipNeuroEvo, this.neuronalNetworkStructure, parentsID);
     }
 }
