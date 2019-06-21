@@ -8,6 +8,7 @@ import { Scoring } from '../ia/scoring';
 import { Phenotype } from './phenotype.interface';
 import { ShipNeurEvo } from './shipNeuroEvo.model';
 import { ShipScoring } from './shipScoring.model';
+import { TouchSequence } from 'selenium-webdriver';
 
 export class Ship extends GameObject {
     // Constants
@@ -213,7 +214,7 @@ export class Ship extends GameObject {
         const coeffs = scoringCoeffs.getCoefficients();
         // tslint:disable-next-line:forin
         for (const key in coeffs) {
-            this.scoringCoefficients.setCoefficient(key, coeffs[key].value);
+            this.scoringCoefficients.setCoefficient(key, coeffs[key]);
         }
     }
 
@@ -247,17 +248,12 @@ export class Ship extends GameObject {
     }
 
     public scoring(): number {
-        const score = (this.nbHealthPackPicked * 1)
-                    + this.nbEnnemiesDestroyed * this.getAccuracy();
-                     // + (this.nbEnnemiesTouched * 5)
-                     // + this.nbMissilesDestroyed;
-                    // - this.nbReceivedDamage;
-                    // + (this.getAccuracy() * 20);
-                    // - (this.nbReceivedDamage * 2);
-                    // + ((this.age / 30) * 5);
-
-        // const score = (this.nbHealthPackPicked);
-        // const score = this.getAge() / 30
+        const coeffs = this.scoringCoefficients.getCoefficients();
+        let score = 0;
+        // tslint:disable-next-line:forin
+        for (const key in coeffs) {
+            score += coeffs[key] * this[key];
+        }
         return score;
     }
 
@@ -367,94 +363,6 @@ export class Ship extends GameObject {
         // Call NN with the current game state viewed by the ship
         const output = this.nn.feedForward(input);
         this.matchAttributesNeuroEvo(output); // Match ouputs with ship attributes
-    }
-
-    private get inputFlagDetectedMissileFOV(): number {
-        return this.detectedMissileOnFOV !== null ? 1 : 0;
-    }
-    private get inputFlagDetectedShipFOV(): number {
-        return this.detectedShipOnFOV !== null ? 1 : 0;
-    }
-    private get inputFlagDetectedHealthFOV(): number {
-        return this.detectedHealthOnFOV !== null ? 1 : 0;
-    }
-    private get inputFlagDetectedMissileRadar(): number {
-        return this.detectedMissileOnRadar !== null ? 1 : 0;
-    }
-    private get inputFlagDetectedHealthRadar(): number {
-        return this.detectedHealthOnRadar !== null ? 1 : 0;
-    }
-    private get inputFlagDetectedShipRadar(): number {
-        return this.detectedShipOnRadar !== null ? 1 : 0;
-    }
-    private get inputDistanceDetectedMissileFOV(): number {
-        return this.distanceMissileOnFOV === -1 ? -1 : MyMath.map(this.distanceMissileOnFOV, 0, Ship.MAX_DISTANCE, 1, 0);
-    }
-    private get inputDistanceDetectedShipFOV(): number {
-        return this.distanceShipOnFOV === -1 ? -1 : MyMath.map(this.distanceShipOnFOV, 0, Ship.MAX_DISTANCE, 1, 0);
-    }
-    private get inputDistanceDetectedHealthFOV(): number {
-        return this.distanceHealthOnFOV === -1 ? -1 : MyMath.map(this.distanceHealthOnFOV, 0, Ship.MAX_DISTANCE, 1, 0);
-    }
-    private get inputDistanceDetectedMissileRadar(): number {
-        return this.distanceMissileOnRadar === -1 ? -1 : MyMath.map(this.distanceMissileOnRadar, 0, Ship.MAX_DISTANCE, 1, 0);
-    }
-    private get inputDistanceDetectedHealthRadar(): number {
-        return this.distanceHealthOnRadar === -1 ? -1 : MyMath.map(this.distanceHealthOnRadar, 0, Ship.MAX_DISTANCE, 1, 0);
-    }
-    private get inputDistanceDetectedShipRadar(): number {
-        return this.distanceShipOnRadar === -1 ? -1 : MyMath.map(this.distanceShipOnRadar, 0, Ship.MAX_DISTANCE, 1, 0);
-    }
-    private get inputAttractionMissile(): number {
-        return this.attractMissile;
-    }
-    private get inputAttractionShip(): number {
-        return this.attractShip;
-    }
-    private get inputAttractionHealth(): number {
-        return this.attractHealth;
-    }
-    private get inputFOVAngle(): number {
-        return MyMath.map(this.fov, Ship.MIN_ANGLE_FOV, Ship.MAX_ANGLE_FOV, Ship.MIN_NN_VALUE, Ship.MAX_ADN_VALUE);
-    }
-    private get inputRadarRadius(): number {
-        return MyMath.map(this.radarLength, Ship.MIN_LENGTH_RADAR, Ship.MAX_LENGTH_RADAR, Ship.MIN_NN_VALUE, Ship.MAX_ADN_VALUE);
-    }
-    private get inputFireRate(): number {
-        return MyMath.map(this.fireRate, Ship.MIN_FIRE_RATE, Ship.MAX_FIRE_RATE, Ship.MIN_NN_VALUE, Ship.MAX_ADN_VALUE);
-    }
-    private get inputLife(): number {
-        return MyMath.map(this.life, 0, Ship.MAX_LIFE, Ship.MIN_NN_VALUE, Ship.MAX_ADN_VALUE);
-    }
-    private get inputMaxSpeed(): number {
-        return MyMath.map(this.maxSpeed, 0, Ship.MAX_SPEED, Ship.MIN_NN_VALUE, Ship.MAX_ADN_VALUE);
-    }
-    private get inputFlagHasFired(): number {
-        return this.hasFired ? 1 : 0;
-    }
-    private get inputFlagHasBeenHealed(): number {
-        return this.hasBeenHealed ? 1 : 0;
-    }
-    private get inputFlagHasBeenShot(): number {
-        return this.hasBeenShot ? 1 : 0;
-    }
-    private get inputFlagTouchedEnnemy(): number {
-        return this.hasTouchedEnnemy ? 1 : 0;
-    }
-    private get inputFlagTouchedMissile(): number {
-        return this.hasTouchedMissile ? 1 : 0;
-    }
-    private get inputVelocityX(): number {
-        return MyMath.map(this.velo.x, 0, Ship.MAX_SPEED, Ship.MIN_NN_VALUE, Ship.MAX_ADN_VALUE);
-    }
-    private get inputVelocityY(): number {
-        return MyMath.map(this.velo.y, 0, Ship.MAX_SPEED, Ship.MIN_NN_VALUE, Ship.MAX_ADN_VALUE);
-    }
-    private get inputPositionX(): number {
-        return MyMath.map(this.pos.x, this.xMin, this.xMax, Ship.MIN_NN_VALUE, Ship.MAX_ADN_VALUE);
-    }
-    private get inputPositionY(): number {
-        return MyMath.map(this.pos.y, this.yMin, this.yMax, Ship.MIN_NN_VALUE, Ship.MAX_ADN_VALUE);
     }
 
     public getADNFactory(): FactoryADN {
@@ -806,6 +714,144 @@ export class Ship extends GameObject {
 
     public getEnergyFuel(): number {
         return this.energyFuel;
+    }
+
+    // Neuro Evolution Input Getters
+    private get inputFlagDetectedMissileFOV(): number {
+        return this.detectedMissileOnFOV !== null ? 1 : 0;
+    }
+    private get inputFlagDetectedShipFOV(): number {
+        return this.detectedShipOnFOV !== null ? 1 : 0;
+    }
+    private get inputFlagDetectedHealthFOV(): number {
+        return this.detectedHealthOnFOV !== null ? 1 : 0;
+    }
+    private get inputFlagDetectedMissileRadar(): number {
+        return this.detectedMissileOnRadar !== null ? 1 : 0;
+    }
+    private get inputFlagDetectedHealthRadar(): number {
+        return this.detectedHealthOnRadar !== null ? 1 : 0;
+    }
+    private get inputFlagDetectedShipRadar(): number {
+        return this.detectedShipOnRadar !== null ? 1 : 0;
+    }
+    private get inputDistanceDetectedMissileFOV(): number {
+        return this.distanceMissileOnFOV === -1 ? -1 : MyMath.map(this.distanceMissileOnFOV, 0, Ship.MAX_DISTANCE, 1, 0);
+    }
+    private get inputDistanceDetectedShipFOV(): number {
+        return this.distanceShipOnFOV === -1 ? -1 : MyMath.map(this.distanceShipOnFOV, 0, Ship.MAX_DISTANCE, 1, 0);
+    }
+    private get inputDistanceDetectedHealthFOV(): number {
+        return this.distanceHealthOnFOV === -1 ? -1 : MyMath.map(this.distanceHealthOnFOV, 0, Ship.MAX_DISTANCE, 1, 0);
+    }
+    private get inputDistanceDetectedMissileRadar(): number {
+        return this.distanceMissileOnRadar === -1 ? -1 : MyMath.map(this.distanceMissileOnRadar, 0, Ship.MAX_DISTANCE, 1, 0);
+    }
+    private get inputDistanceDetectedHealthRadar(): number {
+        return this.distanceHealthOnRadar === -1 ? -1 : MyMath.map(this.distanceHealthOnRadar, 0, Ship.MAX_DISTANCE, 1, 0);
+    }
+    private get inputDistanceDetectedShipRadar(): number {
+        return this.distanceShipOnRadar === -1 ? -1 : MyMath.map(this.distanceShipOnRadar, 0, Ship.MAX_DISTANCE, 1, 0);
+    }
+    private get inputAttractionMissile(): number {
+        return this.attractMissile;
+    }
+    private get inputAttractionShip(): number {
+        return this.attractShip;
+    }
+    private get inputAttractionHealth(): number {
+        return this.attractHealth;
+    }
+    private get inputFOVAngle(): number {
+        return MyMath.map(this.fov, Ship.MIN_ANGLE_FOV, Ship.MAX_ANGLE_FOV, Ship.MIN_NN_VALUE, Ship.MAX_ADN_VALUE);
+    }
+    private get inputRadarRadius(): number {
+        return MyMath.map(this.radarLength, Ship.MIN_LENGTH_RADAR, Ship.MAX_LENGTH_RADAR, Ship.MIN_NN_VALUE, Ship.MAX_ADN_VALUE);
+    }
+    private get inputFireRate(): number {
+        return MyMath.map(this.fireRate, Ship.MIN_FIRE_RATE, Ship.MAX_FIRE_RATE, Ship.MIN_NN_VALUE, Ship.MAX_ADN_VALUE);
+    }
+    private get inputLife(): number {
+        return MyMath.map(this.life, 0, Ship.MAX_LIFE, Ship.MIN_NN_VALUE, Ship.MAX_ADN_VALUE);
+    }
+    private get inputMaxSpeed(): number {
+        return MyMath.map(this.maxSpeed, 0, Ship.MAX_SPEED, Ship.MIN_NN_VALUE, Ship.MAX_ADN_VALUE);
+    }
+    private get inputFlagHasFired(): number {
+        return this.hasFired ? 1 : 0;
+    }
+    private get inputFlagHasBeenHealed(): number {
+        return this.hasBeenHealed ? 1 : 0;
+    }
+    private get inputFlagHasBeenShot(): number {
+        return this.hasBeenShot ? 1 : 0;
+    }
+    private get inputFlagTouchedEnnemy(): number {
+        return this.hasTouchedEnnemy ? 1 : 0;
+    }
+    private get inputFlagTouchedMissile(): number {
+        return this.hasTouchedMissile ? 1 : 0;
+    }
+    private get inputVelocityX(): number {
+        return MyMath.map(this.velo.x, 0, Ship.MAX_SPEED, Ship.MIN_NN_VALUE, Ship.MAX_ADN_VALUE);
+    }
+    private get inputVelocityY(): number {
+        return MyMath.map(this.velo.y, 0, Ship.MAX_SPEED, Ship.MIN_NN_VALUE, Ship.MAX_ADN_VALUE);
+    }
+    private get inputPositionX(): number {
+        return MyMath.map(this.pos.x, this.xMin, this.xMax, Ship.MIN_NN_VALUE, Ship.MAX_ADN_VALUE);
+    }
+    private get inputPositionY(): number {
+        return MyMath.map(this.pos.y, this.yMin, this.yMax, Ship.MIN_NN_VALUE, Ship.MAX_ADN_VALUE);
+    }
+
+    // Scoring Getters
+    private get scoringHealthPicked(): number {
+        return this.nbHealthPackPicked;
+    }
+
+    private get scoringEnnemiesTouched(): number {
+        return this.nbEnnemiesTouched;
+    }
+
+    private get scoringEnnemiesDestroyed(): number {
+        return this.nbEnnemiesDestroyed;
+    }
+
+    private get scoringMissilesDestroyed(): number {
+        return this.nbMissilesDestroyed;
+    }
+
+    private get scoringMissilesLaunched(): number {
+        return this.nbMissilesLaunched;
+    }
+
+    private get scoringReceivedDamage(): number {
+        return this.nbReceivedDamage;
+    }
+
+    private get scoringAccuracy(): number {
+        return this.getAccuracy();
+    }
+
+    private get scoringLifespan(): number {
+        return this.age / 30;
+    }
+
+    private get scoringEnnemiesTouchedAcc(): number {
+        return this.nbEnnemiesTouched * this.getAccuracy();
+    }
+
+    private get scoringEnnemiesDestroyedAcc(): number {
+        return this.nbEnnemiesDestroyed * this.getAccuracy();
+    }
+
+    private get scoringMissilesDestroyedAcc(): number {
+        return this.nbMissilesDestroyed * this.getAccuracy();
+    }
+
+    private get scoringMissilesLaunchedAcc(): number {
+        return this.nbMissilesLaunched * this.getAccuracy();
     }
 }
 

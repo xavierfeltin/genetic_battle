@@ -9,51 +9,51 @@ export class ShipScoring {
 
     public static generateDefaultScoringCoefficients(): {} {
         const coeffs = {
-            nbHealthPicked: {
+            scoringHealthPicked: {
                 description: 'Nb health picked',
                 value: 1
             },
-            nbEnnemiesTouched: {
+            scoringEnnemiesTouched: {
                 description: 'Ships touched',
                 value: 0
             },
-            nbEnnemiesDestroyed: {
+            scoringEnnemiesDestroyed: {
                 description: 'Ships destroyed',
                 value: 0
             },
-            nbMissilesDestroyed: {
+            scoringMissilesDestroyed: {
                 description: 'Missiles destroyed',
                 value: 0
             },
-            nbMissilesLaunched: {
+            scoringMissilesLaunched: {
                 description: 'Missiles launched',
                 value: 0
             },
-            nbReceivedDamage: {
+            scoringReceivedDamage: {
                 description: 'Received damage',
                 value: 0
             },
-            accuracy: {
+            scoringAccuracy: {
                 description: 'Accuracy',
                 value: 0
             },
-            lifespan: {
+            scoringLifespan: {
                 description: 'Lifespan',
                 value: 0
             },
-            nbEnnemiesTouchedAcc: {
+            scoringEnnemiesTouchedAcc: {
                 description: 'Ships touched x Acc',
                 value: 0
             },
-            nbEnnemiesDestroyedAcc: {
+            scoringEnnemiesDestroyedAcc: {
                 description: 'Ships destroyed x Acc',
                 value: 0
             },
-            nbMissilesDestroyedAcc: {
+            scoringMissilesDestroyedAcc: {
                 description: 'Missiles destroyed x Acc',
                 value: 0
             },
-            nbMissilesLaunchedAcc: {
+            scoringMissilesLaunchedAcc: {
                 description: 'Missiles launched x Acc',
                 value: 0
             }
@@ -62,7 +62,12 @@ export class ShipScoring {
     }
 
     public getCoefficients(): {} {
-        return this.coefficients;
+        const coeffs = {};
+        // tslint:disable-next-line:forin
+        for (const key in this.coefficients) {
+            coeffs[key] = this.coefficients[key].value;
+        }
+        return coeffs;
     }
 
     public getCoefficientNames(): symbol[] {
