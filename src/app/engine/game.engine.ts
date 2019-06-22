@@ -153,7 +153,6 @@ export class GameEngine {
     }
 
     // Scoring configuration
-    debugger; // to do : pb reaffectation coefficients for scoring
     const currentShipScoringCoefficients = this.shipFactory.getShipScoringCoefficients();
     const coeffs = currentShipScoringCoefficients.getCoefficients();
     let hasScoringCoeffsChanged = false;
@@ -161,57 +160,6 @@ export class GameEngine {
       if (coeffs[key].value !== config.scoringCoeffs[key]) {
         currentShipScoringCoefficients.setCoefficient(key, config.scoringCoeffs[key]);
         hasScoringCoeffsChanged = true;
-      }
-    }
-
-    // Ship configuration
-    if (config.energyFire !== this.shipFactory.getEnergyFire()
-      || config.energyFuel !== this.shipFactory.getEnergyFuel()
-      || hasScoringCoeffsChanged
-      || (this.ships.length  > 0
-          && ( config.mutationRate !== this.ships[0].getADNFactory().getMutationRate()
-               || config.crossOverRate !== this.ships[0].getADNFactory().getCrossOverRate()))) {
-
-      // Update configuration for future ships
-      if (config.energyFire !== this.shipFactory.getEnergyFire()) {
-        this.shipFactory.setEnergyFire(config.energyFire);
-      }
-
-      if (config.energyFuel !== this.shipFactory.getEnergyFuel()) {
-        this.shipFactory.setEnergyFuel(config.energyFuel);
-      }
-
-      const adnFactory = this.shipFactory.getADNFactory();
-      if (config.mutationRate !== adnFactory.getMutationRate()) {
-        adnFactory.setMutationRate(config.mutationRate);
-      }
-
-      if (config.crossOverRate !== adnFactory.getCrossOverRate()) {
-        adnFactory.setCrossOverRate(config.crossOverRate);
-      }
-
-      // Update configuration for current ships
-      for (const ship of this.ships) {
-        if (config.energyFire !== ship.getEnergyFire()) {
-          ship.setEnergy(config.energyFire);
-        }
-
-        if (config.energyFuel !== ship.getEnergyFuel()) {
-          ship.setEnergyFuel(config.energyFuel);
-        }
-
-        // ADN configuration
-        if (config.mutationRate !== ship.getADNFactory().getMutationRate()) {
-          ship.getADNFactory().setMutationRate(config.mutationRate);
-        }
-
-        if (config.crossOverRate !== ship.getADNFactory().getCrossOverRate()) {
-          ship.getADNFactory().setCrossOverRate(config.crossOverRate);
-        }
-
-        if (hasScoringCoeffsChanged) {
-          ship.setScoringCoefficients(currentShipScoringCoefficients);
-        }
       }
     }
 
@@ -249,8 +197,61 @@ export class GameEngine {
     needToReset = needToReset || isInputNeuroEvoDifferent;
 
     if (config.resetSimulation || needToReset) {
+      debugger;
       this.reset(true);
       this.initialize();
+    }
+    else {
+        // Change current ships configuration
+        if (config.energyFire !== this.shipFactory.getEnergyFire()
+        || config.energyFuel !== this.shipFactory.getEnergyFuel()
+        || hasScoringCoeffsChanged
+        || (this.ships.length  > 0
+            && ( config.mutationRate !== this.ships[0].getADNFactory().getMutationRate()
+                || config.crossOverRate !== this.ships[0].getADNFactory().getCrossOverRate()))) {
+
+        // Update configuration for future ships
+        if (config.energyFire !== this.shipFactory.getEnergyFire()) {
+          this.shipFactory.setEnergyFire(config.energyFire);
+        }
+
+        if (config.energyFuel !== this.shipFactory.getEnergyFuel()) {
+          this.shipFactory.setEnergyFuel(config.energyFuel);
+        }
+
+        const adnFactory = this.shipFactory.getADNFactory();
+        if (config.mutationRate !== adnFactory.getMutationRate()) {
+          adnFactory.setMutationRate(config.mutationRate);
+        }
+
+        if (config.crossOverRate !== adnFactory.getCrossOverRate()) {
+          adnFactory.setCrossOverRate(config.crossOverRate);
+        }
+
+        // Update configuration for current ships
+        for (const ship of this.ships) {
+          if (config.energyFire !== ship.getEnergyFire()) {
+            ship.setEnergy(config.energyFire);
+          }
+
+          if (config.energyFuel !== ship.getEnergyFuel()) {
+            ship.setEnergyFuel(config.energyFuel);
+          }
+
+          // ADN configuration
+          if (config.mutationRate !== ship.getADNFactory().getMutationRate()) {
+            ship.getADNFactory().setMutationRate(config.mutationRate);
+          }
+
+          if (config.crossOverRate !== ship.getADNFactory().getCrossOverRate()) {
+            ship.getADNFactory().setCrossOverRate(config.crossOverRate);
+          }
+
+          if (hasScoringCoeffsChanged) {
+            ship.setScoringCoefficients(currentShipScoringCoefficients);
+          }
+        }
+      }
     }
 
     this.shipRenderer.setDebugMode(config.debugMode);
@@ -593,6 +594,7 @@ export class GameEngine {
         });
 
         this.ga.populate([picked]);
+        this.ga.populateReference(individuals);
         this.ga.evolveFromReference();
         const newIndividuals = this.ga.getPopulation();
 

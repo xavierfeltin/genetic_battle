@@ -922,7 +922,7 @@ export class FactoryShip {
 
     public create(id: number, generation: number, parentsID: number[] = [-1]): Ship {
         return new Ship(id, generation, this.energyFuel, this.energyFire,
-                        this.adnFactory, this.isNeuroEvolution, this.scoringCoefficients,
-                        this.shipNeuroEvo, this.neuronalNetworkStructure, parentsID);
+                        this.adnFactory, this.isNeuroEvolution, this.scoringCoefficients.copy(),
+                        this.shipNeuroEvo.copy(), this.neuronalNetworkStructure, parentsID);
     }
 }

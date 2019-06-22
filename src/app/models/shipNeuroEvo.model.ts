@@ -129,6 +129,15 @@ export class ShipNeurEvo {
         return inputs;
     }
 
+    public copy(): ShipNeurEvo {
+        const conf = new ShipNeurEvo() ;
+        const activeInputs = this.getActiveInputNames();
+        for (const name in activeInputs) {
+            conf.activateInput(name, true);
+        }
+        return conf;
+    }
+
     public getInputs(): {} {
         return this.inputs;
     }

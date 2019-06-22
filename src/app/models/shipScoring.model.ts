@@ -4,7 +4,13 @@ export class ShipScoring {
     private coefficients: {};
 
     constructor() {
-        this.coefficients = {...ShipScoring.DEFAULT_SCORING_CONFIGURATION};
+        this.coefficients = {};
+        for (const name in ShipScoring.DEFAULT_SCORING_CONFIGURATION) {
+            this.coefficients[name] = {};
+            for (const prop in ShipScoring.DEFAULT_SCORING_CONFIGURATION[name]) {
+                this.coefficients[name][prop] = ShipScoring.DEFAULT_SCORING_CONFIGURATION[name][prop];
+            }            
+        }
     }
 
     public static generateDefaultScoringCoefficients(): {} {
@@ -61,6 +67,15 @@ export class ShipScoring {
         return coeffs;
     }
 
+    public copy(): ShipScoring {
+        const conf = new ShipScoring() ;
+        const coeffs = this.getCoefficients();
+        for (const name in coeffs) {
+            conf.setCoefficient(name, coeffs[name]);
+        }
+        return conf;
+    }
+
     public getCoefficients(): {} {
         const coeffs = {};
         // tslint:disable-next-line:forin
@@ -80,8 +95,6 @@ export class ShipScoring {
     }
 
     public setCoefficient(coeffName: string, value: number) {
-        if (this.coefficients.hasOwnProperty(coeffName)) {
-            this.coefficients[coeffName].value = value;
-        }
+        this.coefficients[coeffName].value = value;
     }
 }

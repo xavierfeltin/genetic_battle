@@ -122,17 +122,7 @@ export class FortuneWheelGA extends GeneticAlgorithm {
 
         for (const popInd of this.population) {
             let childADN: ADN = null;
-            /*
-            if (this.best === null ||  this.best.fitness < popInd.fitness ) {
-                // only clone the bests
-                this.best = popInd;
-                childADN = popInd.adn;
-                this.computeProbas();
-            } else if ((this.best.fitness * 0.5) < popInd.fitness) {
-                childADN = popInd.adn;
-            }
-            */
-
+            
             if (this.best === null ||  this.best.fitness < popInd.fitness ) {
                 this.best = popInd;
                 this.computeProbas();
@@ -145,18 +135,6 @@ export class FortuneWheelGA extends GeneticAlgorithm {
                 const parentB = this.pickOne(this.refPopulation);
                 childADN = (parentA.fitness > parentB.fitness) ? parentA.adn.crossOver(parentB.adn) : parentB.adn.crossOver(parentA.adn);
             }
-
-            /*
-            else if (popInd.fitness < scoreAvg ) {
-                // Indiv is coming from two good parents
-                const parentA = this.pickOne(this.refPopulation);
-                const parentB = this.pickOne(this.refPopulation);
-                childADN = parentA.adn.crossOver(parentB.adn);
-            } else {
-                // Indiv is good enough to be cloned directly
-                childADN = popInd.adn;
-            }
-            */
 
             childADN = childADN.mutate();
             const ind: Individual = {

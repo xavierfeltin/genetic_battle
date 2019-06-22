@@ -1,9 +1,8 @@
 import { MyMath } from '../tools/math.tools';
-import { ThrowStmt } from '@angular/compiler';
 
 export class ADN {
-    public static readonly MUTATION_RATE = 0.01;
-    public static readonly CROSSOVER_RATE = 0.9;
+    public static readonly MUTATION_RATE = 0.02;
+    public static readonly CROSSOVER_RATE = 0.8;
 
     protected genes: number[];
     protected mutationRate: number;
@@ -52,7 +51,7 @@ export class HugeADN extends ADN {
     public mutate() {
         const result = new HugeADN(this.genes.length, this.minimum, this.maximum, this.mutationRate, this.crossOverRate);
 
-        const maxGenesToMutate = Math.round(this.genes.length * this.mutationRate); // * ADN.MUTATION_RATE;
+        const maxGenesToMutate = Math.ceil(this.genes.length * this.mutationRate); // * ADN.MUTATION_RATE;
         const nbToMutate = Math.round(Math.random() * maxGenesToMutate);
 
         const indexes = [];
@@ -101,8 +100,8 @@ export class SmallADN extends ADN {
     public mutate() {
         const result = new SmallADN(this.genes.length, this.minimum, this.maximum, this.mutationRate, this.crossOverRate);
 
-        const maxGenesToMutate = Math.round(this.genes.length * this.mutationRate);
-        const nbToMutate = Math.ceil(Math.random() * maxGenesToMutate);
+        const maxGenesToMutate = Math.ceil(this.genes.length * this.mutationRate);
+        const nbToMutate = Math.round(Math.random() * maxGenesToMutate);
 
         const indexes = [];
         for (let i = 0; i < nbToMutate; i++) {
