@@ -134,6 +134,21 @@ export class Matrix {
         return this.values[row][column];
     }
 
+    public extract(start: number, nbRows: number): Matrix {
+        if ((start >= this.rows) || (start + nbRows - 1 >= this.rows)) {
+            return new Matrix(nbRows, this.columns);
+        }
+
+        const m = new Matrix(nbRows, this.columns);
+        for (let i = 0; i < nbRows; i++) {
+            for (let j = 0; j < this.columns; j++) {
+                m.values[i][j] = this.values[start + i][j];
+            }
+        }
+
+        return m;
+    }
+
     public setValueAt(value: number, row: number, column: number) {
         if (row < 0 || column < 0 || row >= this.rows || column >= this.columns) {
             console.error('Try to access a data outside of the matrix row: ' + row + ', column: ' + column);

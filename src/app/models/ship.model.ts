@@ -31,7 +31,7 @@ export class Ship extends GameObject {
     public static readonly MAX_FIRE_RATE: number = 100;
 
     private static readonly NB_GENES: number = 6;
-    private static readonly NB_ATTRIBUTES: number = 6;
+    private static readonly NN_OUTPUTS: number[] = [3, 3, 3, 3, 3, 1];
     private static readonly NB_NN_INPUT: number = 10;
     private static readonly NN_HIDDEN_LAYERS: number[] = [4, 4];
     private static readonly MIN_ADN_VALUE: number = -1;
@@ -170,7 +170,7 @@ export class Ship extends GameObject {
         const activeInputs = this.inputsNeuroEvo.getActiveInputNames();
         this.neuronalNetworkStructure = nnStructure;
         if (this.isNeuroEvo) {
-            this.nn = new NeuralNetwork(activeInputs.length, this.neuronalNetworkStructure, Ship.NB_ATTRIBUTES);
+            this.nn = new NeuralNetwork(activeInputs.length, this.neuronalNetworkStructure, Ship.NN_OUTPUTS);
         }
         this.nbGenes = this.isNeuroEvo ? this.nn.getNbCoefficients() : Ship.NB_GENES;
         const minValue = Ship.MIN_ADN_VALUE * 1;
@@ -316,40 +316,59 @@ export class Ship extends GameObject {
         this.setRadar(length);
     }
 
-    private matchAttributesNeuroEvo(output: number[]) {
-        const medianValue = 0.3; // 0
+    private getSolution(output: number[]): number {
+        const score = [];
+        let sum = 0;
+        if (output.length > 1) {
+            for (const out of output) {
+                sum += out;
+                score.push(sum);
+            }
+            score[score.length - 1] = 1; // force last value to be 1 for probabilities
+            const rand = Math.random();
+            let i = 0;
+            while (i < score.length && rand < score[i]) {
+                i += 1;
+            }
+            return i;
+        } else {
+            return output[0];
+        }
+    }
 
-        let delta = (output[0] < -medianValue || output[0] > medianValue) ? ((output[0] < -medianValue) ? -0.05 : 0.05 ) : 0;
-        this.attractHealth += + delta;
+    private matchAttributesNeuroEvo(output: number[][]) {
+        let i = this.getSolution(output[0]);
+        let delta = (i === 0 || i === 2)  ? ((i === 0) ? -0.05 : 0.05 ) : 0;
+        this.attractHealth += delta;
         this.attractHealth = Math.min(this.attractHealth + delta, Ship.MAX_ATTRACTION);
         this.attractHealth = Math.max(this.attractHealth, Ship.MIN_ATTRACTION);
 
-        delta = (output[1] < -medianValue || output[1] > medianValue) ? ((output[1] < -medianValue ) ? -0.05 : 0.05 ) : 0;
+        i = this.getSolution(output[1]);
+        delta = (i === 0 || i === 2)  ? ((i === 0) ? -0.05 : 0.05 ) : 0;
         this.attractMissile += delta;
         this.attractMissile = Math.min(this.attractMissile, Ship.MAX_ATTRACTION);
         this.attractMissile = Math.max(this.attractMissile, Ship.MIN_ATTRACTION);
 
-        delta = (output[2] < -medianValue || output[2] > medianValue) ? ((output[2] < -medianValue ) ? -0.05 : 0.05 ) : 0;
+        i = this.getSolution(output[2]);
+        delta = (i === 0 || i === 2)  ? ((i === 0) ? -0.05 : 0.05 ) : 0;
         this.attractShip += delta;
         this.attractShip = Math.min(this.attractShip, Ship.MAX_ATTRACTION);
         this.attractShip = Math.max(this.attractShip, Ship.MIN_ATTRACTION);
 
-        delta = (output[3] < -medianValue || output[3] > medianValue) ? ((output[3] < -medianValue ) ? -1 : 1 ) : 0;
+        i = this.getSolution(output[3]);
+        delta = (i === 0 || i === 2)  ? ((i === 0) ? -1 : 1 ) : 0;
         delta = (this.fov + delta > Ship.MAX_ANGLE_FOV) ? 0 : delta;
         delta = (this.fov + delta < Ship.MIN_ANGLE_FOV) ? 0 : delta;
         this.setFOV(Math.round(this.getFOV() + delta));
 
-        this.fireRate = (output[4] <= 0 ) ? 0 : 100;
-        /*
-        this.fireRate += (output[4] !== 0) ? ((output[4] < 0) ? -1 : 1 ) : 0;
-        this.fireRate = Math.min(this.fireRate, Ship.MAX_FIRE_RATE);
-        this.fireRate = Math.max(this.fireRate, Ship.MIN_FIRE_RATE);
-        */
-
-        delta = (output[5] !== medianValue ) ? ((output[5] < medianValue ) ? -1 : 1 ) : 0;
+        i = this.getSolution(output[4]);
+        delta = (i === 0 || i === 2)  ? ((i === 0) ? -1 : 1 ) : 0;
         delta = (this.radarLength + delta > Ship.MAX_LENGTH_RADAR) ? 0 : delta;
         delta = (this.radarLength + delta < Ship.MIN_LENGTH_RADAR) ? 0 : delta;
         this.setRadar(this.radarLength + delta);
+
+        i = this.getSolution(output[5]);
+        this.fireRate = (i <= 0 ) ? 0 : 100;
     }
 
     public expressADNNeuroEvo(missiles: GameObject[], healths: GameObject[], ships: GameObject[]) {

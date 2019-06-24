@@ -8,6 +8,19 @@ export class Activation {
     static tanh(x: number): number {
         return Math.tanh(x);
     }
+
+    static softmax(inputs: number[]): number[] {
+      let sum = 0;
+      for (const x of inputs) {
+        sum += Math.exp(x);
+      }
+
+      const scores = [];
+      for (const x of inputs) {
+        scores.push(Math.exp(x) / sum);
+      }
+      return scores;
+    }
 }
 
 export class NeuralNetwork {
@@ -17,7 +30,8 @@ export class NeuralNetwork {
   // Number of neurons of each layer
   private nIn: number;
   private nHid: number[];
-  private nOut: number;
+  private nOut: number[]; // structure of outputs
+  private nbOutputs: number; // total number of outputs
   private nLayer: number;
 
   // Weights (full connexions between two layers of neurons)
@@ -30,10 +44,10 @@ export class NeuralNetwork {
 
   private nbCoefficients: number;
 
-  constructor(nInput: number, nHidden: number[], nOutput: number, coefficients: number[] = []) {
+  constructor(nInput: number, nHidden: number[], nOutput: number[], coefficients: number[] = []) {
     this.nIn = nInput;
     this.nHid = [...nHidden];
-    this.nOut = nOutput;
+    this.nOut = [...nOutput];
     this.nLayer = nHidden.length;
 
     this.HHWeights = [];
@@ -52,8 +66,13 @@ export class NeuralNetwork {
       this.HBias.push(bias);
     }
 
-    this.HOWeights = Matrix.random(nOutput, nHidden[this.nLayer - 1]);
-    this.OBias = Matrix.random(nOutput, 1);
+    this.nbOutputs = 0;
+    for (const n of this.nOut) {
+      this.nbOutputs += n;
+    }
+
+    this.HOWeights = Matrix.random(this.nbOutputs, nHidden[this.nLayer - 1]);
+    this.OBias = Matrix.random(this.nbOutputs, 1);
 
     this.nbCoefficients = this.computeNbCoefficients();
 
@@ -91,7 +110,7 @@ export class NeuralNetwork {
     this.OBias.setValues(coefficients);
   }
 
-  public feedForward(inputArr: number[]): number[] {
+  public feedForward(inputArr: number[]): number[][] {
     const input = Matrix.fromArray(inputArr);
 
     let hidden: Matrix = null;
@@ -114,10 +133,18 @@ export class NeuralNetwork {
     output.add(this.OBias);
 
     // activation function for output nodes
-    this.activate(output);
+    let solution = [];
+    let index = 0;
+    for (const nbNeurones of this.nOut) {
+      const subMatrix = output.extract(index, nbNeurones);
+      const part = this.activateOutput(subMatrix);
+      solution = [...solution, part];
+      index += nbNeurones;
+    }
 
     // generating output array
-    return output.toArray();
+    // return output.toArray();
+    return solution;
   }
 
   private activate(neurons: Matrix) {
@@ -127,6 +154,17 @@ export class NeuralNetwork {
         neurons.values[i][j] = Activation.tanh(val);
       }
     }
+  }
+
+  // neurons is a 1D-array of activated neurons
+  private activateOutput(neurons: Matrix): number[] {
+    let output = [];
+    if (neurons.rows === 1) {
+      output.push(Activation.tanh(neurons.toArray()[0])); // tanh(sum of neurons connected to this output)
+    } else {
+      output = Activation.softmax(neurons.toArray());
+    }
+    return output;
   }
 
   private computeNbCoefficients(): number {
