@@ -48,6 +48,18 @@ export class FortuneWheelGA extends GeneticAlgorithm {
         super();
     }
 
+    public basicEvolve() {
+        const newPopulation = [];
+        for (const popInd of this.population) {
+            const childADN = popInd.adn.mutate();
+            const ind: Individual = {
+                adn: childADN
+            };
+            newPopulation.push(ind);
+        }
+        this.population = newPopulation;
+    }
+
     public evolve() {
         const newPopulation = [];
 
@@ -61,11 +73,6 @@ export class FortuneWheelGA extends GeneticAlgorithm {
             }
         });
 
-        /*
-        if (this.best === null || this.best.fitness < this.population[0].fitness) {
-            this.best = this.population[0];
-        }
-        */
         const best = this.population[0];
         newPopulation.push(best);
 
@@ -82,19 +89,6 @@ export class FortuneWheelGA extends GeneticAlgorithm {
             };
             newPopulation.push(ind);
         }
-
-        /*
-        const nbChildren = this.population.length;
-        for (let i = 1; i < nbChildren; i++) {
-            const childADN = this.population[i].adn;
-            childADN.mutate();
-
-            const ind: Individual = {
-                adn: childADN
-            };
-            newPopulation.push(ind);
-        }
-        */
 
         this.population = newPopulation;
     }
@@ -131,7 +125,7 @@ export class FortuneWheelGA extends GeneticAlgorithm {
             if (scoreAvg < popInd.fitness) {
                 childADN = popInd.adn;
             } else {
-                const parentA = this.pickOne(this.refPopulation);
+                const parentA = popInd;
                 const parentB = this.pickOne(this.refPopulation);
                 childADN = (parentA.fitness > parentB.fitness) ? parentA.adn.crossOver(parentB.adn) : parentB.adn.crossOver(parentA.adn);
             }
@@ -153,7 +147,7 @@ export class FortuneWheelGA extends GeneticAlgorithm {
 
         const rand = Math.random();
         let i = 0;
-        while (i < population.length && rand < population[i].proba) {
+        while (i < population.length && population[i].proba < rand) {
             i += 1;
         }
 

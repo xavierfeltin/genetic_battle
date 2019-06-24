@@ -327,7 +327,7 @@ export class Ship extends GameObject {
             score[score.length - 1] = 1; // force last value to be 1 for probabilities
             const rand = Math.random();
             let i = 0;
-            while (i < score.length && rand < score[i]) {
+            while (i < score.length && score[i] < rand) {
                 i += 1;
             }
             return i;
@@ -420,7 +420,8 @@ export class Ship extends GameObject {
             this.adnFactory, this.isNeuroEvo, this.scoringCoefficients, this.inputsNeuroEvo,
             this.neuronalNetworkStructure, [this.id, this.partner.id]);
         ship.setADN(adn);
-        ship.setPosition(this.pos);
+        const pos = new Vect2D(Math.random() * this.width, Math.random() * this.height);
+        ship.setPosition(pos);
         ship.setOrientation(orientation);
         ship.setBorders(this.getBorders());
 

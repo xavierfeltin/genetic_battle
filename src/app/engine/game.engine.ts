@@ -532,21 +532,6 @@ export class GameEngine {
     this.drawHealth();
   }
 
-  private configureContinuousEvolutionWithReference(referenceShips: Ship[]) {
-    if (this.ships.length < this.maxShips) {
-
-      const refIndividuals = [];
-      for (const ship of referenceShips) {
-        const ind = {
-          adn: ship.getADN(),
-          fitness: ship.scoring()
-        };
-        refIndividuals.push(ind);
-      }
-      this.ga.populateReference(refIndividuals);
-    }
-  }
-
   // Evolution performed once the ship is dead
   // The ship is cloning itself if it was good enough
   // or a new ship is created based on two ships with a good score
@@ -595,13 +580,14 @@ export class GameEngine {
 
         this.ga.populate([picked]);
         this.ga.populateReference(individuals);
-        this.ga.evolveFromReference();
+        this.ga.basicEvolve();
         const newIndividuals = this.ga.getPopulation();
 
         const orientation = Math.random() * 360;
         const ship = this.shipFactory.create(this.generateId(), pickedShip.getGeneration() + 1, [pickedShip.id]);
         ship.setADN(newIndividuals[0].adn);
-        ship.setPosition(pickedShip.pos);
+        const pos = new Vect2D(Math.random() * this.width, Math.random() * this.height);
+        ship.setPosition(pos);
         ship.setOrientation(orientation);
         ship.setBorders([0, this.width, 0, this.height]);
         newShips.push(ship);
