@@ -30,8 +30,12 @@ export class GeneticAlgorithm {
         return null;
     }
 
-    public populate(individuals: Individual[]) {
-        this.population = [...individuals];
+    public populate(individuals: Individual[], withBest = false) {
+        if (withBest && this.best !== null) {
+            this.population = [...individuals, this.best];
+        } else {
+            this.population = [...individuals];
+        }
     }
 
     public populateReference(individuals: Individual[]) {
@@ -51,6 +55,10 @@ export class FortuneWheelGA extends GeneticAlgorithm {
     public basicEvolve() {
         const newPopulation = [];
         for (const popInd of this.population) {
+            if (this.best === null || this.best.fitness < popInd.fitness) {
+                this.best = popInd;
+            }
+
             const childADN = popInd.adn.mutate();
             const ind: Individual = {
                 adn: childADN
@@ -116,7 +124,7 @@ export class FortuneWheelGA extends GeneticAlgorithm {
 
         for (const popInd of this.population) {
             let childADN: ADN = null;
-            
+
             if (this.best === null ||  this.best.fitness < popInd.fitness ) {
                 this.best = popInd;
                 this.computeProbas();

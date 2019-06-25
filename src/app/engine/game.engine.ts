@@ -25,7 +25,7 @@ export class GameEngine {
   private static readonly NB_INIT_HEALTH: number = 0; // 20;
   private static readonly RATE_SPAWN_HEALTH: number = 0; // 0.01;
   private static readonly RATE_CLONE_SHIP: number = 0.03;
-  private static readonly BREEDING_RATE_SHIP: number = 0.01;
+  private static readonly BREEDING_RATE_SHIP: number = 0.001;
   private static readonly MAX_POPULATION = 20;
   private static readonly GAME_TIMER = 45; // 60; // in seconds
   private static readonly NEURO_EVO_MODE = 'neuroevol';
@@ -571,9 +571,9 @@ export class GameEngine {
       }
 
       if (isCloning) {
-        this.ga.populate(individuals);
+        this.ga.populate(individuals, true);
         this.ga.computeProbas();
-        const picked = this.ga.pickOne(individuals);
+        const picked = this.ga.pickOne(this.ga.getPopulation());
         const pickedShip = ships.find((value: Ship, index: number, allShips: Ship[]) => {
           return value.id === picked.id;
         });
@@ -584,7 +584,9 @@ export class GameEngine {
         const newIndividuals = this.ga.getPopulation();
 
         const orientation = Math.random() * 360;
-        const ship = this.shipFactory.create(this.generateId(), pickedShip.getGeneration() + 1, [pickedShip.id]);
+        const pickedGeneration = pickedShip ? pickedShip.getGeneration() + 1 : 0;
+        const pickedId = pickedShip ? pickedShip.id : -1;
+        const ship = this.shipFactory.create(this.generateId(), pickedGeneration, [pickedId]);
         ship.setADN(newIndividuals[0].adn);
         const pos = new Vect2D(Math.random() * this.width, Math.random() * this.height);
         ship.setPosition(pos);

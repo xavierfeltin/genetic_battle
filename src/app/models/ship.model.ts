@@ -316,6 +316,7 @@ export class Ship extends GameObject {
     }
 
     private getSolution(output: number[]): number {
+        /*
         const score = [];
         let sum = 0;
         if (output.length > 1) {
@@ -330,6 +331,23 @@ export class Ship extends GameObject {
                 i += 1;
             }
             return i;
+        } else {
+            return output[0];
+        }
+        */
+
+        let maxIndex = -1;
+        let max = -Infinity;
+        if (output.length > 1) {
+            for (let i = 0; i < output.length; i++) {
+                const out = output[i];
+                if (max < out) {
+                    max = out;
+                    maxIndex = i;
+                }
+                i++;
+            }
+            return maxIndex;
         } else {
             return output[0];
         }
@@ -755,22 +773,23 @@ export class Ship extends GameObject {
         return this.detectedShipOnRadar !== null ? 1 : 0;
     }
     private get inputDistanceDetectedMissileFOV(): number {
-        return this.distanceMissileOnFOV === -1 ? -1 : MyMath.map(this.distanceMissileOnFOV, 0, Ship.MAX_DISTANCE, 1, 0);
+        // Undetected missile means missile is very far away
+        return this.distanceMissileOnFOV === -1 ? 1 : this.distanceMissileOnFOV / Ship.MAX_DISTANCE;
     }
     private get inputDistanceDetectedShipFOV(): number {
-        return this.distanceShipOnFOV === -1 ? -1 : MyMath.map(this.distanceShipOnFOV, 0, Ship.MAX_DISTANCE, 1, 0);
+        return this.distanceShipOnFOV === -1 ? 1 : this.distanceShipOnFOV / Ship.MAX_DISTANCE;
     }
     private get inputDistanceDetectedHealthFOV(): number {
-        return this.distanceHealthOnFOV === -1 ? -1 : MyMath.map(this.distanceHealthOnFOV, 0, Ship.MAX_DISTANCE, 1, 0);
+        return this.distanceHealthOnFOV === -1 ? 1 : this.distanceHealthOnFOV / Ship.MAX_DISTANCE;
     }
     private get inputDistanceDetectedMissileRadar(): number {
-        return this.distanceMissileOnRadar === -1 ? -1 : MyMath.map(this.distanceMissileOnRadar, 0, Ship.MAX_DISTANCE, 1, 0);
+        return this.distanceMissileOnRadar === -1 ? 1 : this.distanceMissileOnRadar / Ship.MAX_DISTANCE;
     }
     private get inputDistanceDetectedHealthRadar(): number {
-        return this.distanceHealthOnRadar === -1 ? -1 : MyMath.map(this.distanceHealthOnRadar, 0, Ship.MAX_DISTANCE, 1, 0);
+        return this.distanceHealthOnRadar === -1 ? 1 : this.distanceHealthOnRadar / Ship.MAX_DISTANCE;
     }
     private get inputDistanceDetectedShipRadar(): number {
-        return this.distanceShipOnRadar === -1 ? -1 : MyMath.map(this.distanceShipOnRadar, 0, Ship.MAX_DISTANCE, 1, 0);
+        return this.distanceShipOnRadar === -1 ? 1 : this.distanceShipOnRadar / Ship.MAX_DISTANCE;
     }
     private get inputAttractionMissile(): number {
         return this.attractMissile;
