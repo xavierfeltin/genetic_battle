@@ -7,8 +7,7 @@ import { Missile } from './missile.model';
 import { Scoring } from '../ia/scoring';
 import { Phenotype } from './phenotype.interface';
 import { ShipNeurEvo } from './shipNeuroEvo.model';
-import { ShipScoring } from './shipScoring.model';
-import { TouchSequence } from 'selenium-webdriver';
+import { ShipScoring } from './shipScoring.model';;
 
 export class Ship extends GameObject {
     // Constants
@@ -22,7 +21,7 @@ export class Ship extends GameObject {
     public static readonly MAX_LIFE: number = 100;
     public static readonly DEFAULT_ENERGY_FUEL: number = 0;
     public static readonly DEFAULT_ENERGY_FIRE: number = -2;
-    public static readonly DEFAULT_NN_HIDDEN_LAYERS: number[] = [4, 4];
+    public static readonly DEFAULT_NN_HIDDEN_LAYERS: number[] = [12, 6];
 
     private static readonly MAX_SPEED: number = 5;
     private static readonly MIN_SPEED: number = 2;
@@ -872,6 +871,10 @@ export class Ship extends GameObject {
 
     private get scoringMissilesLaunchedAcc(): number {
         return this.nbMissilesLaunched * this.getAccuracy();
+    }
+
+    private get scoringHealthPickedAcc(): number {
+        return this.nbHealthPackPicked * this.getAccuracy();
     }
 }
 

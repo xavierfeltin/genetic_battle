@@ -5,11 +5,13 @@ export class ShipScoring {
 
     constructor() {
         this.coefficients = {};
+        // tslint:disable-next-line:forin
         for (const name in ShipScoring.DEFAULT_SCORING_CONFIGURATION) {
             this.coefficients[name] = {};
+            // tslint:disable-next-line:forin
             for (const prop in ShipScoring.DEFAULT_SCORING_CONFIGURATION[name]) {
                 this.coefficients[name][prop] = ShipScoring.DEFAULT_SCORING_CONFIGURATION[name][prop];
-            }            
+            }
         }
     }
 
@@ -17,7 +19,7 @@ export class ShipScoring {
         const coeffs = {
             scoringHealthPicked: {
                 description: 'Nb health picked',
-                value: 1
+                value: 0
             },
             scoringEnnemiesTouched: {
                 description: 'Ships touched',
@@ -46,6 +48,10 @@ export class ShipScoring {
             scoringLifespan: {
                 description: 'Lifespan',
                 value: 0
+            },
+            scoringHealthPickedAcc: {
+                description: 'Health picked x Acc',
+                value: 1
             },
             scoringEnnemiesTouchedAcc: {
                 description: 'Ships touched x Acc',

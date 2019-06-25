@@ -1,4 +1,4 @@
-export class Game {    
+export class Game {
     private readonly MAX_SCORE: number = 10;
     private scores: number [];
     private hasStarted: boolean;
@@ -36,7 +36,7 @@ export class Game {
         for (let i = 0; i < this.scores.length; i++) {
             this.scores[i] = 0;
         }
-        
+
         this.hasStarted = false;
         this.isOver = false;
 
@@ -55,4 +55,4 @@ export class Game {
     public getScore(idPlayer: number): number {
         return this.scores[idPlayer];
     }
-} 
+}

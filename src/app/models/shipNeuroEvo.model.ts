@@ -71,11 +71,11 @@ export class ShipNeurEvo {
             },
             inputFOVAngle: {
                 description: 'FOV angle',
-                status: false
+                status: true
             },
             inputRadarRadius: {
                 description: 'Radiar radius',
-                status: false
+                status: true
             },
             inputFireRate: {
                 description: 'Fire rate',

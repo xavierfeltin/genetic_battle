@@ -9,18 +9,18 @@ export class Vect2D {
         this.norm = this.computeNorm();
     }
 
-    public setV(v: Vect2D) {
-        this.x = v.x;
-        this.y = v.y;
-        this.norm = this.computeNorm();
-    }
-
     public static add(v1: Vect2D, v2: Vect2D): Vect2D {
         return new Vect2D(v1.x + v2.x, v1.y + v2.y);
     }
 
     public static sub(v1: Vect2D, v2: Vect2D): Vect2D {
         return new Vect2D(v1.x - v2.x, v1.y - v2.y);
+    }
+
+    public setV(v: Vect2D) {
+        this.x = v.x;
+        this.y = v.y;
+        this.norm = this.computeNorm();
     }
 
     public mul(coeff: number) {
@@ -42,7 +42,7 @@ export class Vect2D {
         this.x /= norm;
         this.y /= norm;
         this.norm = 1;
-    } 
+    }
 
     public distance2(v: Vect2D) {
         const x = this.x - v.x;
