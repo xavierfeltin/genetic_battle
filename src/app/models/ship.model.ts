@@ -30,7 +30,11 @@ export class Ship extends GameObject {
     public static readonly MAX_FIRE_RATE: number = 100;
 
     private static readonly NB_GENES: number = 6;
-    private static readonly NN_OUTPUTS: number[] = [3, 3, 3, 3, 3, 1];
+    // private static readonly NN_OUTPUTS: number[] = [3, 3, 3, 3, 3, 1];
+
+    private static readonly NN_OUTPUTS: number[] = [3, 3, 3, 1];
+    public static readonly IS_ACTION_DRIVEN: boolean = true;
+
     private static readonly NB_NN_INPUT: number = 10;
     private static readonly NN_HIDDEN_LAYERS: number[] = [4, 4];
     private static readonly MIN_ADN_VALUE: number = -1;
@@ -354,38 +358,63 @@ export class Ship extends GameObject {
     }
 
     private matchAttributesNeuroEvo(output: number[][]) {
-        let i = this.getSolution(output[0]);
-        let delta = (i === 0 || i === 2)  ? ((i === 0) ? -0.05 : 0.05 ) : 0;
-        this.attractHealth += delta;
-        this.attractHealth = Math.min(this.attractHealth + delta, Ship.MAX_ATTRACTION);
-        this.attractHealth = Math.max(this.attractHealth, Ship.MIN_ATTRACTION);
 
-        i = this.getSolution(output[1]);
-        delta = (i === 0 || i === 2)  ? ((i === 0) ? -0.05 : 0.05 ) : 0;
-        this.attractMissile += delta;
-        this.attractMissile = Math.min(this.attractMissile, Ship.MAX_ATTRACTION);
-        this.attractMissile = Math.max(this.attractMissile, Ship.MIN_ATTRACTION);
+        if (Ship.IS_ACTION_DRIVEN) {
+            let i = this.getSolution(output[0]);
+            let delta = (i === 0 || i === 2)  ? ((i === 0) ? -3 : 3 ) : 0;
+            const newAngle = (this.orientation + delta) % 360;
+            this.setOrientation(newAngle);
 
-        i = this.getSolution(output[2]);
-        delta = (i === 0 || i === 2)  ? ((i === 0) ? -0.05 : 0.05 ) : 0;
-        this.attractShip += delta;
-        this.attractShip = Math.min(this.attractShip, Ship.MAX_ATTRACTION);
-        this.attractShip = Math.max(this.attractShip, Ship.MIN_ATTRACTION);
+            i = this.getSolution(output[1]);
+            delta = (i === 0 || i === 2)  ? ((i === 0) ? -1 : 1 ) : 0;
+            delta = (this.fov + delta > Ship.MAX_ANGLE_FOV) ? 0 : delta;
+            delta = (this.fov + delta < Ship.MIN_ANGLE_FOV) ? 0 : delta;
+            this.setFOV(Math.round(this.getFOV() + delta));
 
-        i = this.getSolution(output[3]);
-        delta = (i === 0 || i === 2)  ? ((i === 0) ? -1 : 1 ) : 0;
-        delta = (this.fov + delta > Ship.MAX_ANGLE_FOV) ? 0 : delta;
-        delta = (this.fov + delta < Ship.MIN_ANGLE_FOV) ? 0 : delta;
-        this.setFOV(Math.round(this.getFOV() + delta));
+            i = this.getSolution(output[2]);
+            delta = (i === 0 || i === 2)  ? ((i === 0) ? -1 : 1 ) : 0;
+            delta = (this.radarLength + delta > Ship.MAX_LENGTH_RADAR) ? 0 : delta;
+            delta = (this.radarLength + delta < Ship.MIN_LENGTH_RADAR) ? 0 : delta;
+            this.setRadar(this.radarLength + delta);
 
-        i = this.getSolution(output[4]);
-        delta = (i === 0 || i === 2)  ? ((i === 0) ? -1 : 1 ) : 0;
-        delta = (this.radarLength + delta > Ship.MAX_LENGTH_RADAR) ? 0 : delta;
-        delta = (this.radarLength + delta < Ship.MIN_LENGTH_RADAR) ? 0 : delta;
-        this.setRadar(this.radarLength + delta);
+            i = this.getSolution(output[3]);
+            this.fireRate = (i <= 0 ) ? 0 : 100;
+        } else {
+            let i = this.getSolution(output[0]);
+            let delta = (i === 0 || i === 2)  ? ((i === 0) ? -0.05 : 0.05 ) : 0;
+            this.attractHealth += delta;
+            this.attractHealth = Math.min(this.attractHealth + delta, Ship.MAX_ATTRACTION);
+            this.attractHealth = Math.max(this.attractHealth, Ship.MIN_ATTRACTION);
 
-        i = this.getSolution(output[5]);
-        this.fireRate = (i <= 0 ) ? 0 : 100;
+            i = this.getSolution(output[1]);
+            delta = (i === 0 || i === 2)  ? ((i === 0) ? -0.05 : 0.05 ) : 0;
+            this.attractMissile += delta;
+            this.attractMissile = Math.min(this.attractMissile, Ship.MAX_ATTRACTION);
+            this.attractMissile = Math.max(this.attractMissile, Ship.MIN_ATTRACTION);
+
+            i = this.getSolution(output[2]);
+            delta = (i === 0 || i === 2)  ? ((i === 0) ? -0.05 : 0.05 ) : 0;
+            this.attractShip += delta;
+            this.attractShip = Math.min(this.attractShip, Ship.MAX_ATTRACTION);
+            this.attractShip = Math.max(this.attractShip, Ship.MIN_ATTRACTION);
+
+            i = this.getSolution(output[3]);
+            delta = (i === 0 || i === 2)  ? ((i === 0) ? -1 : 1 ) : 0;
+            delta = (this.fov + delta > Ship.MAX_ANGLE_FOV) ? 0 : delta;
+            delta = (this.fov + delta < Ship.MIN_ANGLE_FOV) ? 0 : delta;
+            this.setFOV(Math.round(this.getFOV() + delta));
+
+            i = this.getSolution(output[4]);
+            delta = (i === 0 || i === 2)  ? ((i === 0) ? -1 : 1 ) : 0;
+            delta = (this.radarLength + delta > Ship.MAX_LENGTH_RADAR) ? 0 : delta;
+            delta = (this.radarLength + delta < Ship.MIN_LENGTH_RADAR) ? 0 : delta;
+            this.setRadar(this.radarLength + delta);
+
+            i = this.getSolution(output[5]);
+            this.fireRate = (i <= 0 ) ? 0 : 100;
+        }
+
+
     }
 
     public expressADNNeuroEvo(missiles: GameObject[], healths: GameObject[], ships: GameObject[]) {
@@ -595,28 +624,32 @@ export class Ship extends GameObject {
             this.resetStates();
         }
 
-        if (this.distanceMissileOnFOV < this.distanceMissileOnRadar) {
-            this.steer(this.detectedMissileOnRadar, this.attractMissile);
+        if (Ship.IS_ACTION_DRIVEN) {
+            this.velo.setMag(this.speed);
         } else {
-            this.steer(this.detectedMissileOnFOV, this.attractMissile);
+            if (this.distanceMissileOnFOV < this.distanceMissileOnRadar) {
+                this.steer(this.detectedMissileOnRadar, this.attractMissile);
+            } else {
+                this.steer(this.detectedMissileOnFOV, this.attractMissile);
+            }
+
+            if (this.distanceShipOnFOV < this.distanceShipOnRadar) {
+                this.steer(this.detectedShipOnRadar, this.attractShip);
+            } else {
+                this.steer(this.detectedShipOnFOV, this.attractShip);
+            }
+
+            if (this.distanceHealthOnFOV < this.distanceHealthOnRadar) {
+                this.steer(this.detectedHealthOnRadar, this.attractHealth);
+            } else {
+                this.steer(this.detectedHealthOnFOV, this.attractHealth);
+            }
+
+            this.boundaries(wArea, hArea);
+
+            // Apply acceleration to velocity
+            this.applyAcc();
         }
-
-        if (this.distanceShipOnFOV < this.distanceShipOnRadar) {
-            this.steer(this.detectedShipOnRadar, this.attractShip);
-        } else {
-            this.steer(this.detectedShipOnFOV, this.attractShip);
-        }
-
-        if (this.distanceHealthOnFOV < this.distanceHealthOnRadar) {
-            this.steer(this.detectedHealthOnRadar, this.attractHealth);
-        } else {
-            this.steer(this.detectedHealthOnFOV, this.attractHealth);
-        }
-
-        this.boundaries(wArea, hArea);
-
-        // Apply acceleration to velocity
-        this.applyAcc();
 
         if (this.velo.x !== 0 && this.velo.y !== 0) {
             this.updateLife(this.energyFuel, Ship.DUE_TO_OTHER); // moving consumes energy

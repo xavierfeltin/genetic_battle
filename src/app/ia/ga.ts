@@ -2,6 +2,7 @@ import { ADN } from './adn';
 
 export interface Individual {
     fitness?: number;
+    stdFitness?: number; // standardized for computing proba
     proba?: number;
     adn: ADN;
     id?: number;
@@ -45,6 +46,30 @@ export class GeneticAlgorithm {
     public getPopulation(): Individual[] {
         return this.population;
     }
+
+    public getBest(): Individual {
+        return this.best;
+    }
+
+    public updateBest() {
+        for (const popInd of this.population) {
+            if (this.best === null || this.best.fitness < popInd.fitness) {
+                this.best = popInd;
+            }
+        }
+    }
+
+    public integrateBestToPopulation() {
+        if (this.best !== null) {
+            const tmp = this.population.find((value: Individual, index: number, allShips: Individual[]) => {
+                return value.id === this.best.id;
+            });
+
+            if (!tmp) {
+                this.population.push(this.best);
+            }
+        }
+    }
 }
 
 export class FortuneWheelGA extends GeneticAlgorithm {
@@ -55,10 +80,6 @@ export class FortuneWheelGA extends GeneticAlgorithm {
     public basicEvolve() {
         const newPopulation = [];
         for (const popInd of this.population) {
-            if (this.best === null || this.best.fitness < popInd.fitness) {
-                this.best = popInd;
-            }
-
             const childADN = popInd.adn.mutate();
             const ind: Individual = {
                 adn: childADN
@@ -168,6 +189,7 @@ export class FortuneWheelGA extends GeneticAlgorithm {
     public computeProbas() {
         let minValue = Infinity;
         for (const pop of this.population) {
+            pop.stdFitness = 0;
             if (pop.fitness < minValue) {
                 minValue = pop.fitness;
             }
@@ -176,14 +198,14 @@ export class FortuneWheelGA extends GeneticAlgorithm {
         let sumFit = 0;
         for (const pop of this.population) {
             if (minValue <= 0) {
-                pop.fitness += minValue + 1; // start at 1 to avoid null share
+                pop.stdFitness = pop.fitness + minValue + 1; // start at 1 to avoid null share
             }
-            sumFit += (pop.fitness * pop.fitness);
+            sumFit += (pop.stdFitness * pop.stdFitness);
         }
 
         let previousProba = 0;
         for (const pop of this.population) {
-            const relativeFitness = (pop.fitness * pop.fitness) / sumFit;
+            const relativeFitness = (pop.stdFitness * pop.stdFitness) / sumFit;
             pop.proba = previousProba + relativeFitness;
             previousProba = pop.proba;
         }

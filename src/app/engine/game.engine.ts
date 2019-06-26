@@ -70,6 +70,7 @@ export class GameEngine {
   private isNeuroEvolution: boolean;
 
   private ga: FortuneWheelGA;
+  private bestShip: Ship;
 
   // Output variables
   private oldestShip: Ship;
@@ -121,6 +122,7 @@ export class GameEngine {
     this.shipFactory.setNeuroEvolution(this.isNeuroEvolution);
 
     this.ga = new FortuneWheelGA();
+    this.bestShip = null;
   }
 
   public setCanvas(idCanvas: string) {
@@ -571,21 +573,31 @@ export class GameEngine {
       }
 
       if (isCloning) {
-        this.ga.populate(individuals, true);
+        this.ga.populate(individuals);
+        this.ga.updateBest();
+        this.ga.integrateBestToPopulation();
         this.ga.computeProbas();
+
         const picked = this.ga.pickOne(this.ga.getPopulation());
-        const pickedShip = ships.find((value: Ship, index: number, allShips: Ship[]) => {
+        let pickedShip = ships.find((value: Ship, index: number, allShips: Ship[]) => {
           return value.id === picked.id;
         });
+        pickedShip = pickedShip ? pickedShip : this.bestShip;
 
         this.ga.populate([picked]);
-        this.ga.populateReference(individuals);
         this.ga.basicEvolve();
+
         const newIndividuals = this.ga.getPopulation();
+        const newBest = this.ga.getBest();
+        if (this.bestShip === null || newBest.id !== this.bestShip.id) {
+          this.bestShip = ships.find((value: Ship, index: number, allShips: Ship[]) => {
+            return value.id === newBest.id;
+          });
+        }
 
         const orientation = Math.random() * 360;
-        const pickedGeneration = pickedShip ? pickedShip.getGeneration() + 1 : 0;
-        const pickedId = pickedShip ? pickedShip.id : -1;
+        const pickedGeneration = pickedShip ? pickedShip.getGeneration() + 1 : this.bestShip.getGeneration() + 1;
+        const pickedId = pickedShip ? pickedShip.id : this.bestShip.id;
         const ship = this.shipFactory.create(this.generateId(), pickedGeneration, [pickedId]);
         ship.setADN(newIndividuals[0].adn);
         const pos = new Vect2D(Math.random() * this.width, Math.random() * this.height);

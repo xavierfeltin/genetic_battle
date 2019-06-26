@@ -19,7 +19,7 @@ export class ShipScoring {
         const coeffs = {
             scoringHealthPicked: {
                 description: 'Nb health picked',
-                value: 0
+                value: 1
             },
             scoringEnnemiesTouched: {
                 description: 'Ships touched',
@@ -51,7 +51,7 @@ export class ShipScoring {
             },
             scoringHealthPickedAcc: {
                 description: 'Health picked x Acc',
-                value: 1
+                value: 0
             },
             scoringEnnemiesTouchedAcc: {
                 description: 'Ships touched x Acc',
