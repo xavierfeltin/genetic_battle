@@ -43,7 +43,7 @@ export class Ship extends GameObject {
     private static readonly MAX_NN_VALUE: number = 1;
 
     public static readonly MAX_ANGLE_FOV: number = 120;
-    public static readonly MIN_ANGLE_FOV: number = 2;
+    public static readonly MIN_ANGLE_FOV: number = 10;
     public static readonly MIN_LENGTH_RADAR: number = 40;
     public static readonly MAX_LENGTH_RADAR: number = 120;
     public static readonly MIN_LENGTH_FOV: number = 80;
@@ -257,7 +257,14 @@ export class Ship extends GameObject {
         for (const key in coeffs) {
             score += coeffs[key] * this[key];
         }
-        return score;
+
+        // Try to modelize a "productive" indicator depending of time of l
+        if (this.age < 100) {
+            // Penalize very young ships
+            return (score / (this.age * 10)) * 100;
+        } else {
+            return (score / (this.age)) * 100;
+        }
     }
 
     public getScore(): Scoring {
@@ -349,7 +356,6 @@ export class Ship extends GameObject {
                     max = out;
                     maxIndex = i;
                 }
-                i++;
             }
             return maxIndex;
         } else {
@@ -361,21 +367,27 @@ export class Ship extends GameObject {
 
         if (Ship.IS_ACTION_DRIVEN) {
             let i = this.getSolution(output[0]);
-            let delta = (i === 0 || i === 2)  ? ((i === 0) ? -3 : 3 ) : 0;
-            const newAngle = (this.orientation + delta) % 360;
-            this.setOrientation(newAngle);
+            let delta = (i === 0 || i === 2)  ? ((i === 0) ? -2 : 2 ) : 0;
+            if (delta !== 0) {
+                const newAngle = (this.orientation + delta) % 360;
+                this.setOrientation(newAngle);
+            }
 
             i = this.getSolution(output[1]);
             delta = (i === 0 || i === 2)  ? ((i === 0) ? -1 : 1 ) : 0;
             delta = (this.fov + delta > Ship.MAX_ANGLE_FOV) ? 0 : delta;
             delta = (this.fov + delta < Ship.MIN_ANGLE_FOV) ? 0 : delta;
-            this.setFOV(Math.round(this.getFOV() + delta));
+            if (delta !== 0) {
+                this.setFOV(Math.round(this.getFOV() + delta));
+            }
 
             i = this.getSolution(output[2]);
             delta = (i === 0 || i === 2)  ? ((i === 0) ? -1 : 1 ) : 0;
             delta = (this.radarLength + delta > Ship.MAX_LENGTH_RADAR) ? 0 : delta;
             delta = (this.radarLength + delta < Ship.MIN_LENGTH_RADAR) ? 0 : delta;
-            this.setRadar(this.radarLength + delta);
+            if (delta !== 0) {
+                this.setRadar(this.radarLength + delta);
+            }
 
             i = this.getSolution(output[3]);
             this.fireRate = (i <= 0 ) ? 0 : 100;
@@ -485,8 +497,8 @@ export class Ship extends GameObject {
         this.fov = angle;
         this.cosHalfFov = Math.cos((this.fov / 2) * Math.PI / 180);
 
-        const area = 2800; // constant FOV area
-        const radAngle = this.fov * Math.PI / 180;
+        // const area = 2800; // constant FOV area
+        // const radAngle = this.fov * Math.PI / 180;
         // this.fovLength = Math.round(Math.sqrt(2 * area / radAngle));
         this.fovLength = Ship.MAX_LENGTH_FOV;
     }

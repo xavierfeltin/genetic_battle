@@ -27,6 +27,7 @@ export class GameEngine {
   private static readonly RATE_CLONE_SHIP: number = 0.03;
   private static readonly BREEDING_RATE_SHIP: number = 0.001;
   private static readonly MAX_POPULATION = 20;
+  private static readonly MAX_DEAD_POPULATION = 3;
   private static readonly GAME_TIMER = 45; // 60; // in seconds
   private static readonly NEURO_EVO_MODE = 'neuroevol';
   private static readonly ALGO_EVO_MODE = 'geneticalgo';
@@ -54,7 +55,8 @@ export class GameEngine {
   private healthFactory: FactoryHealth;
 
   private ships: Ship[] = [];
-  private deadShips: Ship[] = [];
+  private deadShips: Ship[] = []; // dead during the last turn
+  private memoryShips: Ship[] = []; // the MAX_DEAD_POPULATION best dead ships
   private missiles: Missile[] = [];
   private health: Health[] = [];
   private game: Game;
@@ -423,6 +425,7 @@ export class GameEngine {
       this.ships.push(ship)
     }
     */
+
     this.deadShips  = [];
 
     // Manage ship actions
@@ -498,7 +501,17 @@ export class GameEngine {
         }
 
         const deleted = this.ships.splice(i, 1);
-        this.deadShips.push(deleted[0]);
+        this.deadShips.push(deleted[0]); // dead this turn for plotting
+
+        this.memoryShips.push(deleted[0]);
+        this.memoryShips = this.memoryShips.sort((a: Ship, b: Ship): number => {
+          return (a.scoring() > b.scoring()) ? -1 : (a.scoring() < b.scoring()) ? 1 : 0;
+        });
+        if (GameEngine.MAX_DEAD_POPULATION < this.memoryShips.length) {
+          this.memoryShips.pop();
+        }
+
+
       } else {
         ship.acc.mul(0);
         ship.updateHeading();
@@ -545,9 +558,13 @@ export class GameEngine {
     let nbMaxCrossingShips = isCloning ? deltaPop - 1 : deltaPop;
 
     if (deltaPop > 0) {
+
+      //const shipsToEval = [...this.ships, ...this.memoryShips];
+      const shipsToEval = [...this.ships, ...this.memoryShips];
+
       // Select an individual to clone or reproduce
       const individuals = [];
-      for (const pop of ships) {
+      for (const pop of shipsToEval) {
 
         // Transform ships into individuals
         if (isCloning) {
@@ -574,31 +591,33 @@ export class GameEngine {
 
       if (isCloning) {
         this.ga.populate(individuals);
-        this.ga.updateBest();
-        this.ga.integrateBestToPopulation();
+        // this.ga.updateBest();
+        // this.ga.integrateBestToPopulation();
         this.ga.computeProbas();
 
         const picked = this.ga.pickOne(this.ga.getPopulation());
-        let pickedShip = ships.find((value: Ship, index: number, allShips: Ship[]) => {
+        const pickedShip = shipsToEval.find((value: Ship, index: number, allShips: Ship[]) => {
           return value.id === picked.id;
         });
-        pickedShip = pickedShip ? pickedShip : this.bestShip;
+        // pickedShip = pickedShip ? pickedShip : this.bestShip;
 
         this.ga.populate([picked]);
         this.ga.basicEvolve();
 
         const newIndividuals = this.ga.getPopulation();
+        /*
         const newBest = this.ga.getBest();
         if (this.bestShip === null || newBest.id !== this.bestShip.id) {
           this.bestShip = ships.find((value: Ship, index: number, allShips: Ship[]) => {
             return value.id === newBest.id;
           });
         }
+        */
 
         const orientation = Math.random() * 360;
-        const pickedGeneration = pickedShip ? pickedShip.getGeneration() + 1 : this.bestShip.getGeneration() + 1;
-        const pickedId = pickedShip ? pickedShip.id : this.bestShip.id;
-        const ship = this.shipFactory.create(this.generateId(), pickedGeneration, [pickedId]);
+        // const pickedGeneration = pickedShip ? pickedShip.getGeneration() + 1 : this.bestShip.getGeneration() + 1;
+        // const pickedId = pickedShip ? pickedShip.id : this.bestShip.id;
+        const ship = this.shipFactory.create(this.generateId(), pickedShip.getGeneration() + 1, [pickedShip.id]);
         ship.setADN(newIndividuals[0].adn);
         const pos = new Vect2D(Math.random() * this.width, Math.random() * this.height);
         ship.setPosition(pos);
