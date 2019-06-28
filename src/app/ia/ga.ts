@@ -200,7 +200,8 @@ export class FortuneWheelGA extends GeneticAlgorithm {
             if (minValue <= 0) {
                 pop.stdFitness = pop.fitness + minValue + 1; // start at 1 to avoid null share
             }
-            sumFit += (pop.stdFitness * pop.stdFitness);
+            //sumFit += (pop.stdFitness * pop.stdFitness);
+            sumFit += pop.stdFitness;
         }
 
         let previousProba = 0;

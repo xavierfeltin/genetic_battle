@@ -19,7 +19,7 @@ export class ShipScoring {
         const coeffs = {
             scoringHealthPicked: {
                 description: 'Nb health picked',
-                value: 1
+                value: 3
             },
             scoringEnnemiesTouched: {
                 description: 'Ships touched',
@@ -39,7 +39,7 @@ export class ShipScoring {
             },
             scoringReceivedDamage: {
                 description: 'Received damage',
-                value: 0
+                value: -1
             },
             scoringAccuracy: {
                 description: 'Accuracy',
@@ -59,7 +59,7 @@ export class ShipScoring {
             },
             scoringEnnemiesDestroyedAcc: {
                 description: 'Ships destroyed x Acc',
-                value: 0
+                value: 1
             },
             scoringMissilesDestroyedAcc: {
                 description: 'Missiles destroyed x Acc',

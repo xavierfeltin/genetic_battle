@@ -61,7 +61,7 @@ export class HugeADN extends ADN {
 
         for (let i = 0; i < this.genes.length; i++) {
             if (i in indexes) {
-                let pct = this.maximum * 1.0;
+                let pct = this.maximum * 0.5;
                 if (pct === 0) {
                     pct = 0.01;
                 }

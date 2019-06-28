@@ -95,11 +95,11 @@ export class ShipNeurEvo {
             },
             inputFlagHasBeenHealed: {
                 description: 'Has been healed',
-                status: false
+                status: true
             },
             inputFlagHasBeenShot: {
                 description: 'Has been shot',
-                status: false
+                status: true
             },
             inputFlagTouchedEnnemy: {
                 description: 'Has touched ennemy',
@@ -119,11 +119,11 @@ export class ShipNeurEvo {
             },
             inputPositionX: {
                 description: 'Ship X position',
-                status: false
+                status: true
             },
             inputPositionY: {
                 description: 'Ship Y position',
-                status: false
+                status: true
             }
         };
         return inputs;

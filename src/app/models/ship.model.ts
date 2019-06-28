@@ -21,7 +21,7 @@ export class Ship extends GameObject {
     public static readonly MAX_LIFE: number = 100;
     public static readonly DEFAULT_ENERGY_FUEL: number = 0;
     public static readonly DEFAULT_ENERGY_FIRE: number = -2;
-    public static readonly DEFAULT_NN_HIDDEN_LAYERS: number[] = [12, 6];
+    public static readonly DEFAULT_NN_HIDDEN_LAYERS: number[] = [16, 8];
 
     private static readonly MAX_SPEED: number = 5;
     private static readonly MIN_SPEED: number = 2;
@@ -258,13 +258,9 @@ export class Ship extends GameObject {
             score += coeffs[key] * this[key];
         }
 
-        // Try to modelize a "productive" indicator depending of time of l
-        if (this.age < 100) {
-            // Penalize very young ships
-            return (score / (this.age * 10)) * 100;
-        } else {
-            return (score / (this.age)) * 100;
-        }
+        // Try to modelize an "expectation" indicator depending of lifespan
+        const lifespan = this.getAge() / 30;
+        return score / Math.log(lifespan + Math.E) ;
     }
 
     public getScore(): Scoring {
@@ -778,8 +774,14 @@ export class Ship extends GameObject {
     }
 
     public isInView(target: GameObject): boolean {
+        const deltaBehindY = Math.sin((this.orientation + 180) * Math.PI / 180) * this.radius;
+        const deltaBehindX = Math.cos((this.orientation + 180) * Math.PI / 180) * this.radius;
+        const xShip = this.pos.x + deltaBehindX ;
+        const yShip = this.pos.y + deltaBehindY ;
+        const posBehindShip = new Vect2D(xShip, yShip);
+
         // Compare angle between heading and target with field of view angle
-        const vShipTarget = Vect2D.sub(target.pos, this.pos);
+        const vShipTarget = Vect2D.sub(target.pos, posBehindShip);
         const distance = vShipTarget.norm;
         vShipTarget.normalize();
         const dotProduct = this.heading.dotProduct(vShipTarget);

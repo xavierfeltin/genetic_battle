@@ -27,7 +27,7 @@ export class ShipRender {
 
         this.ctx.save(); // save current state
 
-        if (this.debugMode && ship.isOldest) {
+        if (this.debugMode) {
             this.drawMissileRadar(ship);
             this.drawFieldOfView(ship);
             this.drawCollisionBox(ship);
@@ -87,28 +87,34 @@ export class ShipRender {
     }
 
     private drawFieldOfView(ship: Ship) {
+        const color = ship.isOldest ? 'rgba(0,255, 0)' : 'rgba(107, 142, 35)';
         const xOrigin = ship.pos.x;
         const yOrigin = ship.pos.y;
+        const deltaBehindY = Math.sin((ship.orientation + 180) * Math.PI / 180) * ship.radius;
+        const deltaBehindX = Math.cos((ship.orientation + 180) * Math.PI / 180) * ship.radius;
+        const xShip = xOrigin + deltaBehindX ;
+        const yShip = yOrigin + deltaBehindY ;
+
         const fov = ship.getFOV();
         const lengthFOV = ship.getFOVLen();
-        const angleMin = -fov/2 + ship.orientation;
-        const angleMax = fov/2 + ship.orientation;
+        const angleMin = -fov / 2 + ship.orientation;
+        const angleMax = fov / 2 + ship.orientation;
 
         this.ctx.beginPath();
-        this.ctx.moveTo(xOrigin, yOrigin);
-        this.ctx.lineTo(xOrigin + Math.cos(angleMin * Math.PI / 180) * lengthFOV, yOrigin + Math.sin(angleMin * Math.PI / 180) * lengthFOV);
-        this.ctx.strokeStyle = 'rgba(0, 255, 0)';
+        this.ctx.moveTo(xShip, yShip);
+        this.ctx.lineTo(xShip + Math.cos(angleMin * Math.PI / 180) * lengthFOV, yShip + Math.sin(angleMin * Math.PI / 180) * lengthFOV);
+        this.ctx.strokeStyle = color;
         this.ctx.stroke();
 
         this.ctx.beginPath();
-        this.ctx.moveTo(xOrigin, yOrigin);
-        this.ctx.lineTo(xOrigin + Math.cos(angleMax * Math.PI / 180) * lengthFOV, yOrigin + Math.sin(angleMax * Math.PI / 180) * lengthFOV);
-        this.ctx.strokeStyle = 'rgba(0, 255, 0)';
+        this.ctx.moveTo(xShip, yShip);
+        this.ctx.lineTo(xShip + Math.cos(angleMax * Math.PI / 180) * lengthFOV, yShip + Math.sin(angleMax * Math.PI / 180) * lengthFOV);
+        this.ctx.strokeStyle = color;
         this.ctx.stroke();
 
         this.ctx.beginPath();
-        this.ctx.strokeStyle = 'rgba(0, 255, 0)';
-        this.ctx.arc(xOrigin, yOrigin, lengthFOV, angleMin * Math.PI / 180, angleMax * Math.PI / 180);
+        this.ctx.strokeStyle = color;
+        this.ctx.arc(xShip, yShip, lengthFOV, angleMin * Math.PI / 180, angleMax * Math.PI / 180);
         this.ctx.stroke();
     }
 
@@ -116,14 +122,15 @@ export class ShipRender {
         const xOrigin = ship.pos.x;
         const yOrigin = ship.pos.y;
         const lengthRadar = ship.getRadarLen();
+        const color = ship.isOldest ? 'rgba(255, 0, 0)' : 'rgba(178, 34, 34)';
 
         this.ctx.beginPath();
-        this.ctx.strokeStyle = 'rgba(255, 0, 0)';
+        this.ctx.strokeStyle = color;
         this.ctx.arc(xOrigin, yOrigin, lengthRadar, 0, Math.PI * 2);
         this.ctx.stroke();
     }
 
-    private interpolateColor (color1: number[], color2: number[], factor: number = 0.5): number[] {
+    private interpolateColor(color1: number[], color2: number[], factor: number = 0.5): number[] {
         const result = [...color1];
 
         for (let i = 0; i < 3; i++) {
