@@ -6,7 +6,7 @@ export class Matrix {
 
     public static product(A: Matrix, B: Matrix): Matrix {
         if (A.columns !== B.rows) {
-            console.log('A columns (' + A.columns + ') !== B columns (' + B.columns + ')');
+            console.error('A columns (' + A.columns + ') !== B columns (' + B.columns + ')');
             return null;
         }
 
@@ -17,7 +17,6 @@ export class Matrix {
                 for (let k = 0; k < A.columns; k++) {
                     sum += A.values[i][k] * B.values[k][j];
                 }
-                // result.values[j][i] = sum;
                 result.values[i][j] = sum;
             }
         }
@@ -25,10 +24,17 @@ export class Matrix {
         return result;
     }
 
-    public static fromArray(arr: number[]): Matrix {
-        const result = new Matrix(arr.length,  1);
-        for (let i = 0; i < result.rows; i++) {
-            result.values[i][0] = arr[i];
+    public static fromArray(arr: number[], rows: number, columns: number): Matrix {
+        if (rows * columns !== arr.length) {
+            console.error('The specified rows and columns do not match the array length');
+            return null;
+        }
+
+        const result = new Matrix(rows,  columns);
+        for (let i = 0; i < rows; i++) {
+            for (let j = 0; j < columns; j++) {
+                result.values[i][j] = arr[j + (i * columns)];
+            }
         }
         return result;
     }
@@ -206,8 +212,6 @@ export class Matrix {
         return result;
     }
 
-
-
     public toArray(): number[] {
         const result = Array<number>(this.columns * this.rows);
         for (let i = 0; i < this.rows; i++) {
@@ -216,5 +220,27 @@ export class Matrix {
             }
         }
         return result;
+    }
+
+    public isEqual(m: Matrix): boolean {
+        if (m === null) {
+            return false;
+        }
+
+        if (m.rows !== this.rows && m.columns !== this.columns) {
+            return false;
+        }
+
+        let isEqual = true;
+        for (let i = 0; i < this.rows; i++) {
+            for (let j = 0; j < this.columns; j++) {
+                if (this.getValueAt(i, j) !== m.getValueAt(i, j)) {
+                    isEqual = false;
+                    break;
+                }
+            }
+        }
+
+        return isEqual;
     }
 }

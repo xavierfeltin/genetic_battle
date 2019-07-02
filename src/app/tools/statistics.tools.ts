@@ -40,7 +40,7 @@ export class Stat {
         for (const d of data) {
             let index = Math.floor((d + delta) / step) - deltaMinValue;
             // ex: for 10 classes, highest value 2.0, 2.0 / 0.4 = 10 but needs to be included to index 9, not a new class
-            index = Math.min(index, nbClasses-1); 
+            index = Math.min(index, nbClasses - 1);
             classes[index]++;
         }
 

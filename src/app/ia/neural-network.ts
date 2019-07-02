@@ -111,7 +111,7 @@ export class NeuralNetwork {
   }
 
   public feedForward(inputArr: number[]): number[][] {
-    const input = Matrix.fromArray(inputArr);
+    const input = Matrix.fromArray(inputArr, 1, inputArr.length);
 
     let hidden: Matrix = null;
     for (let i = 0; i < this.nLayer; i++) {
