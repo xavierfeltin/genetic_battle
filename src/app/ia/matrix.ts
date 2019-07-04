@@ -166,6 +166,7 @@ export class Matrix {
 
     public hadamard(m: Matrix) {
         if (m.rows !== this.rows || m.columns !== this.columns) {
+            console.error('A columns (' + this.columns + ') !== B columns (' + m.columns + ')');
             return;
         }
 
@@ -178,6 +179,7 @@ export class Matrix {
 
     public add(m: Matrix) {
         if (m.rows !== this.rows || m.columns !== this.columns) {
+            console.error('A columns (' + this.columns + ') !== B columns (' + m.columns + ')');
             return;
         }
 
@@ -190,6 +192,7 @@ export class Matrix {
 
     public substract(m: Matrix) {
         if (m.rows !== this.rows || m.columns !== this.columns) {
+            console.error('A columns (' + this.columns + ') !== B columns (' + m.columns + ')');
             return;
         }
 
@@ -199,8 +202,6 @@ export class Matrix {
             }
         }
     }
-
-
 
     public transpose(): Matrix {
         const result = new Matrix(this.columns, this.rows);
