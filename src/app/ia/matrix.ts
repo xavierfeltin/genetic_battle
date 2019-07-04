@@ -119,7 +119,7 @@ export class Matrix {
         }
     }
 
-    public setValues(values: number[]): Matrix {
+    public setValues(values: number[]) {
         if (values.length !== (this.rows * this.columns)) {
             return;
         }

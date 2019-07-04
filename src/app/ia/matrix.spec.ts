@@ -145,9 +145,43 @@ describe('Matrix', () => {
     });
   });
 
-  describe('getValueAt', () => {});
+  describe('getValueAt', () => {
+    it('outputs the selected value from the matrix', () => {
+        const m1 = Matrix.fromArray([1, 1, 1, 1, 1, 1], 3, 2);
+        const result = m1.getValueAt(1, 1);
+        expect(result === 1);
+    });
 
-  describe('setValues', () => {});
+    it('outputs null since the value is picked outside the matrix', () => {
+        const m1 = Matrix.fromArray([1, 1, 1, 1, 1, 1], 3, 2);
+        const result = m1.getValueAt(5, 5);
+        expect(result === null);
+    });
+  });
 
-  describe('random', () => {});
+  describe('setValues', () => {
+    it('outputs the updated matrix with the values set', () => {
+        const m1 = Matrix.fromArray([1, 1, 1, 1, 1, 1], 3, 2);
+        m1.setValues([2, 2, 2, 2, 2, 2]);
+        const expected = Matrix.fromArray([2, 2, 2, 2, 2, 2], 3, 2);
+        expect(m1.isEqual(expected));
+    });
+
+    it('outputs the same matrix since the values to set are too big', () => {
+        const m1 = Matrix.fromArray([1, 1, 1, 1, 1, 1], 3, 2);
+        m1.setValues([2, 2, 2, 2, 2, 2, 2, 2, 2, 2]);
+        const expected = Matrix.fromArray([1, 1, 1, 1, 1, 1], 3, 2);
+        expect(m1.isEqual(expected));
+    });
+  });
+
+  describe('random', () => {
+    it('outputs a matrix randomly initialized', () => {
+        const m1 = Matrix.random(3, 2);
+        const expected = Matrix.fromArray([0, 0, 0, 0, 0, 0], 3, 2);
+        expect(m1.rows === 3);
+        expect(m1.columns === 2);
+        expect(!m1.isEqual(expected));
+    });
+  });
 });

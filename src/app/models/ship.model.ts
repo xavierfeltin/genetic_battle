@@ -168,11 +168,11 @@ export class Ship extends GameObject {
         this.fireRate = Math.round((Ship.MIN_FIRE_RATE + Ship.MAX_FIRE_RATE) / 2);
 
         this.scoringCoefficients =  scoringCoefficients;
-        this.isNeuroEvo = isNeuroEvo;
-        this.inputsNeuroEvo = neuroEvoInputs;
-        const activeInputs = this.inputsNeuroEvo.getActiveInputNames();
-        this.neuronalNetworkStructure = nnStructure;
+        this.isNeuroEvo = isNeuroEvo;        
         if (this.isNeuroEvo) {
+            this.inputsNeuroEvo = neuroEvoInputs;        
+            this.neuronalNetworkStructure = nnStructure;
+            const activeInputs = this.inputsNeuroEvo.getActiveInputNames();
             this.nn = new NeuralNetwork(activeInputs.length, this.neuronalNetworkStructure, Ship.NN_OUTPUTS);
         }
         this.nbGenes = this.isNeuroEvo ? this.nn.getNbCoefficients() : Ship.NB_GENES;
@@ -421,8 +421,6 @@ export class Ship extends GameObject {
             i = this.getSolution(output[5]);
             this.fireRate = (i <= 0 ) ? 0 : 100;
         }
-
-
     }
 
     public expressADNNeuroEvo(missiles: GameObject[], healths: GameObject[], ships: GameObject[]) {
