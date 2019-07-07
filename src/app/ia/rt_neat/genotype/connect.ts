@@ -35,12 +35,17 @@ export class ConnectGene {
     public get weight() {
         return this.coefficient;
     }
+    public set weight(w: number) {
+        this.coefficient = w;
+    }
 
     public get isEnabled() {
         return this.enabled;
     }
 
     public get reccurent() {
+        console.log(this.inNode.layer);
+        console.log(this.outNode.layer);
         return this.inNode.layer >= this.outNode.layer; // can be a link on itself
     }
 }

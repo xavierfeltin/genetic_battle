@@ -12,11 +12,11 @@ describe('Ship', () => {
         s.setPosition(new Vect2D(100, 100));
         s.setOrientation(0);
         s.setFOV(120);
-        
+
         const go = new GameObject(2);
         go.setPosition(new Vect2D(130, 100));
 
-        expect(s.isInView(go));
+        expect(s.isInView(go)).toBeTruthy();
     });
 
     it('outputs true if the object is in view of the ship 2', () => {
@@ -28,7 +28,7 @@ describe('Ship', () => {
         const go = new GameObject(2);
         go.setPosition(new Vect2D(100, 100));
 
-        expect(s.isInView(go));
+        expect(s.isInView(go)).toBeTruthy();
     });
 
     it('outputs true if the object is in view of the ship limit case', () => {
@@ -38,15 +38,15 @@ describe('Ship', () => {
         s.setFOV(120);
 
         const go = new GameObject(2);
-        go.setPosition(new Vect2D(130, -6.5));
-        expect(s.isInView(go));
+        go.setPosition(new Vect2D(155, -29));
+        expect(s.isInView(go)).toBeTruthy();
 
         const go2 = new GameObject(2);
-        go2.setPosition(new Vect2D(130, 166));
-        expect(s.isInView(go2));
+        go2.setPosition(new Vect2D(155, 229));
+        expect(s.isInView(go2)).toBeTruthy();
     });
 
-    it('outputs alse if the object is outside the view of the ship 1', () => {
+    it('outputs false if the object is outside the view of the ship 1', () => {
         const s = new Ship(1, 1, 1, 1, adnFactory, false, null, null, [], [-1]);
         s.setPosition(new Vect2D(100, 100));
         s.setOrientation(0);
@@ -54,11 +54,10 @@ describe('Ship', () => {
 
         const go = new GameObject(2);
         go.setPosition(new Vect2D(-100, 100));
-
-        expect(s.isInView(go));
+        expect(s.isInView(go)).toBeFalsy();
     });
 
-    it('outputs alse if the object is outside the view of the ship 2', () => {
+    it('outputs false if the object is outside the view of the ship 2', () => {
         const s = new Ship(1, 1, 1, 1, adnFactory, false, null, null, [], [-1]);
         s.setPosition(new Vect2D(100, 100));
         s.setOrientation(0);
@@ -66,11 +65,10 @@ describe('Ship', () => {
 
         const go = new GameObject(2);
         go.setPosition(new Vect2D(100, 50));
-
-        expect(s.isInView(go));
+        expect(s.isInView(go)).toBeFalsy();
     });
 
-    it('outputs alse if the object is outside the view of the ship 2', () => {
+    it('outputs false if the object is outside the view of the ship 2', () => {
         const s = new Ship(1, 1, 1, 1, adnFactory, false, null, null, [], [-1]);
         s.setPosition(new Vect2D(100, 100));
         s.setOrientation(0);
@@ -78,8 +76,7 @@ describe('Ship', () => {
 
         const go = new GameObject(2);
         go.setPosition(new Vect2D(100, 150));
-
-        expect(s.isInView(go));
+        expect(s.isInView(go)).toBeFalsy();
     });
 
     it('outputs false if the object is in view of the ship limit case', () => {
@@ -87,14 +84,14 @@ describe('Ship', () => {
         s.setPosition(new Vect2D(100, 100));
         s.setOrientation(0);
         s.setFOV(120);
-
+        
         const go = new GameObject(2);
-        go.setPosition(new Vect2D(130, -7));
-        expect(!s.isInView(go));
+        go.setPosition(new Vect2D(155, -30));
+        expect(s.isInView(go)).toBeFalsy();
 
         const go2 = new GameObject(2);
-        go2.setPosition(new Vect2D(130, 167));
-        expect(!s.isInView(go2));
+        go2.setPosition(new Vect2D(155, 230));
+        expect(s.isInView(go2)).toBeFalsy();
     });
   });
 });

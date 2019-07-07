@@ -28,6 +28,9 @@ export class NodeGene {
     public get layer(): number {
         return this.position;
     }
+    public set layer(l: number) {
+        this.position = l;
+    }
 
     isInput(): boolean {
         return this.type === NodeType.Input;

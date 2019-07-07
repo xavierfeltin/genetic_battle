@@ -6,7 +6,7 @@ export class Matrix {
 
     public static product(A: Matrix, B: Matrix): Matrix {
         if (A.columns !== B.rows) {
-            console.error('A columns (' + A.columns + ') !== B columns (' + B.columns + ')');
+            console.error('A columns (' + A.columns + ') !== B rows (' + B.rows + ')');
             return null;
         }
 
@@ -214,10 +214,10 @@ export class Matrix {
     }
 
     public toArray(): number[] {
-        const result = Array<number>(this.columns * this.rows);
+        const result = [];
         for (let i = 0; i < this.rows; i++) {
             for (let j = 0; j < this.columns; j++) {
-                result[i + (j * this.columns)] = this.values[i][j];
+                result.push(this.values[i][j]);
             }
         }
         return result;

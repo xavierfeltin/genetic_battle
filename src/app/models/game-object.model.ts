@@ -120,6 +120,7 @@ export class GameObject {
     public setOrientation(angle: number) {
         this.orientation = angle;
         this.velo.setV(PhysicsEngine.getVeloFromAngle(this.orientation, this.speed));
+        this.updateHeading(false);
     }
 
     public setEnergy(energy: number) {
@@ -177,9 +178,12 @@ export class GameObject {
         this.velo.setMag(this.speed);
     }
 
-    public updateHeading() {
+    public updateHeading(updateOrientation: boolean = true) {
         this.heading.setV(this.velo);
         this.heading.normalize();
-        this.orientation = this.heading.getHeading();
+
+        if (updateOrientation) {
+            this.orientation = this.heading.getHeading();
+        }
     }
 }
