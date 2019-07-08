@@ -15,6 +15,7 @@ export class Node {
     private position: number;
     private activation: string;
     private val: number;
+    private mem:number;
     private inLinks: Connect[];
 
     constructor(id: number, type: NodeType, layer: number, activationName: string, value: number = 0) {
@@ -23,6 +24,7 @@ export class Node {
         this.position = layer;
         this.activation = activationName;
         this.val = value;
+        this.mem = 0;
         this.inLinks = [];
     }
 
@@ -33,9 +35,18 @@ export class Node {
     public activate() {
         let newValue = 0;
         for (const link of this.inLinks) {
-            newValue += (link.weight * link.inputNode.value);
+            if (link.reccurent) {
+                newValue += (link.weight * link.inputNode.mem);
+            } else {
+                newValue += (link.weight * link.inputNode.value);
+            }
+            
         }
         this.val = this.applyActivation(newValue); // TODO: maybe later add bias
+    }
+
+    public saveInMemory() {
+        this.mem = this.val;
     }
 
     private applyActivation(x: number) {
@@ -63,6 +74,13 @@ export class Node {
 
     public get value(): number {
         return this.val;
+    }
+    public set value(x: number) {
+        this.val = x;
+    }
+
+    public get memory(): number {
+        return this.mem;
     }
 
     public get activationFunction(): string {
