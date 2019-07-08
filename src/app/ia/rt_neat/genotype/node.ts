@@ -32,19 +32,19 @@ export class NodeGene {
         this.position = l;
     }
 
-    isInput(): boolean {
+    public isInput(): boolean {
         return this.type === NodeType.Input;
     }
 
-    isOutput(): boolean {
+    public isOutput(): boolean {
         return this.type === NodeType.Output;
     }
 
-    isHidden(): boolean {
+    public isHidden(): boolean {
         return this.type === NodeType.Hidden;
     }
 
-    isBias(): boolean {
+    public isBias(): boolean {
         return this.type === NodeType.Bias;
     }
 }

@@ -30,6 +30,9 @@ export class Genome {
 
     // add connection between two existing nodes
     public addConnection(inNode: NodeGene, outNode: NodeGene) {
+        // TODO: forbid connections between nodes of the same layer except itself
+        // or forbid cycle between graphs of the same layer
+
         const newLink = new ConnectGene(Genome.nextInnovation, inNode, outNode, MyMath.random(-1, 1), true);
         this.links.push(newLink);
         Genome.incrementInnovation();
@@ -43,9 +46,9 @@ export class Genome {
     public splitConnection(connect: ConnectGene) {
         // Deactivate previous connection
         this.activateConnection(connect, false);
-        
+
         // Insert a node between the previously connected node
-        const newNodeLayer = connect.reccurent ? connect.outputNode.layer + 1 : connect.inputNode.layer + 1; 
+        const newNodeLayer = connect.reccurent ? connect.outputNode.layer + 1 : connect.inputNode.layer + 1;
         const newNode = new NodeGene(this.nodes.length, NodeType.Hidden, newNodeLayer);
         this.nodeGenes.push(newNode);
 
@@ -65,9 +68,9 @@ export class Genome {
             anteConnect.inputNode.layer = newNode.layer + 1;
         } else {
             postConnect.outputNode.layer = newNode.layer + 1;
-        }        
+        }
     }
-    
+
     // enable / disable a connection between two nodes
     public activateConnection(connect: ConnectGene, enable: boolean) {
         connect.activate(enable);

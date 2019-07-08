@@ -25,7 +25,7 @@ interface ExpectedNode {
     layer: number;
 }
 
-function checkConnection (connect: ConnectGene, conf: ExpectedConnection) {
+function checkConnection(connect: ConnectGene, conf: ExpectedConnection) {
     expect(connect.innovation).toBe(conf.innovation);
     expect(connect.inputNode.identifier).toBe(conf.inNode.identifier);
     expect(connect.outputNode.identifier).toBe(conf.outNode.identifier);
@@ -34,13 +34,12 @@ function checkConnection (connect: ConnectGene, conf: ExpectedConnection) {
 
     if (conf.testValue) {
         expect(connect.weight).toBe(conf.weight);
-    }
-    else {
+    } else {
         expect(isNaN(connect.weight)).toBeFalsy();
-    }   
+    }
 }
 
-function checkNode (node: NodeGene, conf: ExpectedNode) {
+function checkNode(node: NodeGene, conf: ExpectedNode) {
     expect(node.identifier).toBe(conf.identifier);
     expect(node.nodeType).toBe(conf.type);
     expect(node.layer).toBe(node.layer);
@@ -131,7 +130,7 @@ describe('Genome', () => {
                 isEnabled: false,
                 recurrent: false
             });
-            
+
             // Check incoming connection to new node
             const addedNode = g.nodeGenes[2];
             const newIncomingConnection = g.connectGenes[1];
@@ -156,8 +155,8 @@ describe('Genome', () => {
                 isEnabled: true,
                 recurrent: false
             });
-            
-            // Check new node            
+
+            // Check new node
             checkNode(addedNode, {
                 identifier: g.nodeGenes.length - 1,
                 type: NodeType.Hidden,
@@ -201,7 +200,7 @@ describe('Genome', () => {
                 isEnabled: false,
                 recurrent: true
             });
-            
+
             // Check incoming connection to new node
             const addedNode = g.nodeGenes[2];
             const newIncomingConnection = g.connectGenes[1];
@@ -226,8 +225,8 @@ describe('Genome', () => {
                 isEnabled: true,
                 recurrent: true
             });
-            
-            // Check new node            
+
+            // Check new node
             checkNode(addedNode, {
                 identifier: g.nodeGenes.length - 1,
                 type: NodeType.Hidden,
