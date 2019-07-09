@@ -15,8 +15,9 @@ export class Node {
     private position: number;
     private activation: string;
     private val: number;
-    private mem:number;
+    private mem: number;
     private inLinks: Connect[];
+    private outLinks: Connect[];
 
     constructor(id: number, type: NodeType, layer: number, activationName: string, value: number = 0) {
         this.id = id;
@@ -26,10 +27,15 @@ export class Node {
         this.val = value;
         this.mem = 0;
         this.inLinks = [];
+        this.outLinks = [];
     }
 
     public addInput(link: Connect) {
         this.inLinks.push(link);
+    }
+
+    public addOutput(link: Connect) {
+        this.outLinks.push(link);
     }
 
     public activate() {
@@ -40,7 +46,6 @@ export class Node {
             } else {
                 newValue += (link.weight * link.inputNode.value);
             }
-            
         }
         this.val = this.applyActivation(newValue); // TODO: maybe later add bias
     }
@@ -89,6 +94,10 @@ export class Node {
 
     public get inputs(): Connect[] {
         return this.inLinks;
+    }
+
+    public get outputs(): Connect[] {
+        return this.outLinks;
     }
 
     public isInput(): boolean {

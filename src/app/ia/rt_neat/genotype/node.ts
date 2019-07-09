@@ -1,3 +1,5 @@
+import { Connect } from "../phenotype/connect";
+
 export enum NodeType {
     Input = 0,
     Output = 1,

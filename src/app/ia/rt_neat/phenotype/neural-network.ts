@@ -43,23 +43,24 @@ export class NeuralNetwork {
             if (link.isEnabled) {
                 let inNode: Node = null;
                 if (link.inputNode.isInput()) {
-                    inNode = this.inputs.find((value: Node) => { return value.identifier === link.inputNode.identifier; });
+                    inNode = this.inputs.find((value: Node) => value.identifier === link.inputNode.identifier);
                 } else if (link.inputNode.isOutput()) {
-                    inNode = this.outputs.find((value: Node) => { return value.identifier === link.inputNode.identifier; });
+                    inNode = this.outputs.find((value: Node) => value.identifier === link.inputNode.identifier);
                 } else {
-                    inNode = hiddens.find((value: Node) => { return value.identifier === link.inputNode.identifier; });
+                    inNode = hiddens.find((value: Node) => value.identifier === link.inputNode.identifier);
                 }
 
                 let outNode: Node = null;
                 if (link.outputNode.isInput()) {
-                    outNode = this.inputs.find((value: Node) => { return value.identifier === link.inputNode.identifier; });
-                } else if (link.inputNode.isOutput()) {
-                    outNode = this.outputs.find((value: Node) => { return value.identifier === link.inputNode.identifier; });
+                    outNode = this.inputs.find((value: Node) => value.identifier === link.outputNode.identifier);
+                } else if (link.outputNode.isOutput()) {
+                    outNode = this.outputs.find((value: Node) => value.identifier === link.outputNode.identifier);
                 } else {
-                    outNode = hiddens.find((value: Node) => { return value.identifier === link.inputNode.identifier; });
+                    outNode = hiddens.find((value: Node) => value.identifier === link.outputNode.identifier);
                 }
-                                    
+
                 const newLink = new Connect(link.innovation, inNode, outNode, link.weight);
+                inNode.addOutput(newLink);
                 outNode.addInput(newLink);
                 this.links.push(newLink);
             }
@@ -69,15 +70,15 @@ export class NeuralNetwork {
         // TODO: do not take into account hidden nodes not connected to any output
         const split = {};
         for (const node of hiddens) {
-            if (node.inputs.length > 0) {
+            if (node.inputs.length > 0 || node.outputs.length > 0) {
                 if (!(node.layer in split)) {
-                    split[node.layer] =  [];                    
+                    split[node.layer] =  [];
                 }
                 split[node.layer].push(node);
             }
         }
 
-        let indexes: number[] = Object.keys(split).map( i => { return parseInt(i); });
+        let indexes: number[] = Object.keys(split).map( i => parseInt(i) );
         indexes = indexes.sort();
         for (const index in split) {
             this.layers.push(split[index]);
@@ -92,7 +93,7 @@ export class NeuralNetwork {
 
         // Activate nodes through all layers
         for (const layer of this.layers) {
-            for (const node of layer){
+            for (const node of layer) {
                 node.activate();
             }
         }
@@ -109,6 +110,22 @@ export class NeuralNetwork {
             }
         }
 
-        return this.outputs.map( out => { return out.value});
+        return this.outputs.map( out => out.value );
+    }
+
+    public get networkInputs(): Node[] {
+        return this.inputs;
+    }
+
+    public get networkOutputs(): Node[] {
+        return this.outputs;
+    }
+
+    public get networkLayers(): Node[][] {
+        return this.layers;
+    }
+
+    public get networkConnections(): Connect[] {
+        return this.links;
     }
 }
