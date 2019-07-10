@@ -30,7 +30,7 @@ export class NeuralNetwork {
                 const newNode = new Node(node.identifier, node.nodeType, node.layer, 'none');
                 this.inputs.push(newNode);
             } else if (node.isOutput()) {
-                const newNode = new Node(node.identifier, node.nodeType, node.layer, 'none');
+                const newNode = new Node(node.identifier, node.nodeType, node.layer, 'tanh');
                 this.outputs.push(newNode);
             } else {
                 const newNode = new Node(node.identifier, node.nodeType, node.layer, 'tanh');
@@ -127,5 +127,30 @@ export class NeuralNetwork {
 
     public get networkConnections(): Connect[] {
         return this.links;
+    }
+
+    public print() {
+        console.log('Inputs: ');
+        for (const input of this.inputs) {
+            input.print();
+        }
+
+        console.log('Hiddens: ');
+        for (let i = 0 ; i < this.layers.length; i++) {
+            console.log('Layer ' + i);
+            for (const hidden of this.layers[i]) {
+                hidden.print();
+            }
+        }
+
+        console.log('Outputs: ');
+        for (const output of this.outputs) {
+            output.print();
+        }
+
+        console.log('Links: ');
+        for (const link of this.links) {
+            link.print();
+        }
     }
 }

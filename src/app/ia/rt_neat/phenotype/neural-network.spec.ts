@@ -37,6 +37,36 @@ function generateSimpleGenome(): Genome {
     return g;
 }
 
+function generateSimpleGenomeWithRecurrentLink(): Genome {
+    const n1 = new NodeGene(0, NodeType.Input, -Infinity);
+    const n2 = new NodeGene(1, NodeType.Output, Infinity);
+    const n3 = new NodeGene(2, NodeType.Hidden, 0);
+    const g = new Genome();
+    g.addNode(n1);
+    g.addNode(n2);
+    g.addNode(n3);
+    g.addConnection(n1, n3);
+    g.addConnection(n2, n3);
+    g.addConnection(n3, n2);
+
+    return g;
+}
+
+function generateSimpleGenomeWithRecurrentLinkOnItself(): Genome {
+    const n1 = new NodeGene(0, NodeType.Input, -Infinity);
+    const n2 = new NodeGene(1, NodeType.Output, Infinity);
+    const n3 = new NodeGene(2, NodeType.Hidden, 0);
+    const g = new Genome();
+    g.addNode(n1);
+    g.addNode(n2);
+    g.addNode(n3);
+    g.addConnection(n1, n3);
+    g.addConnection(n3, n3);
+    g.addConnection(n3, n2);
+
+    return g;
+}
+
 function generate2LayeredGenome(): Genome {
     const n1 = new NodeGene(0, NodeType.Input, -Infinity);
     const n2 = new NodeGene(1, NodeType.Output, Infinity);
@@ -181,7 +211,7 @@ describe('Neural-network', () => {
             checkNode(outputs[0], {
                 identifier: 1,
                 layer: Infinity,
-                activationFunction: 'none',
+                activationFunction: 'tanh',
                 nbInputs: 1,
                 inputIdentifier: 0,
                 nbOutputs: 0,
@@ -220,7 +250,7 @@ describe('Neural-network', () => {
             checkNode(outputs[0], {
                 identifier: 1,
                 layer: Infinity,
-                activationFunction: 'none',
+                activationFunction: 'tanh',
                 nbInputs: 1,
                 inputIdentifier: 2,
                 nbOutputs: 0,
@@ -287,6 +317,72 @@ describe('Neural-network', () => {
             });
         });
 
+        it ('outputs an initialized network with a recurrent link', () => {
+            const genome = generateSimpleGenomeWithRecurrentLink();
+            const nn = new NeuralNetwork();
+            nn.init(genome);
+
+            const inputs = nn.networkInputs;
+            expect(inputs.length).toBe(1);
+            checkNode(inputs[0], {
+                identifier: 0,
+                layer: -Infinity,
+                activationFunction: 'none',
+                nbInputs: 0,
+                inputIdentifier: -1,
+                nbOutputs: 1,
+                outputIdentifier: 2
+            });
+
+            const outputs = nn.networkOutputs;
+            expect(outputs.length).toBe(1);
+            checkNode(outputs[0], {
+                identifier: 1,
+                layer: Infinity,
+                activationFunction: 'tanh',
+                nbInputs: 1,
+                inputIdentifier: 2,
+                nbOutputs: 0,
+                outputIdentifier: -1
+            });
+
+            const hiddens = nn.networkLayers[0];
+            expect(nn.networkLayers.length).toBe(1);
+            expect(hiddens.length).toBe(1);
+            checkNode(hiddens[0], {
+                identifier: 2,
+                layer: 0,
+                activationFunction: 'tanh',
+                nbInputs: 2,
+                inputIdentifier: 0, // TODO change to put an array of identifier
+                nbOutputs: 1,
+                outputIdentifier: 1 // TODO change to put an array of identifier
+            });
+
+            const links = nn.networkConnections;
+            expect(links.length).toBe(3);
+            checkConnection(links[0], {
+                identifier: 0,
+                inNodeIdentifier: 0,
+                outNodeIdentifier: 2,
+                weight: NaN
+            });
+
+            checkConnection(links[1], {
+                identifier: 1,
+                inNodeIdentifier: 1,
+                outNodeIdentifier: 2,
+                weight: NaN
+            });
+
+            checkConnection(links[2], {
+                identifier: 2,
+                inNodeIdentifier: 2,
+                outNodeIdentifier: 1,
+                weight: NaN
+            });
+        });
+
         it('outputs an initialized a network without disabled connections', () => {
             const genome = generateWithDisabledLinksGenome();
             const nn = new NeuralNetwork();
@@ -315,6 +411,83 @@ describe('Neural-network', () => {
             expect(hiddens.map(node => node.identifier)).toContain(2);
             expect(hiddens.map(node => node.identifier)).toContain(3);
             expect(hiddens.map(node => node.identifier)).toContain(4);
+        });
+    });
+
+    describe('feed forward', () => {
+        it('outputs the results of a direct neural network', () => {
+            const genome = generateSimpleDirectGenome();
+            const nn = new NeuralNetwork();
+            nn.init(genome);
+            const results = nn.feedForward([1]);
+            expect(results.length).toBe(1);
+            expect(results[0]).toBe(Math.tanh(nn.networkInputs[0].value * nn.networkConnections[0].weight));
+        });
+
+        it('outputs the results of a simple neural network', () => {
+            const genome = generateSimpleGenome();
+            const nn = new NeuralNetwork();
+            nn.init(genome);
+            const results = nn.feedForward([1]);
+            expect(results.length).toBe(1);
+
+            let expectedResult = Math.tanh(nn.networkInputs[0].value * nn.networkConnections[0].weight);
+            expectedResult = Math.tanh(expectedResult * nn.networkConnections[1].weight);
+            expect(results[0]).toBe(expectedResult);
+        });
+
+        it('outputs the results of a neural network with recurrent link', () => {
+            const genome = generateSimpleGenomeWithRecurrentLink();
+            const nn = new NeuralNetwork();
+            nn.init(genome);
+
+            // First feedforward with a memory at 0
+            let results = nn.feedForward([1]);
+            expect(results.length).toBe(1);
+            expect(nn.networkInputs[0].value).toBe(1);
+            let expectedResult = Math.tanh(nn.networkInputs[0].value * nn.networkConnections[0].weight
+                                            + 0 * nn.networkConnections[1].weight);
+            expectedResult = Math.tanh(expectedResult * nn.networkConnections[2].weight);
+            expect(results[0]).toBe(expectedResult);
+            expect(nn.networkOutputs[0].memory).toBe(expectedResult); // save the result  in memory
+
+            // Second feedforward with a memory set at expectedResult
+            const memory = expectedResult;
+            results = nn.feedForward([1]);
+
+            expect(nn.networkInputs[0].value).toBe(1);
+            expectedResult = Math.tanh(nn.networkInputs[0].value * nn.networkConnections[0].weight
+                                        + memory * nn.networkConnections[1].weight);
+            expectedResult = Math.tanh(expectedResult * nn.networkConnections[2].weight);
+            expect(results[0]).toBe(expectedResult);
+        });
+
+        it('outputs the results of a neural network with recurrent link on itself', () => {
+            const genome = generateSimpleGenomeWithRecurrentLinkOnItself();
+            const nn = new NeuralNetwork();
+            nn.init(genome);
+
+            // First feedforward with a memory at 0
+            let results = nn.feedForward([1]);
+            expect(results.length).toBe(1);
+            expect(nn.networkInputs[0].value).toBe(1);
+            let expectedResult = Math.tanh(nn.networkInputs[0].value * nn.networkConnections[0].weight
+                                            + 0 * nn.networkConnections[1].weight);
+            expect(nn.networkLayers[0][0].memory).toBe(expectedResult);
+            const memory = expectedResult; // save the result  in memory
+
+            expectedResult = Math.tanh(expectedResult * nn.networkConnections[2].weight);
+            expect(results[0]).toBe(expectedResult);
+
+            // Second feedforward with a memory set at expectedResult
+            results = nn.feedForward([1]);
+            expect(nn.networkInputs[0].value).toBe(1);
+            expectedResult = Math.tanh(nn.networkInputs[0].value * nn.networkConnections[0].weight
+                                        + memory * nn.networkConnections[1].weight);
+            expect(nn.networkLayers[0][0].value).toBe(expectedResult);
+
+            expectedResult = Math.tanh(expectedResult * nn.networkConnections[2].weight);
+            expect(results[0]).toBe(expectedResult);
         });
     });
 });

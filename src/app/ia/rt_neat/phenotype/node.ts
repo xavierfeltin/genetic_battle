@@ -62,6 +62,25 @@ export class Node {
         }
     }
 
+    public print() {
+        console.log('id: ' + this.identifier + ', val: ' + this.value + ', mem: ' + this.mem);
+        let msg = '';
+        for (const link of this.inLinks) {
+            msg += link.identifier;
+            if (link.reccurent) {
+                msg += 'R';
+            }
+            msg += ', ';
+        }
+        console.log('in links: ' + msg);
+
+        msg = '';
+        for (const link of this.outLinks) {
+            msg += link.identifier + ', ';
+        }
+        console.log('out links: ' + msg);
+    }
+
     public get identifier(): number {
         return this.id;
     }

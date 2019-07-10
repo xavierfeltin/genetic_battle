@@ -14,6 +14,11 @@ export class Connect {
         this.coefficient = coeff;
     }
 
+    public print() {
+        console.log('id: ' + this.identifier + ', weight: ' + this.weight + ', recurrent: ' + this.reccurent);
+        console.log('Node ' + this.inNode.identifier + ' ---> Node ' + this.outNode.identifier);
+    }
+
     public get identifier() {
         return this.id;
     }
