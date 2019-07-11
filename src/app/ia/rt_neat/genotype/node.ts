@@ -1,5 +1,3 @@
-import { Connect } from "../phenotype/connect";
-
 export enum NodeType {
     Input = 0,
     Output = 1,
@@ -48,5 +46,9 @@ export class NodeGene {
 
     public isBias(): boolean {
         return this.type === NodeType.Bias;
+    }
+
+    public copy(): NodeGene {
+        return new NodeGene(this.id, this.type, this.position);
     }
 }

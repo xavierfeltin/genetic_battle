@@ -37,7 +37,7 @@ export class ADN {
         return result;
     }
 
-    public mutate() {
+    public mutate(): ADN {
         const result = new ADN(this.genes.length, this.minimum, this.maximum, this.mutationRate, this.crossOverRate);
         return result;
     }
@@ -48,7 +48,7 @@ export class HugeADN extends ADN {
         super(nbGenes, min, max, mutationRate, crossOverRate);
     }
 
-    public mutate() {
+    public mutate(): HugeADN {
         const result = new HugeADN(this.genes.length, this.minimum, this.maximum, this.mutationRate, this.crossOverRate);
 
         const maxGenesToMutate = Math.ceil(this.genes.length * this.mutationRate); // * ADN.MUTATION_RATE;
@@ -97,7 +97,7 @@ export class SmallADN extends ADN {
         super(nbGenes, min, max, mutationRate, crossOverRate);
     }
 
-    public mutate() {
+    public mutate(): SmallADN {
         const result = new SmallADN(this.genes.length, this.minimum, this.maximum, this.mutationRate, this.crossOverRate);
 
         const maxGenesToMutate = Math.ceil(this.genes.length * this.mutationRate);

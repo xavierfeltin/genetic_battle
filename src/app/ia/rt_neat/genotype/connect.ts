@@ -48,4 +48,15 @@ export class ConnectGene {
         console.log(this.outNode.layer);
         return this.inNode.layer >= this.outNode.layer; // can be a link on itself
     }
+
+    public copy(nodes: NodeGene[]): ConnectGene {
+        let filtered = nodes.filter((n: NodeGene) => n.identifier === this.inNode.identifier);
+        const newInNode = filtered.length > 0 ? filtered[0] : null;
+
+        filtered = nodes.filter((n: NodeGene) => n.identifier === this.outNode.identifier);
+        const newOutNode = filtered.length > 0 ? filtered[0] : null;
+
+        const connect = new ConnectGene(this.innovationId, newInNode, newOutNode, this.coefficient, this.enabled);
+        return connect;
+    }
 }

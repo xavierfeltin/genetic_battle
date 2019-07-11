@@ -79,4 +79,11 @@ export class Genome {
     public changeConnectionWeight(connect: ConnectGene, weight: number) {
         connect.weight = weight;
     }
+
+    public copy(): Genome {
+        const g = new Genome();
+        g.nodes = this.nodes.map(n => n.copy());
+        g.links = this.links.map(l => l.copy(g.nodes));
+        return g;
+    }
 }
