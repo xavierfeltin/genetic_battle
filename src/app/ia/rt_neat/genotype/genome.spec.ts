@@ -5,6 +5,7 @@ import { Genome } from './genome';
 beforeEach(() => {
     // Reset static variable before each test
     Genome.innovationNumber = 0;
+    Genome.nodeNumber = 0;
 });
 
 afterEach(() => {});
@@ -111,8 +112,10 @@ describe('Genome', () => {
 
     describe('add node', () => {
         it('add a node to split an existing link', () => {
-            const n1 = new NodeGene(0, NodeType.Hidden, 1);
-            const n2 = new NodeGene(1, NodeType.Hidden, 2);
+            const n1 = new NodeGene(Genome.nextNodeId, NodeType.Hidden, 1);
+            Genome.incrementNodeId();
+            const n2 = new NodeGene(Genome.nextNodeId, NodeType.Hidden, 2);
+            Genome.incrementNodeId();
             const g = new Genome();
             g.addNode(n1);
             g.addNode(n2);
@@ -158,7 +161,7 @@ describe('Genome', () => {
 
             // Check new node
             checkNode(addedNode, {
-                identifier: g.nodeGenes.length - 1,
+                identifier: Genome.nextNodeId - 1,
                 type: NodeType.Hidden,
                 layer: 2
             });
@@ -181,8 +184,10 @@ describe('Genome', () => {
         });
 
         it('add a node to split an existing recurrent link', () => {
-            const n1 = new NodeGene(0, NodeType.Hidden, 2);
-            const n2 = new NodeGene(1, NodeType.Hidden, 1);
+            const n1 = new NodeGene(Genome.nextNodeId, NodeType.Hidden, 2);
+            Genome.incrementNodeId();
+            const n2 = new NodeGene(Genome.nextNodeId, NodeType.Hidden, 1);
+            Genome.incrementNodeId();
             const g = new Genome();
             g.addNode(n1);
             g.addNode(n2);
@@ -228,7 +233,7 @@ describe('Genome', () => {
 
             // Check new node
             checkNode(addedNode, {
-                identifier: g.nodeGenes.length - 1,
+                identifier: Genome.nextNodeId - 1,
                 type: NodeType.Hidden,
                 layer: 2
             });

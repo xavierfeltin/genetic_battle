@@ -4,6 +4,8 @@ import { MyMath } from '../../../tools/math.tools';
 
 export class Genome {
     public static innovationNumber = 0;
+    public static nodeNumber = 0;
+
     private nodes: NodeGene[];
     private links: ConnectGene[];
 
@@ -20,12 +22,28 @@ export class Genome {
         return Genome.innovationNumber;
     }
 
+    public static incrementNodeId() {
+        Genome.nodeNumber++;
+    }
+
+    public static get nextNodeId(): number {
+        return Genome.nodeNumber;
+    }
+
     public get nodeGenes(): NodeGene[] {
         return this.nodes;
     }
 
+    public set nodeGenes(genes: NodeGene[]) {
+        this.nodes = genes;
+    }
+
     public get connectGenes(): ConnectGene[] {
         return this.links;
+    }
+
+    public set connectGenes(genes: ConnectGene[]) {
+        this.links = genes;
     }
 
     // add connection between two existing nodes
@@ -49,7 +67,8 @@ export class Genome {
 
         // Insert a node between the previously connected node
         const newNodeLayer = connect.reccurent ? connect.outputNode.layer + 1 : connect.inputNode.layer + 1;
-        const newNode = new NodeGene(this.nodes.length, NodeType.Hidden, newNodeLayer);
+        const newNode = new NodeGene(Genome.nextNodeId, NodeType.Hidden, newNodeLayer);
+        Genome.incrementNodeId();
         this.nodeGenes.push(newNode);
 
         // Connect the previous nodes with the new node
