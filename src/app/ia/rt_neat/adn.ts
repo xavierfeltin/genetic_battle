@@ -4,7 +4,7 @@ import { MyMath } from '../../tools/math.tools';
 import { NodeGene } from './genotype/node';
 import { ConnectGene } from './genotype/connect';
 
-export interface Rates {
+export interface RTADNRates {
     mutation: number;
     crossOver: number;
     mutationActivation: number;
@@ -25,7 +25,8 @@ export class RTADN extends ADN {
     private mutationAllowRecurrentRate: number;
     private mutationSplitConnectRate: number; 
 
-    constructor(min: number, max: number, rates: Rates) {
+    // TODO: add genome directly in constructor
+    constructor(min: number, max: number, rates: RTADNRates) {
         super(0, min, max, rates.mutation, rates.crossOver);
         this.g = new Genome();
         this.mutationActivationRate = rates.mutationActivation;
@@ -158,7 +159,7 @@ export class RTADN extends ADN {
         return result;
     }
 
-    public get rates(): Rates {
+    public get rates(): RTADNRates {
         return {
             mutation: this.mutationRate,
             crossOver: this.crossOverRate,

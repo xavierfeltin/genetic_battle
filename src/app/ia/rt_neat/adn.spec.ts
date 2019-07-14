@@ -1,7 +1,7 @@
 import { NodeGene, NodeType } from './genotype/node';
 import { ConnectGene } from './genotype/connect';
 import { Genome } from './genotype/genome';
-import { RTADN, Rates } from './adn';
+import { RTADN, RTADNRates } from './adn';
 
 beforeEach(() => {
     // Reset static variable before each test
@@ -14,7 +14,7 @@ afterEach(() => {});
 describe('RTAdn', () => {
     describe('constructor', () => {
         it('outputs an adn with the correct attributes', () => {
-            const rates: Rates = {
+            const rates: RTADNRates = {
                 mutation: 0.01,
                 crossOver: 0.01,
                 mutationActivation: 0.01,
