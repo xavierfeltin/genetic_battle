@@ -44,8 +44,6 @@ export class ConnectGene {
     }
 
     public get reccurent() {
-        console.log(this.inNode.layer);
-        console.log(this.outNode.layer);
         return this.inNode.layer >= this.outNode.layer; // can be a link on itself
     }
 

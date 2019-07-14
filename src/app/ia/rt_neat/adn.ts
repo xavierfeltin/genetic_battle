@@ -2,18 +2,40 @@ import { Genome } from './genotype/genome';
 import { ADN } from '../adn';
 import { MyMath } from '../../tools/math.tools';
 import { NodeGene } from './genotype/node';
+import { ConnectGene } from './genotype/connect';
+
+export interface Rates {
+    mutation: number;
+    crossOver: number;
+    mutationActivation: number;
+    mutationConnect: number;
+    mutationAllowRecurrent: number;
+    mutationSplitConnect: number;
+}
 
 export class RTADN extends ADN {
     public static readonly MUTATION_ACTIVATION_RATE: number = 0.01;
-    protected g: Genome;
+    public static readonly MUTATION_CONNECT_RATE: number = 0.01;
+    public static readonly MUTATION_ALLOW_RECURRENT: number = 0.01;
+    public static readonly MUTATION_SPLIT_CONNECT_RATE: number = 0.01;
 
-    constructor(min: number, max: number, mutationRate: number, crossOverRate: number) {
-        super(0, min, max, mutationRate, crossOverRate);
+    private g: Genome;
+    private mutationActivationRate: number;
+    private mutationConnectRate: number;
+    private mutationAllowRecurrentRate: number;
+    private mutationSplitConnectRate: number; 
+
+    constructor(min: number, max: number, rates: Rates) {
+        super(0, min, max, rates.mutation, rates.crossOver);
         this.g = new Genome();
+        this.mutationActivationRate = rates.mutationActivation;
+        this.mutationConnectRate = rates.mutationConnect;
+        this.mutationAllowRecurrentRate = rates.mutationAllowRecurrent;
+        this.mutationSplitConnectRate = rates.mutationSplitConnect; 
     }
 
     public get genome(): Genome {
-        return this.genome;
+        return this.g;
     }
 
     public set genome(gen: Genome) {
@@ -26,7 +48,7 @@ export class RTADN extends ADN {
      * @param isBest -1 current parent is best, 0 both are the same, 1 other parent is best
      */
     public crossOver(adn: RTADN, isBest: number = 0): RTADN {
-        const result = new RTADN(this.minimum, this.maximum, this.mutationRate, this.crossOverRate);
+        const result = new RTADN(this.minimum, this.maximum, this.rates);
 
         const unionLinks = [];
         const unionNodes = []; // generated from the links kept during crossover
@@ -92,7 +114,7 @@ export class RTADN extends ADN {
     }
 
     public mutate(): RTADN {
-        const result = new RTADN(this.minimum, this.maximum, this.mutationRate, this.crossOverRate);
+        const result = new RTADN(this.minimum, this.maximum, this.rates);
         const newGenome = this.g.copy();
 
         let pct = this.maximum * 0.5;
@@ -101,17 +123,49 @@ export class RTADN extends ADN {
         }
 
         for (const link of newGenome.connectGenes) {
-            if (Math.random() <= ADN.MUTATION_RATE) {
+            if (Math.random() <= this.mutationRate) {
                 link.weight = link.weight + MyMath.random(-pct, pct);
                 link.weight = Math.max(link.weight, 8);
                 link.weight = Math.min(link.weight, -8);
             }
 
-            if (Math.random() <= RTADN.MUTATION_ACTIVATION_RATE) {
+            if (Math.random() <= this.mutationActivationRate) {
                 link.activate(!link.isEnabled);
-            }
+            }            
+        }
+
+        if (Math.random() <= this.mutationConnectRate) {
+            //TODO : check previously existing innovation to set the correct innovation number
+
+            const nodeIn = this.g.nodeGenes[Math.round(MyMath.random(0, this.g.nodeGenes.length -1))];
+            const nodeOut = this.g.nodeGenes[Math.round(MyMath.random(0, this.g.nodeGenes.length -1))];
+
+            if (Math.random() <= this.mutationAllowRecurrentRate && nodeOut.layer <= nodeIn.layer) {
+                this.g.addConnection(nodeOut, nodeIn); // prevent the recurrent by flipping the connection
+            } else {
+                this.g.addConnection(nodeIn, nodeOut); // percentage where a recurrent link is acceptable
+            }                
+        }
+
+        if (Math.random() <= this.mutationSplitConnectRate) {
+            //TODO : check previously existing innovation to set the correct innovation number
+
+            const enabledLinks = this.g.connectGenes.filter((link: ConnectGene) => link.isEnabled);
+            const link = enabledLinks[Math.round(MyMath.random(0, enabledLinks.length -1))];
+            this.g.splitConnection(link);
         }
 
         return result;
+    }
+
+    public get rates(): Rates {
+        return {
+            mutation: this.mutationRate,
+            crossOver: this.crossOverRate,
+            mutationActivation: this.mutationActivationRate,
+            mutationConnect: this.mutationConnectRate,
+            mutationAllowRecurrent: this.mutationAllowRecurrentRate,
+            mutationSplitConnect: this.mutationSplitConnectRate
+        }
     }
 }
