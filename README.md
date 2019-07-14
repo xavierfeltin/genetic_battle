@@ -2,4 +2,4 @@
 Application of genetic algorithm and neural network in a web environment
 
 ## Simulation
-https://xavierfeltin.github.io/genetic_battle/
+A playable version of this project is available at: https://xavierfeltin.github.io/golad/
