@@ -8,118 +8,94 @@ import { NodeGene } from '../genotype/node';
 beforeEach(() => {
     // Reset static variable before each test
     Genome.innovationNumber = 0;
+    Genome.nodeNumber = 0;
 });
 
 afterEach(() => {});
 
 function generateSimpleDirectGenome(): Genome {
-    const n1 = new NodeGene(0, NodeType.Input, -Infinity);
-    const n2 = new NodeGene(1, NodeType.Output, Infinity);
     const g = new Genome();
-    g.addNode(n1);
-    g.addNode(n2);
-    g.addConnection(n1, n2);
+    g.addNode(NodeType.Input, -Infinity);
+    g.addNode(NodeType.Output, Infinity);
+    g.addConnection(g.nodeGenes[0], g.nodeGenes[1]);
 
     return g;
 }
 
 function generateSimpleGenome(): Genome {
-    const n1 = new NodeGene(0, NodeType.Input, -Infinity);
-    const n2 = new NodeGene(1, NodeType.Output, Infinity);
-    const n3 = new NodeGene(2, NodeType.Hidden, 0);
     const g = new Genome();
-    g.addNode(n1);
-    g.addNode(n2);
-    g.addNode(n3);
-    g.addConnection(n1, n3);
-    g.addConnection(n3, n2);
+    g.addNode( NodeType.Input, -Infinity);
+    g.addNode(NodeType.Output, Infinity);
+    g.addNode(NodeType.Hidden, 0);
+    g.addConnection(g.nodeGenes[0], g.nodeGenes[2]);
+    g.addConnection(g.nodeGenes[2], g.nodeGenes[1]);
 
     return g;
 }
 
 function generateSimpleGenomeWithRecurrentLink(): Genome {
-    const n1 = new NodeGene(0, NodeType.Input, -Infinity);
-    const n2 = new NodeGene(1, NodeType.Output, Infinity);
-    const n3 = new NodeGene(2, NodeType.Hidden, 0);
     const g = new Genome();
-    g.addNode(n1);
-    g.addNode(n2);
-    g.addNode(n3);
-    g.addConnection(n1, n3);
-    g.addConnection(n2, n3);
-    g.addConnection(n3, n2);
+    g.addNode(NodeType.Input, -Infinity);
+    g.addNode(NodeType.Output, Infinity);
+    g.addNode(NodeType.Hidden, 0);
+    g.addConnection(g.nodeGenes[0], g.nodeGenes[2]);
+    g.addConnection(g.nodeGenes[1], g.nodeGenes[2]);
+    g.addConnection(g.nodeGenes[2], g.nodeGenes[1]);
 
     return g;
 }
 
 function generateSimpleGenomeWithRecurrentLinkOnItself(): Genome {
-    const n1 = new NodeGene(0, NodeType.Input, -Infinity);
-    const n2 = new NodeGene(1, NodeType.Output, Infinity);
-    const n3 = new NodeGene(2, NodeType.Hidden, 0);
     const g = new Genome();
-    g.addNode(n1);
-    g.addNode(n2);
-    g.addNode(n3);
-    g.addConnection(n1, n3);
-    g.addConnection(n3, n3);
-    g.addConnection(n3, n2);
+    g.addNode(NodeType.Input, -Infinity);
+    g.addNode(NodeType.Output, Infinity);
+    g.addNode(NodeType.Hidden, 0);
+    g.addConnection(g.nodeGenes[0], g.nodeGenes[2]);
+    g.addConnection(g.nodeGenes[2], g.nodeGenes[2]);
+    g.addConnection(g.nodeGenes[2], g.nodeGenes[1]);
 
     return g;
 }
 
 function generate2LayeredGenome(): Genome {
-    const n1 = new NodeGene(0, NodeType.Input, -Infinity);
-    const n2 = new NodeGene(1, NodeType.Output, Infinity);
-    const n3 = new NodeGene(2, NodeType.Hidden, 0);
-    const n4 = new NodeGene(3, NodeType.Hidden, 1);
     const g = new Genome();
-    g.addNode(n1);
-    g.addNode(n2);
-    g.addNode(n3);
-    g.addNode(n4);
-    g.addConnection(n1, n3);
-    g.addConnection(n3, n4);
-    g.addConnection(n4, n2);
+    g.addNode(NodeType.Input, -Infinity);
+    g.addNode(NodeType.Output, Infinity);
+    g.addNode(NodeType.Hidden, 0);
+    g.addNode(NodeType.Hidden, 1);
+    g.addConnection(g.nodeGenes[0], g.nodeGenes[2]);
+    g.addConnection(g.nodeGenes[2], g.nodeGenes[3]);
+    g.addConnection(g.nodeGenes[3], g.nodeGenes[1]);
 
     return g;
 }
 
 function generateWithDisabledLinksGenome(): Genome {
-    const n1 = new NodeGene(0, NodeType.Input, -Infinity);
-    const n2 = new NodeGene(1, NodeType.Input, -Infinity);
-    const n3 = new NodeGene(2, NodeType.Output, Infinity);
-    const n4 = new NodeGene(3, NodeType.Hidden, 0);
     const g = new Genome();
-    g.addNode(n1);
-    g.addNode(n2);
-    g.addNode(n3);
-    g.addNode(n4);
-    g.addConnection(n1, n4);
-    g.addConnection(n2, n4);
-    g.addConnection(n4, n3);
+    g.addNode(NodeType.Input, -Infinity);
+    g.addNode(NodeType.Input, -Infinity);
+    g.addNode(NodeType.Output, Infinity);
+    g.addNode(NodeType.Hidden, 0);
+    g.addConnection(g.nodeGenes[0], g.nodeGenes[3]);
+    g.addConnection(g.nodeGenes[1], g.nodeGenes[3]);
+    g.addConnection(g.nodeGenes[3], g.nodeGenes[2]);
     g.activateConnection(g.connectGenes[0], false);
 
     return g;
 }
 
 function generateWithDisconnectedNodeGenome(): Genome {
-    const n1 = new NodeGene(0, NodeType.Input, -Infinity);
-    const n2 = new NodeGene(1, NodeType.Output, Infinity);
-    const n3 = new NodeGene(2, NodeType.Hidden, 0);
-    const n4 = new NodeGene(3, NodeType.Hidden, 0);
-    const n5 = new NodeGene(4, NodeType.Hidden, 0);
-    const n6 = new NodeGene(5, NodeType.Hidden, 0);
     const g = new Genome();
-    g.addNode(n1);
-    g.addNode(n2);
-    g.addNode(n3);
-    g.addNode(n4);
-    g.addNode(n5);
-    g.addNode(n6);
-    g.addConnection(n1, n3);
-    g.addConnection(n3, n2);
-    g.addConnection(n4, n2);
-    g.addConnection(n1, n5);
+    g.addNode(NodeType.Input, -Infinity);
+    g.addNode(NodeType.Output, Infinity);
+    g.addNode(NodeType.Hidden, 0);
+    g.addNode(NodeType.Hidden, 0);
+    g.addNode(NodeType.Hidden, 0);
+    g.addNode(NodeType.Hidden, 0);
+    g.addConnection(g.nodeGenes[0], g.nodeGenes[2]);
+    g.addConnection(g.nodeGenes[2], g.nodeGenes[1]);
+    g.addConnection(g.nodeGenes[3], g.nodeGenes[1]);
+    g.addConnection(g.nodeGenes[0], g.nodeGenes[4]);
     g.activateConnection(g.connectGenes[0], false);
 
     return g;

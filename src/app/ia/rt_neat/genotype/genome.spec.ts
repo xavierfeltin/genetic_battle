@@ -68,18 +68,16 @@ describe('Genome', () => {
 
     describe('add connection', () => {
         it('add a connection between two existing nodes in genomes', () => {
-            const n1 = new NodeGene(1, NodeType.Hidden, 1);
-            const n2 = new NodeGene(2, NodeType.Hidden, 2);
             const g = new Genome();
-            g.addNode(n1);
-            g.addNode(n2);
-            g.addConnection(n1, n2);
+            g.addNode(NodeType.Hidden, 1, 1);
+            g.addNode(NodeType.Hidden, 2, 2);
+            g.addConnection(g.nodeGenes[0], g.nodeGenes[1]);
 
             expect(g.connectGenes.length).toBe(1);
             checkConnection(g.connectGenes[0], {
                 innovation: 0,
-                inNode: n1,
-                outNode: n2,
+                inNode: g.nodeGenes[0],
+                outNode: g.nodeGenes[1],
                 weight: -1,
                 testValue: false,
                 isEnabled: true,
@@ -89,18 +87,16 @@ describe('Genome', () => {
         });
 
         it('add a recurrent connection between two existing nodes in genomes', () => {
-            const n1 = new NodeGene(1, NodeType.Hidden, 2);
-            const n2 = new NodeGene(2, NodeType.Hidden, 1);
             const g = new Genome();
-            g.addNode(n1);
-            g.addNode(n2);
-            g.addConnection(n1, n2);
+            g.addNode(NodeType.Hidden, 2, 1);
+            g.addNode( NodeType.Hidden, 1, 2);
+            g.addConnection(g.nodeGenes[0], g.nodeGenes[1]);
 
             expect(g.connectGenes.length).toBe(1);
             checkConnection(g.connectGenes[0], {
                 innovation: 0,
-                inNode: n1,
-                outNode: n2,
+                inNode: g.nodeGenes[0],
+                outNode: g.nodeGenes[1],
                 weight: -1,
                 testValue: false,
                 isEnabled: true,
@@ -112,22 +108,18 @@ describe('Genome', () => {
 
     describe('add node', () => {
         it('add a node to split an existing link', () => {
-            const n1 = new NodeGene(Genome.nextNodeId, NodeType.Hidden, 1);
-            Genome.incrementNodeId();
-            const n2 = new NodeGene(Genome.nextNodeId, NodeType.Hidden, 2);
-            Genome.incrementNodeId();
             const g = new Genome();
-            g.addNode(n1);
-            g.addNode(n2);
-            g.addConnection(n1, n2);
+            g.addNode(NodeType.Hidden, 1);
+            g.addNode(NodeType.Hidden, 2);
+            g.addConnection(g.nodeGenes[0], g.nodeGenes[1]);
             g.splitConnection(g.connectGenes[0]);
 
             // Check previous connection
             expect(g.connectGenes.length).toBe(3);
             checkConnection(g.connectGenes[0], {
                 innovation: 0,
-                inNode: n1,
-                outNode: n2,
+                inNode: g.nodeGenes[0],
+                outNode: g.nodeGenes[1],
                 weight: -1,
                 testValue: false,
                 isEnabled: false,
@@ -140,7 +132,7 @@ describe('Genome', () => {
             const newOutcomingConnection = g.connectGenes[2];
             checkConnection(newIncomingConnection, {
                 innovation: 1,
-                inNode: n1,
+                inNode: g.nodeGenes[0],
                 outNode: addedNode,
                 weight: 1,
                 testValue: true,
@@ -152,7 +144,7 @@ describe('Genome', () => {
             checkConnection(newOutcomingConnection, {
                 innovation: 2,
                 inNode: addedNode,
-                outNode: n2,
+                outNode: g.nodeGenes[1],
                 weight: g.connectGenes[0].weight,
                 testValue: true,
                 isEnabled: true,
@@ -184,22 +176,18 @@ describe('Genome', () => {
         });
 
         it('add a node to split an existing recurrent link', () => {
-            const n1 = new NodeGene(Genome.nextNodeId, NodeType.Hidden, 2);
-            Genome.incrementNodeId();
-            const n2 = new NodeGene(Genome.nextNodeId, NodeType.Hidden, 1);
-            Genome.incrementNodeId();
             const g = new Genome();
-            g.addNode(n1);
-            g.addNode(n2);
-            g.addConnection(n1, n2);
+            g.addNode(NodeType.Hidden, 2);
+            g.addNode(NodeType.Hidden, 1);
+            g.addConnection(g.nodeGenes[0], g.nodeGenes[1]);
             g.splitConnection(g.connectGenes[0]);
 
             // Check previous connection
             expect(g.connectGenes.length).toBe(3);
             checkConnection(g.connectGenes[0], {
                 innovation: 0,
-                inNode: n1,
-                outNode: n2,
+                inNode: g.nodeGenes[0],
+                outNode: g.nodeGenes[1],
                 weight: -1,
                 testValue: false,
                 isEnabled: false,
@@ -212,7 +200,7 @@ describe('Genome', () => {
             const newOutcomingConnection = g.connectGenes[2];
             checkConnection(newIncomingConnection, {
                 innovation: 1,
-                inNode: n1,
+                inNode: g.nodeGenes[0],
                 outNode: addedNode,
                 weight: 1,
                 testValue: true,
@@ -224,7 +212,7 @@ describe('Genome', () => {
             checkConnection(newOutcomingConnection, {
                 innovation: 2,
                 inNode: addedNode,
-                outNode: n2,
+                outNode: g.nodeGenes[1],
                 weight: g.connectGenes[0].weight,
                 testValue: true,
                 isEnabled: true,

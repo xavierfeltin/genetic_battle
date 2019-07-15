@@ -11,18 +11,40 @@ beforeEach(() => {
 
 afterEach(() => {});
 
+function getBasicRates(): RTADNRates {
+    return {
+        mutation: 0.01,
+        crossOver: 0.01,
+        mutationActivation: 0.01,
+        mutationConnect: 0.01,
+        mutationAllowRecurrent: 0.01,
+        mutationSplitConnect: 0.01
+    };
+}
+
+function generateNonConnectedSimpleDirectGenome(): Genome {
+    const g = new Genome();
+    g.addNode(NodeType.Input, -Infinity, 0);
+    g.addNode(NodeType.Output, Infinity, 1);
+
+    return g;
+}
+
+function generateDirectGenome(): Genome {
+    const n1 = new NodeGene(0, NodeType.Input, -Infinity);
+    const n2 = new NodeGene(1, NodeType.Output, Infinity);
+    const g = new Genome();
+    g.addNode(NodeType.Input, -Infinity, 0);
+    g.addNode(NodeType.Output, Infinity, 1);
+    g.addConnection(n1, n2, 0);
+
+    return g;
+}
+
 describe('RTAdn', () => {
     describe('constructor', () => {
         it('outputs an adn with the correct attributes', () => {
-            const rates: RTADNRates = {
-                mutation: 0.01,
-                crossOver: 0.01,
-                mutationActivation: 0.01,
-                mutationConnect: 0.01,
-                mutationAllowRecurrent: 0.01,
-                mutationSplitConnect: 0.01
-                
-            }
+            const rates: RTADNRates = getBasicRates();
             const adn = new RTADN(-1, 1, rates);
             const adnRates = adn.rates;
 
@@ -33,6 +55,40 @@ describe('RTAdn', () => {
             expect(adnRates.mutationAllowRecurrent).toBe(0.01);
             expect(adnRates.mutationConnect).toBe(0.01);
             expect(adnRates.mutationSplitConnect).toBe(0.01);
+        });
+    });
+
+    describe('crossover', () => {
+        it('outputs the crossover of two non connected genomes', () => {
+            const rates: RTADNRates = getBasicRates();
+            const adnParent1 = new RTADN(-1, 1, rates);
+            adnParent1.genome = generateNonConnectedSimpleDirectGenome();
+
+            const adnParent2 = new RTADN(-1, 1, rates);
+            adnParent2.genome = generateNonConnectedSimpleDirectGenome();
+
+            const newAdn = adnParent1.crossOver(adnParent2, 0);
+            expect(newAdn.genome.nodeGenes.length).toBe(2);
+            expect(newAdn.genome.nodeGenes[0].identifier).toBe(0);
+            expect(newAdn.genome.nodeGenes[1].identifier).toBe(1);
+            expect(newAdn.genome.connectGenes.length).toBe(0);
+        });
+
+        it('outputs the crossover of identical genomes with different weight links', () => {
+            const rates: RTADNRates = getBasicRates();
+            const adnParent1 = new RTADN(-1, 1, rates);
+            adnParent1.genome = generateDirectGenome();
+
+            const adnParent2 = new RTADN(-1, 1, rates);
+            adnParent2.genome = generateDirectGenome();
+
+            const newAdn = adnParent1.crossOver(adnParent2, 0);
+            expect(newAdn.genome.nodeGenes.length).toBe(2);
+            expect(newAdn.genome.nodeGenes[0].identifier).toBe(0);
+            expect(newAdn.genome.nodeGenes[1].identifier).toBe(1);
+            expect(newAdn.genome.connectGenes.length).toBe(1);
+            const avgWeights = (adnParent1.genome.connectGenes[0].weight + adnParent2.genome.connectGenes[0].weight) / 2;
+            expect(newAdn.genome.connectGenes[0].weight).toBe(avgWeights);
         });
     });
 });

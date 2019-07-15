@@ -3,6 +3,7 @@ import { ADN } from '../adn';
 import { MyMath } from '../../tools/math.tools';
 import { NodeGene } from './genotype/node';
 import { ConnectGene } from './genotype/connect';
+import { NodeType } from './phenotype/node';
 
 export interface RTADNRates {
     mutation: number;
@@ -23,7 +24,7 @@ export class RTADN extends ADN {
     private mutationActivationRate: number;
     private mutationConnectRate: number;
     private mutationAllowRecurrentRate: number;
-    private mutationSplitConnectRate: number; 
+    private mutationSplitConnectRate: number;
 
     // TODO: add genome directly in constructor
     constructor(min: number, max: number, rates: RTADNRates) {
@@ -32,7 +33,7 @@ export class RTADN extends ADN {
         this.mutationActivationRate = rates.mutationActivation;
         this.mutationConnectRate = rates.mutationConnect;
         this.mutationAllowRecurrentRate = rates.mutationAllowRecurrent;
-        this.mutationSplitConnectRate = rates.mutationSplitConnect; 
+        this.mutationSplitConnectRate = rates.mutationSplitConnect;
     }
 
     public get genome(): Genome {
@@ -75,6 +76,14 @@ export class RTADN extends ADN {
                 // Set the link with the average of the weights from the 2 parents
                 const newLink = link.copy([]);
                 newLink.weight = (link.weight + adn.genome.connectGenes[index].weight) / 2;
+
+                if (!adn.genome.connectGenes[index].isEnabled || !link.isEnabled) {
+                    if (Math.random() < 0.75) {
+                        newLink.activate(false);
+                    }
+                }
+
+                unionLinks.push(newLink);
             } else {
                 // push it if this parent is the best or both have the same fitness
                 if (isBest === -1) {
@@ -91,21 +100,29 @@ export class RTADN extends ADN {
         }
 
         // Get the nodes from the links
-        for (const link of unionLinks) {
-            let found: NodeGene = unionNodes.find((n: NodeGene) => n.identifier === link.inNode.identifier);
-            if (!found) {
-                unionNodes.push(link.inNode);
-            } else if (found.layer !== link.inNode.layer) {
-                // Update the layer with the latest link information
-                found.layer = link.inNode.layer;
-            }
+        if (unionLinks.length > 0) {
+            for (const link of unionLinks) {
+                let found: NodeGene = unionNodes.find((n: NodeGene) => n.identifier === link.inNode.identifier);
+                if (!found) {
+                    unionNodes.push(link.inNode);
+                } else if (found.layer !== link.inNode.layer) {
+                    // Update the layer with the latest link information
+                    found.layer = link.inNode.layer;
+                }
 
-            found = unionNodes.find((n: NodeGene) => n.identifier === link.outNode.identifier);
-            if (!found) {
-                unionNodes.push(link.outNode);
-            } else if (found.layer !== link.outNode.layer) {
-                // Update the layer with the latest link information
-                found.layer = link.outNode.layer;
+                found = unionNodes.find((n: NodeGene) => n.identifier === link.outNode.identifier);
+                if (!found) {
+                    unionNodes.push(link.outNode);
+                } else if (found.layer !== link.outNode.layer) {
+                    // Update the layer with the latest link information
+                    found.layer = link.outNode.layer;
+                }
+            }
+        } else {
+            // if no links gets only the input, output and bias nodes
+            const structuralNodes = this.genome.nodeGenes.filter((n: NodeGene) => n.nodeType !== NodeType.Hidden);
+            for (const node of structuralNodes) {
+                unionNodes.push(node.copy());
             }
         }
 
@@ -132,27 +149,27 @@ export class RTADN extends ADN {
 
             if (Math.random() <= this.mutationActivationRate) {
                 link.activate(!link.isEnabled);
-            }            
+            }
         }
 
         if (Math.random() <= this.mutationConnectRate) {
-            //TODO : check previously existing innovation to set the correct innovation number
+            // TODO : check previously existing innovation to set the correct innovation number
 
-            const nodeIn = this.g.nodeGenes[Math.round(MyMath.random(0, this.g.nodeGenes.length -1))];
-            const nodeOut = this.g.nodeGenes[Math.round(MyMath.random(0, this.g.nodeGenes.length -1))];
+            const nodeIn = this.g.nodeGenes[Math.round(MyMath.random(0, this.g.nodeGenes.length - 1))];
+            const nodeOut = this.g.nodeGenes[Math.round(MyMath.random(0, this.g.nodeGenes.length - 1))];
 
             if (Math.random() <= this.mutationAllowRecurrentRate && nodeOut.layer <= nodeIn.layer) {
                 this.g.addConnection(nodeOut, nodeIn); // prevent the recurrent by flipping the connection
             } else {
                 this.g.addConnection(nodeIn, nodeOut); // percentage where a recurrent link is acceptable
-            }                
+            }
         }
 
         if (Math.random() <= this.mutationSplitConnectRate) {
-            //TODO : check previously existing innovation to set the correct innovation number
+            // TODO : check previously existing innovation to set the correct innovation number
 
-            const enabledLinks = this.g.connectGenes.filter((link: ConnectGene) => link.isEnabled);
-            const link = enabledLinks[Math.round(MyMath.random(0, enabledLinks.length -1))];
+            const enabledLinks = this.g.connectGenes.filter((l: ConnectGene) => l.isEnabled);
+            const link = enabledLinks[Math.round(MyMath.random(0, enabledLinks.length - 1))];
             this.g.splitConnection(link);
         }
 
@@ -167,6 +184,6 @@ export class RTADN extends ADN {
             mutationConnect: this.mutationConnectRate,
             mutationAllowRecurrent: this.mutationAllowRecurrentRate,
             mutationSplitConnect: this.mutationSplitConnectRate
-        }
+        };
     }
 }

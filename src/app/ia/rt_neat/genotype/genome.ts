@@ -47,17 +47,29 @@ export class Genome {
     }
 
     // add connection between two existing nodes
-    public addConnection(inNode: NodeGene, outNode: NodeGene) {
+    public addConnection(inNode: NodeGene, outNode: NodeGene, innovation: number = -1) {
         // TODO: forbid connections between nodes of the same layer except itself
         // or forbid cycle between graphs of the same layer
 
-        const newLink = new ConnectGene(Genome.nextInnovation, inNode, outNode, MyMath.random(-1, 1), true);
+        let innov = innovation;
+        if (innov === -1) {
+            innov = Genome.nextInnovation;
+            Genome.incrementInnovation();
+        }
+
+        const newLink = new ConnectGene(innov, inNode, outNode, MyMath.random(-1, 1), true);
         this.links.push(newLink);
-        Genome.incrementInnovation();
     }
 
-    public addNode(node: NodeGene) {
-        this.nodeGenes.push(node);
+    public addNode(type: NodeType, position: number, id: number = -1) { // node: NodeGene) {
+        let idNode = id;
+        if (idNode === -1) {
+            idNode = Genome.nextNodeId;
+            Genome.incrementNodeId();
+        }
+
+        const newNode = new NodeGene(idNode, type, position);
+        this.nodeGenes.push(newNode);
     }
 
     // add a node to split an existing connection in two
