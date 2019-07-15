@@ -84,6 +84,7 @@ export class RTADN extends ADN {
                 }
 
                 unionLinks.push(newLink);
+                index++;
             } else {
                 // push it if this parent is the best or both have the same fitness
                 if (isBest === -1) {
