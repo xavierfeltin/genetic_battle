@@ -78,7 +78,16 @@ export class Genome {
         this.activateConnection(connect, false);
 
         // Insert a node between the previously connected node
-        const newNodeLayer = connect.reccurent ? connect.outputNode.layer + 1 : connect.inputNode.layer + 1;
+        let newNodeLayer = connect.reccurent ? connect.outputNode.layer + 1 : connect.inputNode.layer + 1;
+
+        if (newNodeLayer === -Infinity) {
+            // If inNode is an Input, so the hidden layer is the very first one
+            newNodeLayer = 0;
+        } else if (newNodeLayer === Infinity) {
+            // If inNode is an Output (recurrent link), the hidden layer is the one after the outNode
+            newNodeLayer = connect.outputNode.layer === -Infinity ? 0 : connect.outputNode.layer + 1;
+        }
+
         const newNode = new NodeGene(Genome.nextNodeId, NodeType.Hidden, newNodeLayer);
         Genome.incrementNodeId();
         this.nodeGenes.push(newNode);
@@ -96,9 +105,9 @@ export class Genome {
 
         // the out node of the new node is a layer further
         if (connect.reccurent) {
-            anteConnect.inputNode.layer = newNode.layer + 1;
+            anteConnect.inputNode.layer = anteConnect.inputNode.layer === Infinity ? Infinity : newNode.layer + 1;
         } else {
-            postConnect.outputNode.layer = newNode.layer + 1;
+            postConnect.outputNode.layer = postConnect.outputNode.layer === Infinity ? Infinity : newNode.layer + 1;
         }
     }
 

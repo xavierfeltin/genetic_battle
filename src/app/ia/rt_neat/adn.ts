@@ -58,14 +58,22 @@ export class RTADN extends ADN {
 
         // Make an union of all the innovation numbers
         for (const link of this.genome.connectGenes) {
+            console.log('current link: ' + link.innovation);
+
 
             // Some innovations are present in the other set and not in the current genome
             while (index < adn.genome.connectGenes.length
                 && adn.genome.connectGenes[index].innovation < link.innovation) {
 
+                console.log('previous disjoint/excess link: ' + adn.genome.connectGenes[index].innovation);
+
                 // Push it if this parent is the best or both have the same fitness
-                if (isBest === 1) {
-                    unionLinks.push(adn.genome.connectGenes[index].copy([]));
+                if (isBest >= 0) {
+                    const newLink = adn.genome.connectGenes[index].copy([]);
+                    if (!newLink.isEnabled && Math.random() < 0.25) {
+                        newLink.activate(true);
+                    }
+                    unionLinks.push(newLink);
                 }
                 index++;
             }
@@ -73,32 +81,51 @@ export class RTADN extends ADN {
             // Innovations are present in both genomes
             if (index < adn.genome.connectGenes.length
                 && adn.genome.connectGenes[index].innovation === link.innovation) {
+
+                console.log('link exists in both parents: ' + adn.genome.connectGenes[index].innovation);
+
                 // Set the link with the average of the weights from the 2 parents
                 const newLink = link.copy([]);
                 newLink.weight = (link.weight + adn.genome.connectGenes[index].weight) / 2;
 
+                // link is deactivated if it is not enabled in one of the two parents
                 if (!adn.genome.connectGenes[index].isEnabled || !link.isEnabled) {
-                    if (Math.random() < 0.75) {
-                        newLink.activate(false);
-                    }
+                    newLink.activate(false);
                 }
 
                 unionLinks.push(newLink);
                 index++;
             } else {
+                console.log('link exists only in current parent: ' + link.innovation);
+
                 // push it if this parent is the best or both have the same fitness
-                if (isBest === -1) {
-                    unionLinks.push(link.copy([]));
+                if (isBest <= 0) {
+                    const newLink = link.copy([]);
+                    if (!newLink.isEnabled && Math.random() < 0.25) {
+                        newLink.activate(true);
+                    }
+                    unionLinks.push(newLink);
                 }
             }
         }
 
         // Innovations remain in the other genome
-        if (index < adn.genome.connectGenes.length) {
-            for (const link of adn.genome.connectGenes) {
-                unionLinks.push(link.copy([]));
+        console.log('index other parent: ' + index);
+        for (let i = index; i < adn.genome.connectGenes.length; i++) {
+            const link = adn.genome.connectGenes[i];
+            console.log('excess links in the other parent: ' + link.innovation);
+
+            if (isBest >= 0) {
+                const newLink = link.copy([]);
+                if (!newLink.isEnabled && Math.random() < 0.25) {
+                    newLink.activate(true);
+                }
+                unionLinks.push(newLink);
             }
         }
+
+        console.log('results:');
+        console.log(unionLinks);
 
         // Get the nodes from the links
         if (unionLinks.length > 0) {
