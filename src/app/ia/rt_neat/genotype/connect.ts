@@ -57,17 +57,39 @@ export class ConnectGene {
         let newOutNode = null;
 
         if (nodes.length === 0) {
-            newInNode = this.inNode.copy();
-            newOutNode = this.outNode.copy();
+            newInNode = this.copyNode(this.inNode, true);
+            newOutNode = this.copyNode(this.outNode, false);
         } else {
             let filtered = nodes.filter((n: NodeGene) => n.identifier === this.inNode.identifier);
-            newInNode = filtered.length > 0 ? filtered[0] : null;
+            newInNode = filtered.length > 0 ? this.registerOntoNode(filtered[0], true) : this.copyNode(this.inNode, true);
 
             filtered = nodes.filter((n: NodeGene) => n.identifier === this.outNode.identifier);
-            newOutNode = filtered.length > 0 ? filtered[0] : null;
+            newOutNode = filtered.length > 0 ? this.registerOntoNode(filtered[0], false) : this.copyNode(this.outNode, false);
         }
 
         const connect = new ConnectGene(this.innovationId, newInNode, newOutNode, this.coefficient, this.enabled);
         return connect;
+    }
+
+    public copyWithoutDependencies(): ConnectGene {
+        const connect = new ConnectGene(this.innovationId, null, null, this.coefficient, this.enabled);
+        return connect;
+    }
+
+    // Force the node to register the link
+    private registerOntoNode(node: NodeGene, isInput: boolean): NodeGene {
+        if (isInput) {
+            node.addOutLink(this);
+        } else {
+            node.addInLink(this);
+        }
+        return node;
+    }
+
+    // Copy the node and register the link
+    private copyNode(node: NodeGene, isInput: boolean): NodeGene {
+        let newNode = node.copyWithoutDependencies();
+        newNode = this.registerOntoNode(newNode, isInput);
+        return newNode;
     }
 }

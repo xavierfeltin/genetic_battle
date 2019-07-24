@@ -103,11 +103,20 @@ export class Genome {
         Genome.incrementInnovation();
         this.links.push(postConnect);
 
-        // the out node of the new node is a layer further
+        // the out node of the new node is a layer further and propagate to other connections
         if (connect.reccurent) {
             anteConnect.inputNode.layer = anteConnect.inputNode.layer === Infinity ? Infinity : newNode.layer + 1;
         } else {
             postConnect.outputNode.layer = postConnect.outputNode.layer === Infinity ? Infinity : newNode.layer + 1;
+        }
+        propagateLayerUpdate(connect);
+    }
+
+    private propagateLayerUpdate(root: NodeGene) {
+        let linksFromRoot = this.links.filter((l: ConnectGene) => l.inputNode.identifier === root.identifier);
+        while (linksFromRoot.length > 0) {
+            let currentLink = linksFromRoot.pop();
+
         }
     }
 
@@ -122,7 +131,8 @@ export class Genome {
 
     public copy(): Genome {
         const g = new Genome();
-        g.nodes = this.nodes.map(n => n.copy());
+
+        g.nodes = this.nodes.map(n => n.copyWithoutDependencies());
         g.links = this.links.map(l => l.copy(g.nodes));
         return g;
     }

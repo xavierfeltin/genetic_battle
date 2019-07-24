@@ -1,3 +1,5 @@
+import { ConnectGene } from './connect';
+
 export enum NodeType {
     Input = 0,
     Output = 1,
@@ -10,11 +12,15 @@ export class NodeGene {
     private id: number;
     private type: NodeType;
     private position: number;
+    private inLinks: ConnectGene[];
+    private outLinks: ConnectGene[];
 
     constructor(id: number, type: NodeType, position: number) {
         this.id = id;
         this.type = type;
         this.position = position;
+        this.inLinks = [];
+        this.outLinks = [];
     }
 
     public get identifier(): number {
@@ -30,6 +36,14 @@ export class NodeGene {
     }
     public set layer(l: number) {
         this.position = l;
+    }
+
+    public addInLink(link: ConnectGene) {
+        this.inLinks.push(link);
+    }
+
+    public addOutLink(link: ConnectGene) {
+        this.outLinks.push(link);
     }
 
     public isInput(): boolean {
@@ -48,7 +62,18 @@ export class NodeGene {
         return this.type === NodeType.Bias;
     }
 
-    public copy(): NodeGene {
-        return new NodeGene(this.id, this.type, this.position);
+    public get inputs(): ConnectGene[] {
+        return this.inLinks;
+    }
+
+    public get outputs(): ConnectGene[] {
+        return this.outLinks;
+    }
+
+    // The copy does not copy the links
+    // The links have to be set by adding inputs and outputs links
+    public copyWithoutDependencies(): NodeGene {
+        const node = new NodeGene(this.id, this.type, this.position);
+        return node;
     }
 }

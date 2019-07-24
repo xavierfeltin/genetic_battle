@@ -44,6 +44,13 @@ export class RTADN extends ADN {
         this.g = gen;
     }
 
+    // TODO:
+    // - replace union nodes by a dictionary layer => nodes to facilitate the search of existing node
+    // - manage creation of new nodes, and register of links to existing nodes directly in the first loop
+    // - delete the second loop creating the nodes from all the links
+    // - check at the end of no nodes, get the inputs / outputs only
+    // - change or delete functions to get existing nodes and search
+
     /**
      * Crossover between two adn
      * @param adn adn from the second parent
@@ -60,7 +67,6 @@ export class RTADN extends ADN {
         for (const link of this.genome.connectGenes) {
             console.log('current link: ' + link.innovation);
 
-
             // Some innovations are present in the other set and not in the current genome
             while (index < adn.genome.connectGenes.length
                 && adn.genome.connectGenes[index].innovation < link.innovation) {
@@ -69,7 +75,9 @@ export class RTADN extends ADN {
 
                 // Push it if this parent is the best or both have the same fitness
                 if (isBest >= 0) {
-                    const newLink = adn.genome.connectGenes[index].copy([]);
+                    const newLink = adn.genome.connectGenes[index].copyWithoutDependencies();
+                    this.manageDependencies(adn.genome.connectGenes[index], newLink, unionNodes);
+
                     if (!newLink.isEnabled && Math.random() < 0.25) {
                         newLink.activate(true);
                     }
@@ -85,7 +93,8 @@ export class RTADN extends ADN {
                 console.log('link exists in both parents: ' + adn.genome.connectGenes[index].innovation);
 
                 // Set the link with the average of the weights from the 2 parents
-                const newLink = link.copy([]);
+                const newLink = link.copyWithoutDependencies();
+                this.manageDependencies(link, newLink, unionNodes);
                 newLink.weight = (link.weight + adn.genome.connectGenes[index].weight) / 2;
 
                 // link is deactivated if it is not enabled in one of the two parents
@@ -100,7 +109,9 @@ export class RTADN extends ADN {
 
                 // push it if this parent is the best or both have the same fitness
                 if (isBest <= 0) {
-                    const newLink = link.copy([]);
+                    const newLink = link.copyWithoutDependencies();
+                    this.manageDependencies(link, newLink, unionNodes);
+
                     if (!newLink.isEnabled && Math.random() < 0.25) {
                         newLink.activate(true);
                     }
@@ -116,7 +127,9 @@ export class RTADN extends ADN {
             console.log('excess links in the other parent: ' + link.innovation);
 
             if (isBest >= 0) {
-                const newLink = link.copy([]);
+                const newLink = link.copyWithoutDependencies();
+                this.manageDependencies(link, newLink, unionNodes);
+
                 if (!newLink.isEnabled && Math.random() < 0.25) {
                     newLink.activate(true);
                 }
@@ -127,26 +140,7 @@ export class RTADN extends ADN {
         console.log('results:');
         console.log(unionLinks);
 
-        // Get the nodes from the links
-        if (unionLinks.length > 0) {
-            for (const link of unionLinks) {
-                let found: NodeGene = unionNodes.find((n: NodeGene) => n.identifier === link.inNode.identifier);
-                if (!found) {
-                    unionNodes.push(link.inNode);
-                } else if (found.layer !== link.inNode.layer) {
-                    // Update the layer with the latest link information
-                    found.layer = link.inNode.layer;
-                }
-
-                found = unionNodes.find((n: NodeGene) => n.identifier === link.outNode.identifier);
-                if (!found) {
-                    unionNodes.push(link.outNode);
-                } else if (found.layer !== link.outNode.layer) {
-                    // Update the layer with the latest link information
-                    found.layer = link.outNode.layer;
-                }
-            }
-        } else {
+        if (unionLinks.length === 0) {
             // if no links gets only the input, output and bias nodes
             const structuralNodes = this.genome.nodeGenes.filter((n: NodeGene) => n.nodeType !== NodeType.Hidden);
             for (const node of structuralNodes) {
@@ -213,5 +207,55 @@ export class RTADN extends ADN {
             mutationAllowRecurrent: this.mutationAllowRecurrentRate,
             mutationSplitConnect: this.mutationSplitConnectRate
         };
+    }
+
+    // TODO: replace by a more effective search algorithm
+    private searchByLayer(node: NodeGene, nodes: NodeGene[]): NodeGene {
+        let found = null;
+
+        for (const n of nodes) {
+            // The node is already present
+            if (n.identifier === node.identifier) {
+                found = n;
+                break;
+            }
+
+            // The node will not be present
+            if (n.layer <  node.layer) {
+                break;
+            }
+        }
+
+        return found;
+    }
+
+    /**
+     * Report the existing dependencies described in the old link into the new link
+     * If the nodes have been already copied register to it otherwise create a new copy and register
+     * @param oldLink existing link used as reference
+     * @param newLink new link that will be used in the future
+     * @param unionNodes already copied nodes to avoid duplicates
+     */
+    private manageDependencies(oldLink, newLink, unionNodes) {
+
+        let foundNode = this.searchByLayer(oldLink.outputNode, unionNodes);
+        if (foundNode === null) {
+            const newNode = oldLink.outputNode.copy();
+            newNode.inputs.push(newLink);
+            newLink.inputNode = newNode;
+            unionNodes.push(newNode);
+        } else {
+            foundNode.inputs.push(newLink);
+        }
+
+        foundNode = this.searchByLayer(oldLink.inputNode, unionNodes);
+        if (foundNode === null) {
+            const newNode = oldLink.inputNode.copy();
+            newNode.outputs.push(newLink);
+            newLink.outputNode = newNode;
+            unionNodes.push(newNode);
+        } else {
+            foundNode.outputs.push(newLink);
+        }
     }
 }
