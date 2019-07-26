@@ -46,6 +46,8 @@ function checkNode(node: NodeGene, conf: ExpectedNode) {
     expect(node.layer).toBe(node.layer);
 }
 
+//TODO: need to add tests on node link updates
+
 describe('Genome', () => {
     describe('constructor', () => {
         it('outputs a genome with the correct attributes', () => {

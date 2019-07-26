@@ -58,6 +58,8 @@ export class Genome {
         }
 
         const newLink = new ConnectGene(innov, inNode, outNode, MyMath.random(-1, 1), true);
+        inNode.addOutLink(newLink);
+        outNode.addInLink(newLink);
         this.links.push(newLink);
     }
 
@@ -97,26 +99,49 @@ export class Genome {
         const anteConnect = new ConnectGene(Genome.nextInnovation, connect.inputNode, newNode, 1, true);
         Genome.incrementInnovation();
         this.links.push(anteConnect);
+        newNode.addInLink(anteConnect);
+        connect.inputNode.addOutLink(anteConnect);
 
         // Connection out the new node weight of the previous connection
         const postConnect = new ConnectGene(Genome.nextInnovation, newNode, connect.outputNode, connect.weight, true);
         Genome.incrementInnovation();
         this.links.push(postConnect);
+        newNode.addOutLink(postConnect);
+        connect.outputNode.addInLink(postConnect);
 
         // the out node of the new node is a layer further and propagate to other connections
         if (connect.reccurent) {
             anteConnect.inputNode.layer = anteConnect.inputNode.layer === Infinity ? Infinity : newNode.layer + 1;
+            if (anteConnect.inputNode.layer !== Infinity) {
+                this.propagateLayerUpdateAfterIncrement(anteConnect.inputNode);
+            }
         } else {
             postConnect.outputNode.layer = postConnect.outputNode.layer === Infinity ? Infinity : newNode.layer + 1;
+            if (postConnect.outputNode.layer !== Infinity) {
+                this.propagateLayerUpdateAfterIncrement(postConnect.outputNode);
+            }
         }
-        propagateLayerUpdate(connect);
     }
 
-    private propagateLayerUpdate(root: NodeGene) {
-        let linksFromRoot = this.links.filter((l: ConnectGene) => l.inputNode.identifier === root.identifier);
-        while (linksFromRoot.length > 0) {
-            let currentLink = linksFromRoot.pop();
+    /**
+     * Change layers of recurrent incoming links and output non recurrent links
+     * Output reccurent links are not impacted since the node drift farther away as such the recurrent type of the link will not be changed
+     * Even disabled links need to be taken into account in case they are reactivated in future mutations
+     * @param root root node from where the propagation start
+     */
+    private propagateLayerUpdateAfterIncrement(root: NodeGene) {
+        const toVisit = [...root.inputs.map(l => l.outputNode), ...root.outputs.map(l => l.inputNode)];
 
+        console.log('root ' + root.identifier + ', to visit: ');
+        console.log(toVisit);
+
+        while (toVisit.length > 0) {
+            const current = toVisit.shift();
+            const deltaLayer = current.layer - root.layer;
+            if (-1 <= deltaLayer && deltaLayer <= 0) {
+                current.layer += 1;
+                this.propagateLayerUpdateAfterIncrement(current);
+            }
         }
     }
 

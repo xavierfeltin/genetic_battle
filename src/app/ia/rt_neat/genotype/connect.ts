@@ -24,12 +24,20 @@ export class ConnectGene {
         return this.innovationId;
     }
 
-    public get inputNode() {
+    public get inputNode(): NodeGene {
         return this.inNode;
     }
 
-    public get outputNode() {
+    public set inputNode(n: NodeGene) {
+        this.inNode = n;
+    }
+
+    public get outputNode(): NodeGene {
         return this.outNode;
+    }
+
+    public set outputNode(n: NodeGene) {
+        this.outNode = n;
     }
 
     public get weight() {

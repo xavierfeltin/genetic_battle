@@ -70,9 +70,19 @@ function generateComplexGenomes(): Genome[] {
     return [g1, g2];
 }
 
+function sortNodeGenesByIdentifier(n1: NodeGene, n2: NodeGene): number {
+    if (n1.identifier < n2.identifier) {
+        return -1;
+    } else if (n1.identifier > n2.identifier) {
+        return 1;
+    } else {
+        return 0;
+    }
+}
+
 describe('RTAdn', () => {
     describe('constructor', () => {
-        xit('outputs an adn with the correct attributes', () => {
+        it('outputs an adn with the correct attributes', () => {
             const rates: RTADNRates = getBasicRates();
             const adn = new RTADN(-1, 1, rates);
             const adnRates = adn.rates;
@@ -88,7 +98,7 @@ describe('RTAdn', () => {
     });
 
     describe('crossover', () => {
-        xit('outputs the crossover of two non connected genomes', () => {
+        it('outputs the crossover of two non connected genomes', () => {
             const rates: RTADNRates = getBasicRates();
             const adnParent1 = new RTADN(-1, 1, rates);
             adnParent1.genome = generateNonConnectedSimpleDirectGenome();
@@ -97,13 +107,15 @@ describe('RTAdn', () => {
             adnParent2.genome = generateNonConnectedSimpleDirectGenome();
 
             const newAdn = adnParent1.crossOver(adnParent2, 0);
+            newAdn.genome.nodeGenes.sort(sortNodeGenesByIdentifier);
+
             expect(newAdn.genome.nodeGenes.length).toBe(2);
             expect(newAdn.genome.nodeGenes[0].identifier).toBe(0);
             expect(newAdn.genome.nodeGenes[1].identifier).toBe(1);
             expect(newAdn.genome.connectGenes.length).toBe(0);
         });
 
-        xit('outputs the crossover of two identical direct genomes', () => {
+        it('outputs the crossover of two identical direct genomes', () => {
             const rates: RTADNRates = getBasicRates();
             const adnParent1 = new RTADN(-1, 1, rates);
             adnParent1.genome = generateDirectGenome();
@@ -112,6 +124,8 @@ describe('RTAdn', () => {
             adnParent2.genome = generateDirectGenome();
 
             const newAdn = adnParent1.crossOver(adnParent2, 0);
+            newAdn.genome.nodeGenes.sort(sortNodeGenesByIdentifier);
+
             expect(newAdn.genome.nodeGenes.length).toBe(2);
             expect(newAdn.genome.nodeGenes[0].identifier).toBe(0);
             expect(newAdn.genome.nodeGenes[1].identifier).toBe(1);
@@ -120,7 +134,7 @@ describe('RTAdn', () => {
             expect(newAdn.genome.connectGenes[0].weight).toBe(avgWeights);
         });
 
-        xit('outputs the crossover of one direct genome and a genome with a split with equals fitness scores', () => {
+        it('outputs the crossover of one direct genome and a genome with a split with equals fitness scores', () => {
             const rates: RTADNRates = getBasicRates();
             const adnParent1 = new RTADN(-1, 1, rates);
             adnParent1.genome = generateDirectGenome(true);
@@ -129,6 +143,8 @@ describe('RTAdn', () => {
             adnParent2.genome = generateSimpleSplitGenome();
 
             const newAdn = adnParent1.crossOver(adnParent2, 0);
+            newAdn.genome.nodeGenes.sort(sortNodeGenesByIdentifier);
+
             expect(newAdn.genome.nodeGenes.length).toBe(3);
             expect(newAdn.genome.nodeGenes[0].identifier).toBe(0);
             expect(newAdn.genome.nodeGenes[0].nodeType).toBe(NodeType.Input);
@@ -150,7 +166,7 @@ describe('RTAdn', () => {
             expect(newAdn.genome.connectGenes[2].isEnabled).toBeTruthy();
         });
 
-        xit('outputs the crossover of one split genome and one direct genome with equals fitness scores', () => {
+        it('outputs the crossover of one split genome and one direct genome with equals fitness scores', () => {
             const rates: RTADNRates = getBasicRates();
             const adnParent1 = new RTADN(-1, 1, rates);
             adnParent1.genome = generateSimpleSplitGenome(true);
@@ -159,6 +175,8 @@ describe('RTAdn', () => {
             adnParent2.genome = generateDirectGenome(false);
 
             const newAdn = adnParent1.crossOver(adnParent2, 0);
+            newAdn.genome.nodeGenes.sort(sortNodeGenesByIdentifier);
+
             expect(newAdn.genome.nodeGenes.length).toBe(3);
             expect(newAdn.genome.nodeGenes[0].identifier).toBe(0);
             expect(newAdn.genome.nodeGenes[1].identifier).toBe(1);
@@ -174,7 +192,7 @@ describe('RTAdn', () => {
             expect(newAdn.genome.connectGenes[2].isEnabled).toBeTruthy();
         });
 
-        xit('outputs the crossover of one direct genome and a genome with a split with different fitness scores', () => {
+        it('outputs the crossover of one direct genome and a genome with a split with different fitness scores', () => {
             const rates: RTADNRates = getBasicRates();
             const adnParent1 = new RTADN(-1, 1, rates);
             adnParent1.genome = generateDirectGenome(true);
@@ -196,7 +214,7 @@ describe('RTAdn', () => {
             expect(newAdn.genome.connectGenes[0].isEnabled).toBeFalsy();
         });
 
-        xit('outputs the crossover of one split genome and one direct genome with different fitness scores', () => {
+        it('outputs the crossover of one split genome and one direct genome with different fitness scores', () => {
             const rates: RTADNRates = getBasicRates();
             const adnParent1 = new RTADN(-1, 1, rates);
             adnParent1.genome = generateSimpleSplitGenome(true);
@@ -205,6 +223,8 @@ describe('RTAdn', () => {
             adnParent2.genome = generateDirectGenome(false);
 
             const newAdn = adnParent1.crossOver(adnParent2, -1);
+            newAdn.genome.nodeGenes.sort(sortNodeGenesByIdentifier);
+
             expect(newAdn.genome.nodeGenes.length).toBe(3);
             expect(newAdn.genome.nodeGenes[0].identifier).toBe(0);
             expect(newAdn.genome.nodeGenes[1].identifier).toBe(1);
@@ -230,6 +250,8 @@ describe('RTAdn', () => {
             adnParent2.genome = genomes[1];
 
             const newAdn = adnParent1.crossOver(adnParent2, -1);
+            newAdn.genome.nodeGenes.sort(sortNodeGenesByIdentifier);
+
             expect(newAdn.genome.nodeGenes.length).toBe(4);
             expect(newAdn.genome.nodeGenes[0].identifier).toBe(0);
             expect(newAdn.genome.nodeGenes[1].identifier).toBe(1);
@@ -258,6 +280,8 @@ describe('RTAdn', () => {
             adnParent2.genome = genomes[0];
 
             const newAdn = adnParent1.crossOver(adnParent2, -1);
+            newAdn.genome.nodeGenes.sort(sortNodeGenesByIdentifier);
+
             expect(newAdn.genome.nodeGenes.length).toBe(4);
             expect(newAdn.genome.nodeGenes[0].identifier).toBe(0);
             expect(newAdn.genome.nodeGenes[1].identifier).toBe(1);
