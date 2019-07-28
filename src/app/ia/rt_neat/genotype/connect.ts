@@ -7,6 +7,7 @@ export class ConnectGene {
     private outNode: NodeGene;
     private coefficient: number;
     private enabled: boolean;
+    private isRecurrent: boolean;
 
     constructor(id: number, inN: NodeGene, outN: NodeGene, coeff: number, enabled: boolean) {
         this.innovationId = id;
@@ -14,6 +15,7 @@ export class ConnectGene {
         this.outNode = outN;
         this.coefficient = coeff;
         this.enabled = enabled;
+        this.isRecurrent = (this.inNode.layer >= this.outNode.layer);
     }
 
     public activate(active: boolean) {
@@ -52,7 +54,11 @@ export class ConnectGene {
     }
 
     public get reccurent() {
-        return this.inNode.layer >= this.outNode.layer; // can be a link on itself
+        return this.isRecurrent; // can be a link on itself
+    }
+
+    public set reccurent(isRecurrent: boolean) {
+        this.isRecurrent = isRecurrent;
     }
 
     /**
@@ -76,11 +82,13 @@ export class ConnectGene {
         }
 
         const connect = new ConnectGene(this.innovationId, newInNode, newOutNode, this.coefficient, this.enabled);
+        connect.reccurent = this.reccurent;
         return connect;
     }
 
     public copyWithoutDependencies(): ConnectGene {
         const connect = new ConnectGene(this.innovationId, null, null, this.coefficient, this.enabled);
+        connect.reccurent = this.reccurent;
         return connect;
     }
 

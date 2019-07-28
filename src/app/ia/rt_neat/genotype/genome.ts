@@ -94,6 +94,19 @@ export class Genome {
         Genome.incrementNodeId();
         this.nodeGenes.push(newNode);
 
+        // the out node of the new node is a layer further and propagate to other connections
+        if (connect.reccurent) {
+            anteConnect.inputNode.layer = anteConnect.inputNode.layer === Infinity ? Infinity : newNode.layer + 1;
+            if (anteConnect.inputNode.layer !== Infinity) {
+                this.propagateLayerUpdateAfterIncrement(anteConnect.inputNode);
+            }
+        } else {
+            postConnect.outputNode.layer = postConnect.outputNode.layer === Infinity ? Infinity : newNode.layer + 1;
+            if (postConnect.outputNode.layer !== Infinity) {
+                this.propagateLayerUpdateAfterIncrement(postConnect.outputNode);
+            }
+        }
+
         // Connect the previous nodes with the new node
         // Connection into the new node weight of 1
         const anteConnect = new ConnectGene(Genome.nextInnovation, connect.inputNode, newNode, 1, true);
@@ -130,18 +143,33 @@ export class Genome {
      * @param root root node from where the propagation start
      */
     private propagateLayerUpdateAfterIncrement(root: NodeGene) {
-        const toVisit = [...root.inputs.map(l => l.outputNode), ...root.outputs.map(l => l.inputNode)];
-
-        console.log('root ' + root.identifier + ', to visit: ');
-        console.log(toVisit);
-
+        //const toVisit = [...root.inputs.map(l => l.inputNode), ...root.outputs.map(l => l.outputNode)];
+        let toVisit = [...root.inputs];
+        console.log('root ' + root.identifier + ' - layer ' + root.layer + ', to visit: ');
         while (toVisit.length > 0) {
-            const current = toVisit.shift();
-            const deltaLayer = current.layer - root.layer;
-            if (-1 <= deltaLayer && deltaLayer <= 0) {
-                current.layer += 1;
-                this.propagateLayerUpdateAfterIncrement(current);
-            }
+            const currentLink = toVisit.shift(); 
+            const current = currentLink.inputNode;
+            this.propagate(root, current, currentLink.reccurent);
+        }
+
+        toVisit = [...root.outputs];
+        console.log('root ' + root.identifier + ' - layer ' + root.layer + ', to visit: ');
+        while (toVisit.length > 0) {
+            const currentLink = toVisit.shift(); 
+            const current = currentLink.outputNode;
+            this.propagate(root, current, currentLink.reccurent);
+        }
+    }
+
+    private propagate(root: NodeGene, current: NodeGene, isRecurrent: boolean) {
+        const deltaLayer = current.layer - root.layer;
+        const isNotItselft = root.identifier !== current.identifier;
+        const needToMoveLayer = (deltaLayer === -1 && isRecurrent) || (0 === deltaLayer && !isRecurrent); /* && deltaLayer <= 1 */;
+        
+        console.log('current ' + current.identifier + ' - layer ' + current.layer + ': not itself: ' + isNotItselft + ', need to move: ' + needToMoveLayer);
+        if (isNotItselft && needToMoveLayer) {
+            current.layer += 1;
+            this.propagateLayerUpdateAfterIncrement(current);
         }
     }
 
