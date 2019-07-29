@@ -156,6 +156,50 @@ export class RTADN extends ADN {
         return result;
     }
 
+    public static selectInNode(nodeGenes: NodeGene[]) {
+        return nodeGenes[Math.round(MyMath.random(0, nodeGenes.length - 1))];
+    }
+
+    public static selectOutNode(inNode: NodeGene, nodeGenes: NodeGene[]) {
+        let availableNodes = [];                
+
+        const inputs = [];
+        const outputs =  [];
+        const hiddens = [];
+
+        for (const n of nodeGenes) {
+            switch(n.nodeType) {
+                case NodeType.Input: 
+                    inputs.push(n);
+                    break;
+                case NodeType.Output:
+                    outputs.push(n);
+                    break;
+                default: 
+                    hiddens.push(n);
+            }
+        }
+            
+        switch(inNode.nodeType) {
+            case NodeType.Input: 
+                availableNodes = [...outputs, ...hiddens];
+                break;
+            case NodeType.Output:
+                availableNodes = [...hiddens];
+                break;
+            default: 
+                availableNodes = [...outputs, ...hiddens];
+        };
+        const nodeOut = availableNodes.length === 0 ? null : availableNodes[Math.round(MyMath.random(0, availableNodes.length - 1))];
+        return nodeOut;
+    }
+
+    public static selectEnabledLink(connectGenes: ConnectGene[]) {
+        const enabledLinks = connectGenes.filter((l: ConnectGene) => l.isEnabled);
+        const link = enabledLinks[Math.round(MyMath.random(0, enabledLinks.length - 1))];
+        return link;
+    }
+
     public mutate(): RTADN {
         const result = new RTADN(this.minimum, this.maximum, this.rates);
         const newGenome = this.g.copy();
@@ -166,38 +210,50 @@ export class RTADN extends ADN {
         }
 
         for (const link of newGenome.connectGenes) {
-            if (Math.random() <= this.mutationRate) {
+            if (this.mutationRate !== 0  && Math.random() <= this.mutationRate) {
                 link.weight = link.weight + MyMath.random(-pct, pct);
                 link.weight = Math.max(link.weight, 8);
                 link.weight = Math.min(link.weight, -8);
             }
 
-            if (Math.random() <= this.mutationActivationRate) {
+            if (this.mutationActivationRate !== 0 && Math.random() <= this.mutationActivationRate) {
                 link.activate(!link.isEnabled);
             }
         }
 
-        if (Math.random() <= this.mutationConnectRate) {
+        if (this.mutationConnectRate !== 0 && Math.random() <= this.mutationConnectRate) {
             // TODO : check previously existing innovation to set the correct innovation number
 
-            const nodeIn = this.g.nodeGenes[Math.round(MyMath.random(0, this.g.nodeGenes.length - 1))];
-            const nodeOut = this.g.nodeGenes[Math.round(MyMath.random(0, this.g.nodeGenes.length - 1))];
-
-            if (Math.random() <= this.mutationAllowRecurrentRate && nodeOut.layer <= nodeIn.layer) {
-                this.g.addConnection(nodeOut, nodeIn); // prevent the recurrent by flipping the connection
-            } else {
-                this.g.addConnection(nodeIn, nodeOut); // percentage where a recurrent link is acceptable
-            }
+            const nodeIn = RTADN.selectInNode(newGenome.nodeGenes)
+            const nodeOut = RTADN.selectOutNode(nodeIn, newGenome.nodeGenes);
+            
+            if (nodeOut) {
+                if (nodeOut.layer <= nodeIn.layer) {
+                    // recurrent connection detected
+                    if (this.mutationAllowRecurrentRate !== 0 
+                        && Math.random() <= this.mutationAllowRecurrentRate) {
+                        // percentage where a recurrent link is acceptable
+                        newGenome.addConnection(nodeIn, nodeOut);
+                    } else {
+                        // prevent the recurrent by flipping the connection
+                        newGenome.addConnection(nodeOut, nodeIn);
+                    }
+                } else {
+                    // add a forward connection
+                    newGenome.addConnection(nodeIn, nodeOut);
+                }
+            }            
+            //else could happen if output node is selected first without hidden nodes available 
         }
 
-        if (Math.random() <= this.mutationSplitConnectRate) {
+        if (this.mutationSplitConnectRate !== 0 && Math.random() <= this.mutationSplitConnectRate) {
             // TODO : check previously existing innovation to set the correct innovation number
 
-            const enabledLinks = this.g.connectGenes.filter((l: ConnectGene) => l.isEnabled);
-            const link = enabledLinks[Math.round(MyMath.random(0, enabledLinks.length - 1))];
-            this.g.splitConnection(link);
+            const link = RTADN.selectEnabledLink(newGenome.connectGenes);
+            newGenome.splitConnection(link);
         }
 
+        result.g = newGenome;
         return result;
     }
 

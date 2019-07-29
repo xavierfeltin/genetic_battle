@@ -15,7 +15,12 @@ export class ConnectGene {
         this.outNode = outN;
         this.coefficient = coeff;
         this.enabled = enabled;
-        this.isRecurrent = (this.inNode.layer >= this.outNode.layer);
+
+        if (this.inNode !== null && this.outNode !== null) {
+            this.isRecurrent = (this.inNode.layer >= this.outNode.layer);
+        } else {
+            this.isRecurrent = false; // default value
+        }        
     }
 
     public activate(active: boolean) {
