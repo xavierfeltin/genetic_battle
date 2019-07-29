@@ -94,16 +94,16 @@ export class Genome {
         Genome.incrementNodeId();
         this.nodeGenes.push(newNode);
 
-        // the out node of the new node is a layer further and propagate to other connections
+        // Update the layer of the node at the end of the new connection and propagate the modification
         if (connect.reccurent) {
-            anteConnect.inputNode.layer = anteConnect.inputNode.layer === Infinity ? Infinity : newNode.layer + 1;
-            if (anteConnect.inputNode.layer !== Infinity) {
-                this.propagateLayerUpdateAfterIncrement(anteConnect.inputNode);
+            connect.inputNode.layer = connect.inputNode.layer === Infinity ? Infinity : newNode.layer + 1;
+            if (connect.inputNode.layer !== Infinity) {
+                this.propagateLayerUpdateAfterIncrement(connect.inputNode);
             }
         } else {
-            postConnect.outputNode.layer = postConnect.outputNode.layer === Infinity ? Infinity : newNode.layer + 1;
-            if (postConnect.outputNode.layer !== Infinity) {
-                this.propagateLayerUpdateAfterIncrement(postConnect.outputNode);
+            connect.outputNode.layer = connect.outputNode.layer === Infinity ? Infinity : newNode.layer + 1;
+            if (connect.outputNode.layer !== Infinity) {
+                this.propagateLayerUpdateAfterIncrement(connect.outputNode);
             }
         }
 
@@ -122,6 +122,7 @@ export class Genome {
         newNode.addOutLink(postConnect);
         connect.outputNode.addInLink(postConnect);
 
+        /*
         // the out node of the new node is a layer further and propagate to other connections
         if (connect.reccurent) {
             anteConnect.inputNode.layer = anteConnect.inputNode.layer === Infinity ? Infinity : newNode.layer + 1;
@@ -134,6 +135,7 @@ export class Genome {
                 this.propagateLayerUpdateAfterIncrement(postConnect.outputNode);
             }
         }
+        */
     }
 
     /**
@@ -143,32 +145,38 @@ export class Genome {
      * @param root root node from where the propagation start
      */
     private propagateLayerUpdateAfterIncrement(root: NodeGene) {
-        //const toVisit = [...root.inputs.map(l => l.inputNode), ...root.outputs.map(l => l.outputNode)];
+        // const toVisit = [...root.inputs.map(l => l.inputNode), ...root.outputs.map(l => l.outputNode)];
         let toVisit = [...root.inputs];
-        console.log('root ' + root.identifier + ' - layer ' + root.layer + ', to visit: ');
+        console.log('root input ' + root.identifier + ' - layer ' + root.layer + ', to visit: ');
         while (toVisit.length > 0) {
-            const currentLink = toVisit.shift(); 
+            const currentLink = toVisit.shift();
             const current = currentLink.inputNode;
             this.propagate(root, current, currentLink.reccurent);
+            console.log('end propagate input - current ' + current.identifier);
         }
 
         toVisit = [...root.outputs];
-        console.log('root ' + root.identifier + ' - layer ' + root.layer + ', to visit: ');
+        console.log('root output ' + root.identifier + ' - layer ' + root.layer + ', to visit: ');
         while (toVisit.length > 0) {
-            const currentLink = toVisit.shift(); 
+            const currentLink = toVisit.shift();
             const current = currentLink.outputNode;
             this.propagate(root, current, currentLink.reccurent);
+            console.log('end propagate output - current ' + current.identifier);
         }
+
+        console.log('end propagating for root ' + root.identifier);
     }
 
     private propagate(root: NodeGene, current: NodeGene, isRecurrent: boolean) {
         const deltaLayer = current.layer - root.layer;
         const isNotItselft = root.identifier !== current.identifier;
         const needToMoveLayer = (deltaLayer === -1 && isRecurrent) || (0 === deltaLayer && !isRecurrent); /* && deltaLayer <= 1 */;
-        
-        console.log('current ' + current.identifier + ' - layer ' + current.layer + ': not itself: ' + isNotItselft + ', need to move: ' + needToMoveLayer);
+
+        console.log('current ' + current.identifier + ' - layer ' + current.layer + ': not itself: '
+                    + isNotItselft + ', need to move: ' + needToMoveLayer);
         if (isNotItselft && needToMoveLayer) {
             current.layer += 1;
+            console.log('propagate from ' + current.identifier);
             this.propagateLayerUpdateAfterIncrement(current);
         }
     }

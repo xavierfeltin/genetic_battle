@@ -24,8 +24,8 @@ interface ExpectedNode {
     identifier: number;
     type: NodeType;
     layer: number;
-    inputs?: ConnectGene[],
-    outputs?: ConnectGene[]
+    inputs?: ConnectGene[];
+    outputs?: ConnectGene[];
 }
 
 function checkConnection(connect: ConnectGene, conf: ExpectedConnection) {
@@ -49,26 +49,26 @@ function checkNode(node: NodeGene, conf: ExpectedNode) {
 
     if (conf.inputs) {
         const inputsIds = node.inputs.map(i => i.innovation);
-        const expectedInputsIds = conf.inputs.map(i => i.innovation); 
+        const expectedInputsIds = conf.inputs.map(i => i.innovation);
         for (const id of expectedInputsIds) {
             expect(inputsIds).toContain(id);
-        } 
+        }
+        expect(inputsIds.length).toBe(conf.inputs.length);
     }
-    
+
     if (conf.outputs) {
         const outputsIds = node.outputs.map(i => i.innovation);
-        const expectedOutputsIds = conf.outputs.map(i => i.innovation); 
+        const expectedOutputsIds = conf.outputs.map(i => i.innovation);
         for (const id of expectedOutputsIds) {
             expect(outputsIds).toContain(id);
         }
+        expect(outputsIds.length).toBe(conf.outputs.length);
     }
 }
 
-//TODO: need to add tests on node link updates
-
 describe('Genome', () => {
     describe('constructor', () => {
-        xit('outputs a genome with the correct attributes', () => {
+        it('outputs a genome with the correct attributes', () => {
             const g = new Genome();
             expect(g.nodeGenes.length).toBe(0);
             expect(g.connectGenes.length).toBe(0);
@@ -76,18 +76,18 @@ describe('Genome', () => {
     });
 
     describe('manage global innovation', () => {
-        xit('outputs the next innovation number available', () => {
+        it('outputs the next innovation number available', () => {
             expect(Genome.nextInnovation).toBe(0);
         });
 
-        xit('outputs the next innovation number after an increment', () => {
+        it('outputs the next innovation number after an increment', () => {
             Genome.incrementInnovation();
             expect(Genome.nextInnovation).toBe(1);
         });
     });
 
     describe('add connection', () => {
-        xit('add a connection between two existing nodes in genomes', () => {
+        it('add a connection between two existing nodes in genomes', () => {
             const g = new Genome();
             g.addNode(NodeType.Hidden, 1, 1);
             g.addNode(NodeType.Hidden, 2, 2);
@@ -106,7 +106,7 @@ describe('Genome', () => {
             expect(Genome.nextInnovation).toBe(1);
         });
 
-        xit('add a recurrent connection between two existing nodes in genomes', () => {
+        it('add a recurrent connection between two existing nodes in genomes', () => {
             const g = new Genome();
             g.addNode(NodeType.Hidden, 2, 1);
             g.addNode( NodeType.Hidden, 1, 2);
@@ -127,7 +127,7 @@ describe('Genome', () => {
     });
 
     describe('add node', () => {
-        xit('add a node to split a link between input and output', () => {
+        it('add a node to split a link between input and output', () => {
             const g = new Genome();
             g.addNode(NodeType.Input, -Infinity);
             g.addNode(NodeType.Output, Infinity);
@@ -175,27 +175,33 @@ describe('Genome', () => {
             checkNode(addedNode, {
                 identifier: Genome.nextNodeId - 1,
                 type: NodeType.Hidden,
-                layer: 0
+                layer: 0,
+                inputs: [g.connectGenes[1]],
+                outputs: [g.connectGenes[2]]
             });
 
             // Check layer modification on out node from new connection
             checkNode(newOutcomingConnection.outputNode, {
                 identifier: 1,
                 type: NodeType.Output,
-                layer: Infinity
+                layer: Infinity,
+                inputs: [g.connectGenes[0], g.connectGenes[2]],
+                outputs: []
             });
 
             // Check non modification of layer on in node from new connection
             checkNode(newIncomingConnection.inputNode, {
                 identifier: 0,
                 type: NodeType.Input,
-                layer: -Infinity
+                layer: -Infinity,
+                inputs: [],
+                outputs: [g.connectGenes[0], g.connectGenes[1]]
             });
 
             expect(Genome.nextInnovation === 3);
         });
 
-        xit('add a node to split an existing link', () => {
+        it('add a node to split an existing link', () => {
             const g = new Genome();
             g.addNode(NodeType.Hidden, 1);
             g.addNode(NodeType.Hidden, 2);
@@ -243,27 +249,33 @@ describe('Genome', () => {
             checkNode(addedNode, {
                 identifier: Genome.nextNodeId - 1,
                 type: NodeType.Hidden,
-                layer: 2
+                layer: 2,
+                inputs: [g.connectGenes[1]],
+                outputs: [g.connectGenes[2]]
             });
 
             // Check layer modification on out node from new connection
             checkNode(newOutcomingConnection.outputNode, {
                 identifier: 1,
                 type: NodeType.Hidden,
-                layer: 3
+                layer: 3,
+                inputs: [g.connectGenes[0], g.connectGenes[2]],
+                outputs: []
             });
 
             // Check non modification of layer on in node from new connection
             checkNode(newIncomingConnection.inputNode, {
                 identifier: 0,
                 type: NodeType.Hidden,
-                layer: 1
+                layer: 1,
+                inputs: [],
+                outputs: [g.connectGenes[0], g.connectGenes[1]]
             });
 
             expect(Genome.nextInnovation === 3);
         });
 
-        xit('add a node to split an existing recurrent link', () => {
+        it('add a node to split an existing recurrent link', () => {
             const g = new Genome();
             g.addNode(NodeType.Hidden, 2);
             g.addNode(NodeType.Hidden, 1);
@@ -311,27 +323,33 @@ describe('Genome', () => {
             checkNode(addedNode, {
                 identifier: Genome.nextNodeId - 1,
                 type: NodeType.Hidden,
-                layer: 2
+                layer: 2,
+                inputs: [g.connectGenes[1]],
+                outputs: [g.connectGenes[2]]
             });
 
             // Check layer modification on out node from new connection
             checkNode(newOutcomingConnection.outputNode, {
                 identifier: 1,
                 type: NodeType.Hidden,
-                layer: 3
+                layer: 3,
+                inputs: [g.connectGenes[0], g.connectGenes[2]],
+                outputs: []
             });
 
             // Check non modification of layer on in node from new connection
             checkNode(newIncomingConnection.inputNode, {
                 identifier: 0,
                 type: NodeType.Hidden,
-                layer: 1
+                layer: 1,
+                inputs: [],
+                outputs: [g.connectGenes[0], g.connectGenes[1]]
             });
 
             expect(Genome.nextInnovation === 3);
         });
 
-        xit('add a node to split an existing link need to push following nodes further', () => {
+        it('add a node to split an existing link need to push following nodes further', () => {
             const g = new Genome();
             g.addNode(NodeType.Hidden, 1);
             g.addNode(NodeType.Hidden, 2);
@@ -386,35 +404,45 @@ describe('Genome', () => {
             checkNode(addedNode, {
                 identifier: 4,
                 type: NodeType.Hidden,
-                layer: 2
+                layer: 2,
+                inputs: [g.connectGenes[3]],
+                outputs: [g.connectGenes[4]]
             });
 
             // Check layer modification on out node from new connection
             checkNode(newOutcomingConnection.outputNode, {
                 identifier: 1,
                 type: NodeType.Hidden,
-                layer: 3
+                layer: 3,
+                inputs: [g.connectGenes[0], g.connectGenes[4]],
+                outputs: [g.connectGenes[1]]
             });
 
             // Check non modification of layer on in node from new connection
             checkNode(newIncomingConnection.inputNode, {
                 identifier: 0,
                 type: NodeType.Hidden,
-                layer: 1
+                layer: 1,
+                inputs: [],
+                outputs: [g.connectGenes[0], g.connectGenes[3]]
             });
 
             let extraNode = g.nodeGenes[2];
             checkNode(extraNode, {
                 identifier: 2,
                 type: NodeType.Hidden,
-                layer: 4
+                layer: 4,
+                inputs: [g.connectGenes[1]],
+                outputs: [g.connectGenes[2]]
             });
 
             extraNode = g.nodeGenes[3];
             checkNode(extraNode, {
                 identifier: 3,
                 type: NodeType.Hidden,
-                layer: 5
+                layer: 5,
+                inputs: [g.connectGenes[2]],
+                outputs: []
             });
 
             expect(Genome.nextInnovation === 5);
@@ -461,8 +489,6 @@ describe('Genome', () => {
                 recurrent: false
             });
 
-            console.log(newOutcomingConnection);
-            
             // Check outcoming connection from new node
             checkConnection(newOutcomingConnection, {
                 innovation: 4,
@@ -480,7 +506,7 @@ describe('Genome', () => {
                 type: NodeType.Hidden,
                 layer: 2,
                 inputs: [g.connectGenes[3]],
-                outputs: [g.connectGenes[4]] 
+                outputs: [g.connectGenes[4]]
             });
 
             // Check layer modification on out node from new connection
@@ -498,7 +524,7 @@ describe('Genome', () => {
                 type: NodeType.Hidden,
                 layer: 1,
                 inputs: [],
-                outputs: [g.connectGenes[0], g.connectGenes[3]] 
+                outputs: [g.connectGenes[0], g.connectGenes[3]]
             });
 
             let extraNode = g.nodeGenes[2];
@@ -507,7 +533,7 @@ describe('Genome', () => {
                 type: NodeType.Hidden,
                 layer: 3,
                 inputs: [],
-                outputs: [g.connectGenes[1]] 
+                outputs: [g.connectGenes[1]]
             });
 
             extraNode = g.nodeGenes[3];
@@ -516,7 +542,7 @@ describe('Genome', () => {
                 type: NodeType.Hidden,
                 layer: 4,
                 inputs: [],
-                outputs: [g.connectGenes[2]] 
+                outputs: [g.connectGenes[2]]
             });
 
             expect(Genome.nextInnovation === 5);
