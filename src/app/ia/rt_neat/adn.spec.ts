@@ -33,6 +33,17 @@ function getRateForConnecting(): RTADNRates {
     };
 }
 
+function getRateForActivating(): RTADNRates {
+    return {
+        mutation: 0.0,
+        crossOver: 0.0,
+        mutationActivation: 1.0,
+        mutationConnect: 0.0,
+        mutationAllowRecurrent: 0.0,
+        mutationSplitConnect: 0.0
+    };
+}
+
 function getRateForRecurrentConnecting(): RTADNRates {
     return {
         mutation: 0.0,
@@ -41,6 +52,17 @@ function getRateForRecurrentConnecting(): RTADNRates {
         mutationConnect: 1.0,
         mutationAllowRecurrent: 1.0,
         mutationSplitConnect: 0.0
+    };
+}
+
+function getRateForSplitting(): RTADNRates {
+    return {
+        mutation: 0.0,
+        crossOver: 0.0,
+        mutationActivation: 0.0,
+        mutationConnect: 0.0,
+        mutationAllowRecurrent: 0.0,
+        mutationSplitConnect: 1.0
     };
 }
 
@@ -70,6 +92,19 @@ function generateDirectGenome(useGenomeIncrement: boolean = false): Genome {
 function generateSimpleSplitGenome(useGenomeIncrement: boolean = false): Genome {
     const g = generateDirectGenome(useGenomeIncrement);
     g.splitConnection(g.connectGenes[0]);
+    return g;
+}
+
+function generateActivateDeactivateGenome(): Genome {
+    const g = new Genome();
+    g.addNode(NodeType.Input, -Infinity, 0);
+    g.addNode(NodeType.Input, -Infinity, 0);
+    g.addNode(NodeType.Output, Infinity, 1);
+
+    g.addConnection(g.nodeGenes[0], g.nodeGenes[2], 0);
+    g.addConnection(g.nodeGenes[1], g.nodeGenes[2], 1);
+    g.activateConnection(g.connectGenes[1], false);
+
     return g;
 }
 
@@ -366,14 +401,14 @@ describe('RTAdn', () => {
             const adnParent1 = new RTADN(-1, 1, rates);
             adnParent1.genome = generateNonConnectedSimpleDirectGenome();
 
-            RTADN.selectInNode = function(nodeGenes: NodeGene[]) {
+            RTADN.selectInNode = (nodeGenes: NodeGene[]) => {
                 // force to return the output node
                 return nodeGenes[1];
-            }
+            };
 
             const newAdn = adnParent1.mutate();
             newAdn.genome.nodeGenes.sort(sortNodeGenesByIdentifier);
-            
+
             expect(newAdn.genome.nodeGenes.length).toBe(2);
             checkNode(newAdn.genome.nodeGenes[0], {
                 identifier: 0,
@@ -389,22 +424,22 @@ describe('RTAdn', () => {
                 layer: Infinity,
                 inputs: [],
                 outputs: []
-            });                        
+            });
         });
 
-        it('outputs forward connection when adding a forward connection mutation on a non connected genome even if recurrent rate at 1', () => {
+        xit('outputs forward connection when adding a forward connection mutation on a non connected genome even if recurrent rate at 1', () => {
             const rates: RTADNRates = getRateForRecurrentConnecting();
             const adnParent1 = new RTADN(-1, 1, rates);
             adnParent1.genome = generateNonConnectedSimpleDirectGenome();
 
-            RTADN.selectInNode = function(nodeGenes: NodeGene[]) {
+            RTADN.selectInNode = (nodeGenes: NodeGene[]) => {
                 // force to return the output node
                 return nodeGenes[0];
-            }
+            };
 
             const newAdn = adnParent1.mutate();
             newAdn.genome.nodeGenes.sort(sortNodeGenesByIdentifier);
-            
+
             expect(newAdn.genome.nodeGenes.length).toBe(2);
 
             checkNode(newAdn.genome.nodeGenes[0], {
@@ -432,7 +467,102 @@ describe('RTAdn', () => {
                 testValue: false,
                 isEnabled: true,
                 recurrent: false
-            });                      
+            });
+        });
+
+        xit('outputs opposite activation on connections when adding an activation mutation on a simple connected genome', () => {
+            const rates: RTADNRates = getRateForActivating();
+            const adnParent1 = new RTADN(-1, 1, rates);
+            adnParent1.genome = generateActivateDeactivateGenome();
+
+            const newAdn = adnParent1.mutate();
+            newAdn.genome.nodeGenes.sort(sortNodeGenesByIdentifier);
+
+            expect(newAdn.genome.connectGenes.length).toBe(2);
+            checkConnection(newAdn.genome.connectGenes[0], {
+                innovation: 0,
+                inNode: newAdn.genome.nodeGenes[0],
+                outNode: newAdn.genome.nodeGenes[2],
+                weight: -1,
+                testValue: false,
+                isEnabled: false,
+                recurrent: false
+            });
+
+            checkConnection(newAdn.genome.connectGenes[1], {
+                innovation: 1,
+                inNode: newAdn.genome.nodeGenes[1],
+                outNode: newAdn.genome.nodeGenes[2],
+                weight: -1,
+                testValue: false,
+                isEnabled: true,
+                recurrent: false
+            });
+        });
+
+        it('outputs splitted connection when applying a split mutation on a simple connected genome', () => {
+            const rates: RTADNRates = getRateForSplitting();
+            const adnParent1 = new RTADN(-1, 1, rates);
+            adnParent1.genome = generateDirectGenome(true);
+
+            const newAdn = adnParent1.mutate();
+            newAdn.genome.nodeGenes.sort(sortNodeGenesByIdentifier);
+
+            expect(newAdn.genome.connectGenes.length).toBe(3);
+            checkConnection(newAdn.genome.connectGenes[0], {
+                innovation: 0,
+                inNode: newAdn.genome.nodeGenes[0],
+                outNode: newAdn.genome.nodeGenes[1],
+                weight: -1,
+                testValue: false,
+                isEnabled: false,
+                recurrent: false
+            });
+
+            checkConnection(newAdn.genome.connectGenes[1], {
+                innovation: 1,
+                inNode: newAdn.genome.nodeGenes[0],
+                outNode: newAdn.genome.nodeGenes[2],
+                weight: -1,
+                testValue: false,
+                isEnabled: true,
+                recurrent: false
+            });
+
+            checkConnection(newAdn.genome.connectGenes[2], {
+                innovation: 2,
+                inNode: newAdn.genome.nodeGenes[2],
+                outNode: newAdn.genome.nodeGenes[1],
+                weight: -1,
+                testValue: false,
+                isEnabled: true,
+                recurrent: false
+            });
+
+            expect(newAdn.genome.nodeGenes.length).toBe(3);
+            checkNode(newAdn.genome.nodeGenes[0], {
+                identifier: 0,
+                type: NodeType.Input,
+                layer: -Infinity,
+                inputs: [],
+                outputs: [newAdn.genome.connectGenes[0], newAdn.genome.connectGenes[1]]
+            });
+
+            checkNode(newAdn.genome.nodeGenes[1], {
+                identifier: 1,
+                type: NodeType.Output,
+                layer: Infinity,
+                inputs: [newAdn.genome.connectGenes[0], newAdn.genome.connectGenes[2]],
+                outputs: []
+            });
+
+            checkNode(newAdn.genome.nodeGenes[2], {
+                identifier: 2,
+                type: NodeType.Hidden,
+                layer: 0,
+                inputs: [newAdn.genome.connectGenes[1]],
+                outputs: [newAdn.genome.connectGenes[2]]
+            });
         });
     });
 });

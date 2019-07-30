@@ -36,6 +36,50 @@ export class RTADN extends ADN {
         this.mutationSplitConnectRate = rates.mutationSplitConnect;
     }
 
+    public static selectInNode(nodeGenes: NodeGene[]) {
+        return nodeGenes[Math.round(MyMath.random(0, nodeGenes.length - 1))];
+    }
+
+    public static selectOutNode(inNode: NodeGene, nodeGenes: NodeGene[]) {
+        let availableNodes = [];
+
+        const inputs = [];
+        const outputs =  [];
+        const hiddens = [];
+
+        for (const n of nodeGenes) {
+            switch (n.nodeType) {
+                case NodeType.Input:
+                    inputs.push(n);
+                    break;
+                case NodeType.Output:
+                    outputs.push(n);
+                    break;
+                default:
+                    hiddens.push(n);
+            }
+        }
+
+        switch (inNode.nodeType) {
+            case NodeType.Input:
+                availableNodes = [...outputs, ...hiddens];
+                break;
+            case NodeType.Output:
+                availableNodes = [...hiddens];
+                break;
+            default:
+                availableNodes = [...outputs, ...hiddens];
+        }
+        const nodeOut = availableNodes.length === 0 ? null : availableNodes[Math.round(MyMath.random(0, availableNodes.length - 1))];
+        return nodeOut;
+    }
+
+    public static selectEnabledLink(connectGenes: ConnectGene[]) {
+        const enabledLinks = connectGenes.filter((l: ConnectGene) => l.isEnabled);
+        const link = enabledLinks[Math.round(MyMath.random(0, enabledLinks.length - 1))];
+        return link;
+    }
+
     public get genome(): Genome {
         return this.g;
     }
@@ -156,50 +200,6 @@ export class RTADN extends ADN {
         return result;
     }
 
-    public static selectInNode(nodeGenes: NodeGene[]) {
-        return nodeGenes[Math.round(MyMath.random(0, nodeGenes.length - 1))];
-    }
-
-    public static selectOutNode(inNode: NodeGene, nodeGenes: NodeGene[]) {
-        let availableNodes = [];                
-
-        const inputs = [];
-        const outputs =  [];
-        const hiddens = [];
-
-        for (const n of nodeGenes) {
-            switch(n.nodeType) {
-                case NodeType.Input: 
-                    inputs.push(n);
-                    break;
-                case NodeType.Output:
-                    outputs.push(n);
-                    break;
-                default: 
-                    hiddens.push(n);
-            }
-        }
-            
-        switch(inNode.nodeType) {
-            case NodeType.Input: 
-                availableNodes = [...outputs, ...hiddens];
-                break;
-            case NodeType.Output:
-                availableNodes = [...hiddens];
-                break;
-            default: 
-                availableNodes = [...outputs, ...hiddens];
-        };
-        const nodeOut = availableNodes.length === 0 ? null : availableNodes[Math.round(MyMath.random(0, availableNodes.length - 1))];
-        return nodeOut;
-    }
-
-    public static selectEnabledLink(connectGenes: ConnectGene[]) {
-        const enabledLinks = connectGenes.filter((l: ConnectGene) => l.isEnabled);
-        const link = enabledLinks[Math.round(MyMath.random(0, enabledLinks.length - 1))];
-        return link;
-    }
-
     public mutate(): RTADN {
         const result = new RTADN(this.minimum, this.maximum, this.rates);
         const newGenome = this.g.copy();
@@ -224,13 +224,13 @@ export class RTADN extends ADN {
         if (this.mutationConnectRate !== 0 && Math.random() <= this.mutationConnectRate) {
             // TODO : check previously existing innovation to set the correct innovation number
 
-            const nodeIn = RTADN.selectInNode(newGenome.nodeGenes)
+            const nodeIn = RTADN.selectInNode(newGenome.nodeGenes);
             const nodeOut = RTADN.selectOutNode(nodeIn, newGenome.nodeGenes);
-            
+
             if (nodeOut) {
                 if (nodeOut.layer <= nodeIn.layer) {
                     // recurrent connection detected
-                    if (this.mutationAllowRecurrentRate !== 0 
+                    if (this.mutationAllowRecurrentRate !== 0
                         && Math.random() <= this.mutationAllowRecurrentRate) {
                         // percentage where a recurrent link is acceptable
                         newGenome.addConnection(nodeIn, nodeOut);
@@ -242,8 +242,8 @@ export class RTADN extends ADN {
                     // add a forward connection
                     newGenome.addConnection(nodeIn, nodeOut);
                 }
-            }            
-            //else could happen if output node is selected first without hidden nodes available 
+            }
+            // else could happen if output node is selected first without hidden nodes available
         }
 
         if (this.mutationSplitConnectRate !== 0 && Math.random() <= this.mutationSplitConnectRate) {

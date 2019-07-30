@@ -1,10 +1,12 @@
 import { NodeGene, NodeType } from './node';
 import { ConnectGene } from './connect';
 import { MyMath } from '../../../tools/math.tools';
+import { Historic, ModificationType } from './historic';
 
 export class Genome {
     public static innovationNumber = 0;
     public static nodeNumber = 0;
+    public static historic = new Historic();
 
     private nodes: NodeGene[];
     private links: ConnectGene[];
@@ -46,6 +48,15 @@ export class Genome {
         this.links = genes;
     }
 
+    public static logInnovation(type: ModificationType, innovation: number, inNode: number, outNode: number) {
+        Genome.historic.addEntry({
+            modificationType: type,
+            innovationId: innovation, // save the innovation of the splitted connection
+            inNodeId: inNode,
+            outNodeId: outNode
+        });
+    }
+
     // add connection between two existing nodes
     public addConnection(inNode: NodeGene, outNode: NodeGene, innovation: number = -1) {
         // TODO: forbid connections between nodes of the same layer except itself
@@ -61,6 +72,8 @@ export class Genome {
         inNode.addOutLink(newLink);
         outNode.addInLink(newLink);
         this.links.push(newLink);
+
+        Genome.logInnovation(ModificationType.Add, innov, inNode.identifier, outNode.identifier);
     }
 
     public addNode(type: NodeType, position: number, id: number = -1) { // node: NodeGene) {
@@ -122,20 +135,7 @@ export class Genome {
         newNode.addOutLink(postConnect);
         connect.outputNode.addInLink(postConnect);
 
-        /*
-        // the out node of the new node is a layer further and propagate to other connections
-        if (connect.reccurent) {
-            anteConnect.inputNode.layer = anteConnect.inputNode.layer === Infinity ? Infinity : newNode.layer + 1;
-            if (anteConnect.inputNode.layer !== Infinity) {
-                this.propagateLayerUpdateAfterIncrement(anteConnect.inputNode);
-            }
-        } else {
-            postConnect.outputNode.layer = postConnect.outputNode.layer === Infinity ? Infinity : newNode.layer + 1;
-            if (postConnect.outputNode.layer !== Infinity) {
-                this.propagateLayerUpdateAfterIncrement(postConnect.outputNode);
-            }
-        }
-        */
+        Genome.logInnovation( ModificationType.Split, connect.innovation, connect.inputNode.identifier, connect.outputNode.identifier);
     }
 
     /**
@@ -170,7 +170,7 @@ export class Genome {
     private propagate(root: NodeGene, current: NodeGene, isRecurrent: boolean) {
         const deltaLayer = current.layer - root.layer;
         const isNotItselft = root.identifier !== current.identifier;
-        const needToMoveLayer = (deltaLayer === -1 && isRecurrent) || (0 === deltaLayer && !isRecurrent); /* && deltaLayer <= 1 */;
+        const needToMoveLayer = (deltaLayer === -1 && isRecurrent) || (0 === deltaLayer && !isRecurrent); /* && deltaLayer <= 1 */
 
         // console.log('current ' + current.identifier + ' - layer ' + current.layer + ': not itself: '
         //             + isNotItselft + ', need to move: ' + needToMoveLayer);

@@ -492,5 +492,126 @@ describe('Genome', () => {
             expect(Genome.nextInnovation === 5);
             expect(Genome.nextNodeId === 5);
         });
+
+        it('add a node to split an existing recurrent link need to push recurrent and forward link nodes further', () => {
+            const g = new Genome();
+            g.addNode(NodeType.Hidden, 0);
+            g.addNode(NodeType.Hidden, 1);
+            g.addNode(NodeType.Hidden, 1);
+            g.addNode(NodeType.Hidden, 2);
+            g.addConnection(g.nodeGenes[0], g.nodeGenes[1]);
+            g.addConnection(g.nodeGenes[2], g.nodeGenes[1]);
+            g.addConnection(g.nodeGenes[1], g.nodeGenes[3]);
+
+            g.splitConnection(g.connectGenes[0]);
+
+            // check node layers
+            checkNode(g.nodeGenes[0], {
+                identifier: 0,
+                type: NodeType.Hidden,
+                layer: 0,
+                inputs: [],
+                outputs: [g.connectGenes[0], g.connectGenes[3]]
+            });
+
+            checkNode(g.nodeGenes[1], {
+                identifier: 1,
+                type: NodeType.Hidden,
+                layer: 2,
+                inputs: [g.connectGenes[0], g.connectGenes[4], g.connectGenes[1]],
+                outputs: [g.connectGenes[2]]
+            });
+
+            checkNode(g.nodeGenes[2], {
+                identifier: 2,
+                type: NodeType.Hidden,
+                layer: 2,
+                inputs: [],
+                outputs: [g.connectGenes[1]]
+            });
+
+            checkNode(g.nodeGenes[3], {
+                identifier: 3,
+                type: NodeType.Hidden,
+                layer: 3,
+                inputs: [g.connectGenes[2]],
+                outputs: []
+            });
+
+            checkNode(g.nodeGenes[4], {
+                identifier: 4,
+                type: NodeType.Hidden,
+                layer: 1,
+                inputs: [g.connectGenes[3]],
+                outputs: [g.connectGenes[4]]
+            });
+
+            // Check recurrent connection is still recurrent
+            checkConnection(g.connectGenes[1], {
+                innovation: 1,
+                inNode: g.nodeGenes[2],
+                outNode: g.nodeGenes[1],
+                weight: g.connectGenes[1].weight,
+                testValue: true,
+                isEnabled: true,
+                recurrent: true
+            });
+        });
+
+        it('add a node to split an existing recurrent link need to push loop recurrent link further', () => {
+            const g = new Genome();
+            g.addNode(NodeType.Hidden, 0);
+            g.addNode(NodeType.Hidden, 1);
+            g.addNode(NodeType.Hidden, 1);
+            g.addConnection(g.nodeGenes[0], g.nodeGenes[1]);
+            g.addConnection(g.nodeGenes[2], g.nodeGenes[1]);
+            g.addConnection(g.nodeGenes[1], g.nodeGenes[2]);
+
+            g.splitConnection(g.connectGenes[0]);
+
+            // check node layers
+            checkNode(g.nodeGenes[0], {
+                identifier: 0,
+                type: NodeType.Hidden,
+                layer: 0,
+                inputs: [],
+                outputs: [g.connectGenes[0], g.connectGenes[3]]
+            });
+
+            checkNode(g.nodeGenes[1], {
+                identifier: 1,
+                type: NodeType.Hidden,
+                layer: 2,
+                inputs: [g.connectGenes[0], g.connectGenes[4], g.connectGenes[1]],
+                outputs: [g.connectGenes[2]]
+            });
+
+            checkNode(g.nodeGenes[2], {
+                identifier: 2,
+                type: NodeType.Hidden,
+                layer: 2,
+                inputs: [g.connectGenes[2]],
+                outputs: [g.connectGenes[1]]
+            });
+
+            checkNode(g.nodeGenes[3], {
+                identifier: 3,
+                type: NodeType.Hidden,
+                layer: 1,
+                inputs: [g.connectGenes[3]],
+                outputs: [g.connectGenes[4]]
+            });
+
+            // Check recurrent connection is still recurrent
+            checkConnection(g.connectGenes[1], {
+                innovation: 1,
+                inNode: g.nodeGenes[2],
+                outNode: g.nodeGenes[1],
+                weight: g.connectGenes[1].weight,
+                testValue: true,
+                isEnabled: true,
+                recurrent: true
+            });
+        });
     });
 });

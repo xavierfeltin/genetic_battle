@@ -1,6 +1,6 @@
-import { NodeGene } from "./node";
-import { NodeType } from "../phenotype/node";
-import { ConnectGene } from "./connect";
+import { NodeGene } from './node';
+import { NodeType } from '../phenotype/node';
+import { ConnectGene } from './connect';
 
 export interface ExpectedConnection {
     innovation: number;
