@@ -48,12 +48,13 @@ export class Genome {
         this.links = genes;
     }
 
-    public static logInnovation(type: ModificationType, innovation: number, inNode: number, outNode: number) {
+    public static logInnovation(type: ModificationType, innovation: number, inNode: number, outNode: number, newNode: number = -1) {
         Genome.historic.addEntry({
             modificationType: type,
             innovationId: innovation, // save the innovation of the splitted connection
             inNodeId: inNode,
-            outNodeId: outNode
+            outNodeId: outNode,
+            newNodeId: newNode
         });
     }
 
@@ -73,7 +74,9 @@ export class Genome {
         outNode.addInLink(newLink);
         this.links.push(newLink);
 
-        Genome.logInnovation(ModificationType.Add, innov, inNode.identifier, outNode.identifier);
+        if (innovation === -1) {
+            Genome.logInnovation(ModificationType.Add, innov, inNode.identifier, outNode.identifier);
+        }        
     }
 
     public addNode(type: NodeType, position: number, id: number = -1) { // node: NodeGene) {
@@ -88,7 +91,7 @@ export class Genome {
     }
 
     // add a node to split an existing connection in two
-    public splitConnection(connect: ConnectGene) {
+    public splitConnection(connect: ConnectGene, innovationId: number = -1, newNodeId: number = -1) {
         // Deactivate previous connection
         this.activateConnection(connect, false);
 
@@ -103,8 +106,12 @@ export class Genome {
             newNodeLayer = connect.outputNode.layer === -Infinity ? 0 : connect.outputNode.layer + 1;
         }
 
-        const newNode = new NodeGene(Genome.nextNodeId, NodeType.Hidden, newNodeLayer);
-        Genome.incrementNodeId();
+        let nodeId = newNodeId;
+        if (newNodeId === -1) {
+            nodeId = Genome.nextNodeId;
+            Genome.incrementNodeId();
+        }
+        const newNode = new NodeGene(nodeId, NodeType.Hidden, newNodeLayer);        
         this.nodeGenes.push(newNode);
 
         // Update the layer of the node at the end of the new connection and propagate the modification
@@ -121,21 +128,32 @@ export class Genome {
         }
 
         // Connect the previous nodes with the new node
+        let anteConnectId = innovationId + 1;
+        let postConnectId = innovationId + 2;
+        if (innovationId === -1) {
+            anteConnectId = Genome.nextInnovation;
+            Genome.incrementInnovation();    
+            postConnectId = Genome.nextInnovation;
+            Genome.incrementInnovation();
+        }
+        
         // Connection into the new node weight of 1
-        const anteConnect = new ConnectGene(Genome.nextInnovation, connect.inputNode, newNode, 1, true);
+        const anteConnect = new ConnectGene(anteConnectId, connect.inputNode, newNode, 1, true);
         Genome.incrementInnovation();
         this.links.push(anteConnect);
         newNode.addInLink(anteConnect);
         connect.inputNode.addOutLink(anteConnect);
 
         // Connection out the new node weight of the previous connection
-        const postConnect = new ConnectGene(Genome.nextInnovation, newNode, connect.outputNode, connect.weight, true);
-        Genome.incrementInnovation();
+        
+        const postConnect = new ConnectGene(postConnectId, newNode, connect.outputNode, connect.weight, true);
         this.links.push(postConnect);
         newNode.addOutLink(postConnect);
         connect.outputNode.addInLink(postConnect);
 
-        Genome.logInnovation( ModificationType.Split, connect.innovation, connect.inputNode.identifier, connect.outputNode.identifier);
+        if (innovationId === -1) {
+            Genome.logInnovation( ModificationType.Split, connect.innovation, connect.inputNode.identifier, connect.outputNode.identifier, newNode.identifier);
+        }        
     }
 
     /**

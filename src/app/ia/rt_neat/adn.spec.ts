@@ -2,6 +2,7 @@ import { NodeGene, NodeType } from './genotype/node';
 import { Genome } from './genotype/genome';
 import { RTADN, RTADNRates } from './adn';
 import { checkConnection, checkNode } from './genotype/common.spec';
+import { ModificationType } from './genotype/historic';
 
 beforeEach(() => {
     // Reset static variable before each test
@@ -296,7 +297,7 @@ describe('RTAdn', () => {
             expect(newAdn.genome.connectGenes[2].isEnabled).toBeTruthy();
         });
 
-        xit('outputs the crossover of two more complex genomes with different fitness scores', () => {
+        it('outputs the crossover of two more complex genomes with different fitness scores', () => {
             const rates: RTADNRates = getBasicRates();
             const genomes = generateComplexGenomes();
             const adnParent1 = new RTADN(-1, 1, rates);
@@ -500,7 +501,134 @@ describe('RTAdn', () => {
             });
         });
 
-        it('outputs splitted connection when applying a split mutation on a simple connected genome', () => {
+        xit('outputs splitted connection when applying a split mutation on a simple connected genome', () => {
+            const rates: RTADNRates = getRateForSplitting();
+            const adnParent1 = new RTADN(-1, 1, rates);
+            adnParent1.genome = generateDirectGenome(true);
+
+            const newAdn = adnParent1.mutate();
+            newAdn.genome.nodeGenes.sort(sortNodeGenesByIdentifier);
+
+            expect(newAdn.genome.connectGenes.length).toBe(3);
+            checkConnection(newAdn.genome.connectGenes[0], {
+                innovation: 0,
+                inNode: newAdn.genome.nodeGenes[0],
+                outNode: newAdn.genome.nodeGenes[1],
+                weight: -1,
+                testValue: false,
+                isEnabled: false,
+                recurrent: false
+            });
+
+            checkConnection(newAdn.genome.connectGenes[1], {
+                innovation: 1,
+                inNode: newAdn.genome.nodeGenes[0],
+                outNode: newAdn.genome.nodeGenes[2],
+                weight: -1,
+                testValue: false,
+                isEnabled: true,
+                recurrent: false
+            });
+
+            checkConnection(newAdn.genome.connectGenes[2], {
+                innovation: 2,
+                inNode: newAdn.genome.nodeGenes[2],
+                outNode: newAdn.genome.nodeGenes[1],
+                weight: -1,
+                testValue: false,
+                isEnabled: true,
+                recurrent: false
+            });
+
+            expect(newAdn.genome.nodeGenes.length).toBe(3);
+            checkNode(newAdn.genome.nodeGenes[0], {
+                identifier: 0,
+                type: NodeType.Input,
+                layer: -Infinity,
+                inputs: [],
+                outputs: [newAdn.genome.connectGenes[0], newAdn.genome.connectGenes[1]]
+            });
+
+            checkNode(newAdn.genome.nodeGenes[1], {
+                identifier: 1,
+                type: NodeType.Output,
+                layer: Infinity,
+                inputs: [newAdn.genome.connectGenes[0], newAdn.genome.connectGenes[2]],
+                outputs: []
+            });
+
+            checkNode(newAdn.genome.nodeGenes[2], {
+                identifier: 2,
+                type: NodeType.Hidden,
+                layer: 0,
+                inputs: [newAdn.genome.connectGenes[1]],
+                outputs: [newAdn.genome.connectGenes[2]]
+            });
+        });
+    });
+
+    describe('mutate with historic', () => {
+        it ('outputs the modiied genomes reusing similar innovations for adding', () => {
+            // Set next ids far away to simulate previous activity
+            Genome.nodeNumber = 5;
+            Genome.innovationNumber = 5;
+
+            Genome.historic.addEntry({
+                modificationType: ModificationType.Add,
+                innovationId: 0,
+                inNodeId: 0,
+                outNodeId: 1
+            });
+            
+            const rates: RTADNRates = getRateForConnecting();
+            const adnParent1 = new RTADN(-1, 1, rates);
+            adnParent1.genome = generateNonConnectedSimpleDirectGenome();
+
+            const newAdn = adnParent1.mutate();
+            newAdn.genome.nodeGenes.sort(sortNodeGenesByIdentifier);
+
+            expect(newAdn.genome.nodeGenes.length).toBe(2);
+            checkNode(newAdn.genome.nodeGenes[0], {
+                identifier: 0,
+                type: NodeType.Input,
+                layer: -Infinity,
+                inputs: [],
+                outputs: [newAdn.genome.connectGenes[0]]
+            });
+
+            checkNode(newAdn.genome.nodeGenes[1], {
+                identifier: 1,
+                type: NodeType.Output,
+                layer: Infinity,
+                inputs: [newAdn.genome.connectGenes[0]],
+                outputs: []
+            });
+
+            expect(newAdn.genome.connectGenes.length).toBe(1);
+            checkConnection(newAdn.genome.connectGenes[0], {
+                innovation: 0, // reuse historic innovation Id
+                inNode: newAdn.genome.nodeGenes[0],
+                outNode: newAdn.genome.nodeGenes[1],
+                weight: -1,
+                testValue: false,
+                isEnabled: true,
+                recurrent: false
+            });
+        });
+
+        it ('outputs the modiied genomes reusing similar innovations for splitting', () => {
+            // Set next ids far away to simulate previous activity
+            Genome.nodeNumber = 5;
+            Genome.innovationNumber = 5;
+
+            Genome.historic.addEntry({
+                modificationType: ModificationType.Split,
+                innovationId: 0,
+                inNodeId: 0,
+                outNodeId: 1,
+                newNodeId: 2
+            });
+            
             const rates: RTADNRates = getRateForSplitting();
             const adnParent1 = new RTADN(-1, 1, rates);
             adnParent1.genome = generateDirectGenome(true);

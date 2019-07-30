@@ -6,6 +6,7 @@ export enum ModificationType {
 export interface HistoryEntry {
     modificationType: ModificationType;
     innovationId: number;
+    newNodeId?: number; // use for split
     inNodeId: number;
     outNodeId: number;
 }
@@ -27,7 +28,8 @@ export class Historic {
     find(inNodeId: number, type: ModificationType, outNodeId: number) {
         if (this.table[inNodeId]) {
             const histories: HistoryEntry[] = this.table[inNodeId];
-            return histories.find((value) => value.modificationType === type && value.outNodeId === outNodeId);
+            const result = histories.find((value) => value.modificationType === type && value.outNodeId === outNodeId);
+            return result ? result : null;
         }
         return null;
     }

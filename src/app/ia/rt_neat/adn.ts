@@ -4,6 +4,7 @@ import { MyMath } from '../../tools/math.tools';
 import { NodeGene } from './genotype/node';
 import { ConnectGene } from './genotype/connect';
 import { NodeType } from './phenotype/node';
+import { ModificationType } from './genotype/historic';
 
 export interface RTADNRates {
     mutation: number;
@@ -109,13 +110,13 @@ export class RTADN extends ADN {
 
         // Make an union of all the innovation numbers
         for (const link of this.genome.connectGenes) {
-            console.log('current link: ' + link.innovation);
+            // console.log('current link: ' + link.innovation);
 
             // Some innovations are present in the other set and not in the current genome
             while (index < adn.genome.connectGenes.length
                 && adn.genome.connectGenes[index].innovation < link.innovation) {
 
-                console.log('previous disjoint/excess link: ' + adn.genome.connectGenes[index].innovation);
+                // console.log('previous disjoint/excess link: ' + adn.genome.connectGenes[index].innovation);
 
                 // Push it if this parent is the best or both have the same fitness
                 if (isBest >= 0) {
@@ -134,7 +135,7 @@ export class RTADN extends ADN {
             if (index < adn.genome.connectGenes.length
                 && adn.genome.connectGenes[index].innovation === link.innovation) {
 
-                console.log('link exists in both parents: ' + adn.genome.connectGenes[index].innovation);
+                // console.log('link exists in both parents: ' + adn.genome.connectGenes[index].innovation);
 
                 // Set the link with the average of the weights from the 2 parents
                 const newLink = link.copyWithoutDependencies();
@@ -149,7 +150,7 @@ export class RTADN extends ADN {
                 unionLinks.push(newLink);
                 index++;
             } else {
-                console.log('link exists only in current parent: ' + link.innovation);
+                // console.log('link exists only in current parent: ' + link.innovation);
 
                 // push it if this parent is the best or both have the same fitness
                 if (isBest <= 0) {
@@ -165,10 +166,10 @@ export class RTADN extends ADN {
         }
 
         // Innovations remain in the other genome
-        console.log('index other parent: ' + index);
+        // console.log('index other parent: ' + index);
         for (let i = index; i < adn.genome.connectGenes.length; i++) {
             const link = adn.genome.connectGenes[i];
-            console.log('excess links in the other parent: ' + link.innovation);
+            // console.log('excess links in the other parent: ' + link.innovation);
 
             if (isBest >= 0) {
                 const newLink = link.copyWithoutDependencies();
@@ -221,9 +222,7 @@ export class RTADN extends ADN {
             }
         }
 
-        if (this.mutationConnectRate !== 0 && Math.random() <= this.mutationConnectRate) {
-            // TODO : check previously existing innovation to set the correct innovation number
-
+        if (this.mutationConnectRate !== 0 && Math.random() <= this.mutationConnectRate) {            
             const nodeIn = RTADN.selectInNode(newGenome.nodeGenes);
             const nodeOut = RTADN.selectOutNode(nodeIn, newGenome.nodeGenes);
 
@@ -233,14 +232,26 @@ export class RTADN extends ADN {
                     if (this.mutationAllowRecurrentRate !== 0
                         && Math.random() <= this.mutationAllowRecurrentRate) {
                         // percentage where a recurrent link is acceptable
-                        newGenome.addConnection(nodeIn, nodeOut);
+                        
+                        // Check previously existing innovation to set the correct innovation number
+                        const sameExistingInnovation = Genome.historic.find(nodeIn.identifier, ModificationType.Add, nodeOut.identifier);
+                        const innovationId = sameExistingInnovation === null ? -1 : sameExistingInnovation.innovationId;
+                        newGenome.addConnection(nodeIn, nodeOut, innovationId);
                     } else {
                         // prevent the recurrent by flipping the connection
-                        newGenome.addConnection(nodeOut, nodeIn);
+                        
+                        // Check previously existing innovation to set the correct innovation number
+                        const sameExistingInnovation = Genome.historic.find(nodeOut.identifier, ModificationType.Add, nodeIn.identifier);
+                        const innovationId = sameExistingInnovation === null ? -1 : sameExistingInnovation.innovationId;
+                        newGenome.addConnection(nodeOut, nodeIn, innovationId);
                     }
                 } else {
                     // add a forward connection
-                    newGenome.addConnection(nodeIn, nodeOut);
+
+                    // Check previously existing innovation to set the correct innovation number
+                    const sameExistingInnovation = Genome.historic.find(nodeIn.identifier, ModificationType.Add, nodeOut.identifier);
+                    const innovationId = sameExistingInnovation === null ? -1 : sameExistingInnovation.innovationId;
+                    newGenome.addConnection(nodeIn, nodeOut, innovationId);
                 }
             }
             // else could happen if output node is selected first without hidden nodes available
@@ -250,7 +261,11 @@ export class RTADN extends ADN {
             // TODO : check previously existing innovation to set the correct innovation number
 
             const link = RTADN.selectEnabledLink(newGenome.connectGenes);
-            newGenome.splitConnection(link);
+            
+            const sameExistingInnovation = Genome.historic.find(link.inputNode.identifier, ModificationType.Split, link.outputNode.identifier);
+            const innovationId = sameExistingInnovation === null ? -1 : sameExistingInnovation.innovationId;
+            const nodeId  = sameExistingInnovation === null ? -1 : sameExistingInnovation.newNodeId;
+            newGenome.splitConnection(link, innovationId, nodeId);
         }
 
         result.g = newGenome;
