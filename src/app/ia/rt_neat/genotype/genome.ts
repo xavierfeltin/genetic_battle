@@ -16,6 +16,12 @@ export class Genome {
         this.links = [];
     }
 
+    public static reset() {
+        Genome.innovationNumber = 0;
+        Genome.nodeNumber = 0;
+        Genome.historic.reset();
+    }
+
     public static incrementInnovation() {
         Genome.innovationNumber++;
     }
@@ -76,7 +82,7 @@ export class Genome {
 
         if (innovation === -1) {
             Genome.logInnovation(ModificationType.Add, innov, inNode.identifier, outNode.identifier);
-        }        
+        }
     }
 
     public addNode(type: NodeType, position: number, id: number = -1) { // node: NodeGene) {
@@ -111,8 +117,11 @@ export class Genome {
             nodeId = Genome.nextNodeId;
             Genome.incrementNodeId();
         }
-        const newNode = new NodeGene(nodeId, NodeType.Hidden, newNodeLayer);        
+        const newNode = new NodeGene(nodeId, NodeType.Hidden, newNodeLayer);
         this.nodeGenes.push(newNode);
+
+        console.log('new node: ');
+        console.log(newNode);
 
         // Update the layer of the node at the end of the new connection and propagate the modification
         if (connect.reccurent) {
@@ -132,11 +141,11 @@ export class Genome {
         let postConnectId = innovationId + 2;
         if (innovationId === -1) {
             anteConnectId = Genome.nextInnovation;
-            Genome.incrementInnovation();    
+            Genome.incrementInnovation();
             postConnectId = Genome.nextInnovation;
             Genome.incrementInnovation();
         }
-        
+
         // Connection into the new node weight of 1
         const anteConnect = new ConnectGene(anteConnectId, connect.inputNode, newNode, 1, true);
         Genome.incrementInnovation();
@@ -145,15 +154,16 @@ export class Genome {
         connect.inputNode.addOutLink(anteConnect);
 
         // Connection out the new node weight of the previous connection
-        
+
         const postConnect = new ConnectGene(postConnectId, newNode, connect.outputNode, connect.weight, true);
         this.links.push(postConnect);
         newNode.addOutLink(postConnect);
         connect.outputNode.addInLink(postConnect);
 
         if (innovationId === -1) {
-            Genome.logInnovation( ModificationType.Split, connect.innovation, connect.inputNode.identifier, connect.outputNode.identifier, newNode.identifier);
-        }        
+            Genome.logInnovation( ModificationType.Split, connect.innovation,
+                connect.inputNode.identifier, connect.outputNode.identifier, newNode.identifier);
+        }
     }
 
     /**

@@ -6,8 +6,7 @@ import { ModificationType } from './genotype/historic';
 
 beforeEach(() => {
     // Reset static variable before each test
-    Genome.innovationNumber = 0;
-    Genome.nodeNumber = 0;
+    Genome.reset();
 });
 
 afterEach(() => {});
@@ -122,7 +121,7 @@ function generateComplexGenomes(): Genome[] {
     Genome.incrementInnovation();
 
     g1.splitConnection(g1.connectGenes[0]);
-    g2.splitConnection(g1.connectGenes[1]);
+    g2.splitConnection(g2.connectGenes[1]);
 
     return [g1, g2];
 }
@@ -297,7 +296,7 @@ describe('RTAdn', () => {
             expect(newAdn.genome.connectGenes[2].isEnabled).toBeTruthy();
         });
 
-        it('outputs the crossover of two more complex genomes with different fitness scores', () => {
+        xit('outputs the crossover of two more complex genomes with different fitness scores', () => {
             const rates: RTADNRates = getBasicRates();
             const genomes = generateComplexGenomes();
             const adnParent1 = new RTADN(-1, 1, rates);
@@ -327,7 +326,7 @@ describe('RTAdn', () => {
             expect(newAdn.genome.connectGenes[3].isEnabled).toBeTruthy();
         });
 
-        xit('outputs the crossover of two more complex genomes with different fitness scores', () => {
+        it('outputs the crossover of two more complex genomes with different fitness scores', () => {
             const rates: RTADNRates = getBasicRates();
             const genomes = generateComplexGenomes();
             const adnParent1 = new RTADN(-1, 1, rates);
@@ -338,6 +337,10 @@ describe('RTAdn', () => {
 
             const newAdn = adnParent1.crossOver(adnParent2, -1);
             newAdn.genome.nodeGenes.sort(sortNodeGenesByIdentifier);
+
+            console.log(adnParent1.genome.connectGenes);
+            console.log(adnParent2.genome.connectGenes);
+            console.log(newAdn.genome.connectGenes);
 
             expect(newAdn.genome.nodeGenes.length).toBe(4);
             expect(newAdn.genome.nodeGenes[0].identifier).toBe(0);
@@ -579,7 +582,12 @@ describe('RTAdn', () => {
                 inNodeId: 0,
                 outNodeId: 1
             });
-            
+
+            RTADN.selectInNode = (nodeGenes: NodeGene[]) => {
+                // force to return the output node
+                return nodeGenes[0];
+            };
+
             const rates: RTADNRates = getRateForConnecting();
             const adnParent1 = new RTADN(-1, 1, rates);
             adnParent1.genome = generateNonConnectedSimpleDirectGenome();
@@ -628,7 +636,7 @@ describe('RTAdn', () => {
                 outNodeId: 1,
                 newNodeId: 2
             });
-            
+
             const rates: RTADNRates = getRateForSplitting();
             const adnParent1 = new RTADN(-1, 1, rates);
             adnParent1.genome = generateDirectGenome(true);

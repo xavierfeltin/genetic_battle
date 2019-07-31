@@ -182,11 +182,11 @@ export class RTADN extends ADN {
             }
         }
 
-        console.log('results links:');
-        console.log(unionLinks);
+        // console.log('results links:');
+        // console.log(unionLinks);
 
-        console.log('results nodes:');
-        console.log(unionNodes);
+        // console.log('results nodes:');
+        // console.log(unionNodes);
 
         if (unionLinks.length === 0) {
             // if no links gets only the input, output and bias nodes
@@ -222,7 +222,9 @@ export class RTADN extends ADN {
             }
         }
 
-        if (this.mutationConnectRate !== 0 && Math.random() <= this.mutationConnectRate) {            
+        if (this.mutationConnectRate !== 0 && Math.random() <= this.mutationConnectRate) {
+            console.log('Add a connection');
+
             const nodeIn = RTADN.selectInNode(newGenome.nodeGenes);
             const nodeOut = RTADN.selectOutNode(nodeIn, newGenome.nodeGenes);
 
@@ -232,14 +234,14 @@ export class RTADN extends ADN {
                     if (this.mutationAllowRecurrentRate !== 0
                         && Math.random() <= this.mutationAllowRecurrentRate) {
                         // percentage where a recurrent link is acceptable
-                        
+
                         // Check previously existing innovation to set the correct innovation number
                         const sameExistingInnovation = Genome.historic.find(nodeIn.identifier, ModificationType.Add, nodeOut.identifier);
                         const innovationId = sameExistingInnovation === null ? -1 : sameExistingInnovation.innovationId;
                         newGenome.addConnection(nodeIn, nodeOut, innovationId);
                     } else {
                         // prevent the recurrent by flipping the connection
-                        
+
                         // Check previously existing innovation to set the correct innovation number
                         const sameExistingInnovation = Genome.historic.find(nodeOut.identifier, ModificationType.Add, nodeIn.identifier);
                         const innovationId = sameExistingInnovation === null ? -1 : sameExistingInnovation.innovationId;
@@ -247,7 +249,6 @@ export class RTADN extends ADN {
                     }
                 } else {
                     // add a forward connection
-
                     // Check previously existing innovation to set the correct innovation number
                     const sameExistingInnovation = Genome.historic.find(nodeIn.identifier, ModificationType.Add, nodeOut.identifier);
                     const innovationId = sameExistingInnovation === null ? -1 : sameExistingInnovation.innovationId;
@@ -261,10 +262,13 @@ export class RTADN extends ADN {
             // TODO : check previously existing innovation to set the correct innovation number
 
             const link = RTADN.selectEnabledLink(newGenome.connectGenes);
-            
-            const sameExistingInnovation = Genome.historic.find(link.inputNode.identifier, ModificationType.Split, link.outputNode.identifier);
+
+            const sameExistingInnovation = Genome.historic.find(link.inputNode.identifier,
+                                                ModificationType.Split, link.outputNode.identifier);
             const innovationId = sameExistingInnovation === null ? -1 : sameExistingInnovation.innovationId;
             const nodeId  = sameExistingInnovation === null ? -1 : sameExistingInnovation.newNodeId;
+
+            console.log('split connection: ' + link.innovation + ', ' + innovationId + ', ' + nodeId);
             newGenome.splitConnection(link, innovationId, nodeId);
         }
 

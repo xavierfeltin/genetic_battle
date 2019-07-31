@@ -18,14 +18,18 @@ export class Historic {
         this.table = {};
     }
 
-    addEntry(entry: HistoryEntry) {
+    public reset() {
+        this.table = {};
+    }
+
+    public addEntry(entry: HistoryEntry) {
         if (!this.table[entry.inNodeId]) {
             this.table[entry.inNodeId] = [];
         }
         this.table[entry.inNodeId].push(entry);
     }
 
-    find(inNodeId: number, type: ModificationType, outNodeId: number) {
+    public find(inNodeId: number, type: ModificationType, outNodeId: number) {
         if (this.table[inNodeId]) {
             const histories: HistoryEntry[] = this.table[inNodeId];
             const result = histories.find((value) => value.modificationType === type && value.outNodeId === outNodeId);
