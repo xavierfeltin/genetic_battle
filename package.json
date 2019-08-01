@@ -47,8 +47,7 @@
   "jest": {
     "preset": "jest-preset-angular",
     "setupFilesAfterEnv": [
-      "<rootDir>/setupJest.ts",
-      "D:/projet/genetic_battle/src/.vscode/jest.config.js"
+      "<rootDir>/setupJest.ts"
     ]
   }
 }
