@@ -1,7 +1,7 @@
 import { NodeGene, NodeType } from './genotype/node';
 import { Genome } from './genotype/genome';
 import { RTADN, RTADNRates } from './adn';
-import { checkConnection, checkNode } from './genotype/common.spec';
+import { checkConnection, checkNode } from './genotype/common-spec';
 import { ModificationType } from './genotype/historic';
 
 beforeEach(() => {
@@ -138,7 +138,7 @@ function sortNodeGenesByIdentifier(n1: NodeGene, n2: NodeGene): number {
 
 describe('RTAdn', () => {
     describe('constructor', () => {
-        xit('outputs an adn with the correct attributes', () => {
+        it('outputs an adn with the correct attributes', () => {
             const rates: RTADNRates = getBasicRates();
             const adn = new RTADN(-1, 1, rates);
             const adnRates = adn.rates;
@@ -154,7 +154,7 @@ describe('RTAdn', () => {
     });
 
     describe('crossover', () => {
-        xit('outputs the crossover of two non connected genomes', () => {
+        it('outputs the crossover of two non connected genomes', () => {
             const rates: RTADNRates = getBasicRates();
             const adnParent1 = new RTADN(-1, 1, rates);
             adnParent1.genome = generateNonConnectedSimpleDirectGenome();
@@ -171,7 +171,7 @@ describe('RTAdn', () => {
             expect(newAdn.genome.connectGenes.length).toBe(0);
         });
 
-        xit('outputs the crossover of two identical direct genomes', () => {
+        it('outputs the crossover of two identical direct genomes', () => {
             const rates: RTADNRates = getBasicRates();
             const adnParent1 = new RTADN(-1, 1, rates);
             adnParent1.genome = generateDirectGenome();
@@ -190,7 +190,7 @@ describe('RTAdn', () => {
             expect(newAdn.genome.connectGenes[0].weight).toBe(avgWeights);
         });
 
-        xit('outputs the crossover of one direct genome and a genome with a split with equals fitness scores', () => {
+        it('outputs the crossover of one direct genome and a genome with a split with equals fitness scores', () => {
             const rates: RTADNRates = getBasicRates();
             const adnParent1 = new RTADN(-1, 1, rates);
             adnParent1.genome = generateDirectGenome(true);
@@ -222,7 +222,7 @@ describe('RTAdn', () => {
             expect(newAdn.genome.connectGenes[2].isEnabled).toBeTruthy();
         });
 
-        xit('outputs the crossover of one split genome and one direct genome with equals fitness scores', () => {
+        it('outputs the crossover of one split genome and one direct genome with equals fitness scores', () => {
             const rates: RTADNRates = getBasicRates();
             const adnParent1 = new RTADN(-1, 1, rates);
             adnParent1.genome = generateSimpleSplitGenome(true);
@@ -248,7 +248,7 @@ describe('RTAdn', () => {
             expect(newAdn.genome.connectGenes[2].isEnabled).toBeTruthy();
         });
 
-        xit('outputs the crossover of one direct genome and a genome with a split with different fitness scores', () => {
+        it('outputs the crossover of one direct genome and a genome with a split with different fitness scores', () => {
             const rates: RTADNRates = getBasicRates();
             const adnParent1 = new RTADN(-1, 1, rates);
             adnParent1.genome = generateDirectGenome(true);
@@ -270,7 +270,7 @@ describe('RTAdn', () => {
             expect(newAdn.genome.connectGenes[0].isEnabled).toBeFalsy();
         });
 
-        xit('outputs the crossover of one split genome and one direct genome with different fitness scores', () => {
+        it('outputs the crossover of one split genome and one direct genome with different fitness scores', () => {
             const rates: RTADNRates = getBasicRates();
             const adnParent1 = new RTADN(-1, 1, rates);
             adnParent1.genome = generateSimpleSplitGenome(true);
@@ -296,7 +296,7 @@ describe('RTAdn', () => {
             expect(newAdn.genome.connectGenes[2].isEnabled).toBeTruthy();
         });
 
-        xit('outputs the crossover of two more complex genomes with different fitness scores', () => {
+        it('outputs the crossover of two more complex genomes with different fitness scores', () => {
             const rates: RTADNRates = getBasicRates();
             const genomes = generateComplexGenomes();
             const adnParent1 = new RTADN(-1, 1, rates);
@@ -338,12 +338,6 @@ describe('RTAdn', () => {
             const newAdn = adnParent1.crossOver(adnParent2, -1);
             newAdn.genome.nodeGenes.sort(sortNodeGenesByIdentifier);
 
-            // console.log(adnParent1.genome.connectGenes);
-            // console.log(adnParent2.genome.connectGenes);
-            console.log(newAdn.genome.connectGenes);
-
-
-            /*
             expect(newAdn.genome.nodeGenes.length).toBe(4);
             expect(newAdn.genome.nodeGenes[0].identifier).toBe(0);
             expect(newAdn.genome.nodeGenes[1].identifier).toBe(1);
@@ -360,16 +354,20 @@ describe('RTAdn', () => {
             expect(newAdn.genome.connectGenes[2].isEnabled).toBeTruthy();
             expect(newAdn.genome.connectGenes[3].innovation).toBe(5);
             expect(newAdn.genome.connectGenes[3].isEnabled).toBeTruthy();
-            */
         });
     });
 
     describe('mutate', () => {
-        xit('outputs the add connection mutation of a non connected genome', () => {
+        it('outputs the add connection mutation of a non connected genome', () => {
             const rates: RTADNRates = getRateForConnecting();
             const adnParent1 = new RTADN(-1, 1, rates);
             adnParent1.genome = generateNonConnectedSimpleDirectGenome();
 
+            RTADN.selectInNode = (nodeGenes: NodeGene[]) => {
+                // force to return the input node
+                return nodeGenes[0];
+            };
+            
             const newAdn = adnParent1.mutate();
             newAdn.genome.nodeGenes.sort(sortNodeGenesByIdentifier);
 
@@ -403,7 +401,7 @@ describe('RTAdn', () => {
             });
         });
 
-        xit('outputs no connection when adding a recurrent connection mutation on a non connected genome', () => {
+        it('outputs no connection when adding a recurrent connection mutation on a non connected genome', () => {
             const rates: RTADNRates = getRateForRecurrentConnecting();
             const adnParent1 = new RTADN(-1, 1, rates);
             adnParent1.genome = generateNonConnectedSimpleDirectGenome();
@@ -434,7 +432,7 @@ describe('RTAdn', () => {
             });
         });
 
-        xit('outputs forward connection when adding a forward connection mutation on a non connected genome even if recurrent rate at 1', () => {
+        it('outputs forward connection when adding a forward connection mutation on a non connected genome even if recurrent rate at 1', () => {
             const rates: RTADNRates = getRateForRecurrentConnecting();
             const adnParent1 = new RTADN(-1, 1, rates);
             adnParent1.genome = generateNonConnectedSimpleDirectGenome();
@@ -477,7 +475,7 @@ describe('RTAdn', () => {
             });
         });
 
-        xit('outputs opposite activation on connections when adding an activation mutation on a simple connected genome', () => {
+        it('outputs opposite activation on connections when adding an activation mutation on a simple connected genome', () => {
             const rates: RTADNRates = getRateForActivating();
             const adnParent1 = new RTADN(-1, 1, rates);
             adnParent1.genome = generateActivateDeactivateGenome();
@@ -507,7 +505,7 @@ describe('RTAdn', () => {
             });
         });
 
-        xit('outputs splitted connection when applying a split mutation on a simple connected genome', () => {
+        it('outputs splitted connection when applying a split mutation on a simple connected genome', () => {
             const rates: RTADNRates = getRateForSplitting();
             const adnParent1 = new RTADN(-1, 1, rates);
             adnParent1.genome = generateDirectGenome(true);
@@ -574,7 +572,7 @@ describe('RTAdn', () => {
     });
 
     describe('mutate with historic', () => {
-        it ('outputs the modiied genomes reusing similar innovations for adding', () => {
+        it('outputs the modiied genomes reusing similar innovations for adding', () => {
             // Set next ids far away to simulate previous activity
             Genome.nodeNumber = 5;
             Genome.innovationNumber = 5;
@@ -627,7 +625,7 @@ describe('RTAdn', () => {
             });
         });
 
-        it ('outputs the modiied genomes reusing similar innovations for splitting', () => {
+        it('outputs the modiied genomes reusing similar innovations for splitting', () => {
             // Set next ids far away to simulate previous activity
             Genome.nodeNumber = 5;
             Genome.innovationNumber = 5;

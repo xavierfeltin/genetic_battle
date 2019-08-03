@@ -314,39 +314,12 @@ export class RTADN extends ADN {
      * @param newLink new link that will be used in the future
      * @param unionNodes already copied nodes to avoid duplicates
      */
-    private manageDependencies(oldLink, newLink, unionNodes) {
+    private manageDependencies(oldLink: ConnectGene, newLink: ConnectGene, unionNodes: NodeGene[]) {
 
         let foundNode = this.searchByLayer(oldLink.outputNode, unionNodes);
         if (foundNode === null) {
             const newNode = oldLink.outputNode.copyWithoutDependencies();
             newNode.inputs.push(newLink);
-            newLink.inputNode = newNode;
-
-            unionNodes.push(newNode); // TODO: replace by a better sort / insert algorithm
-            unionNodes.sort((n1: NodeGene, n2: NodeGene) => {
-                if (n1.layer < n2.layer) {
-                    return -1;
-                } else if (n1.layer > n2.layer) {
-                    return 1;
-                } else {
-                    if (n1.identifier < n2.identifier) {
-                        return -1;
-                    } else if (n1.identifier > n2.identifier) {
-                        return 1;
-                    } else {
-                        return 0;
-                    }
-                }
-            });
-
-        } else {
-            foundNode.inputs.push(newLink);
-        }
-
-        foundNode = this.searchByLayer(oldLink.inputNode, unionNodes);
-        if (foundNode === null) {
-            const newNode = oldLink.inputNode.copyWithoutDependencies();
-            newNode.outputs.push(newLink);
             newLink.outputNode = newNode;
 
             unionNodes.push(newNode); // TODO: replace by a better sort / insert algorithm
@@ -363,10 +336,39 @@ export class RTADN extends ADN {
                     } else {
                         return 0;
                     }
+                }
+            });
+
+        } else {
+            newLink.outputNode = foundNode;
+            foundNode.inputs.push(newLink);
+        }
+
+        foundNode = this.searchByLayer(oldLink.inputNode, unionNodes);
+        if (foundNode === null) {
+            const newNode = oldLink.inputNode.copyWithoutDependencies();
+            newNode.outputs.push(newLink);
+            newLink.inputNode = newNode;
+
+            unionNodes.push(newNode); // TODO: replace by a better sort / insert algorithm
+            unionNodes.sort((n1: NodeGene, n2: NodeGene) => {
+                if (n1.layer < n2.layer) {
+                    return -1;
+                } else if (n1.layer > n2.layer) {
+                    return 1;
+                } else {
+                    if (n1.identifier < n2.identifier) {
+                        return -1;
+                    } else if (n1.identifier > n2.identifier) {
+                        return 1;
+                    } else {
+                        return 0;
+                    }
 
                 }
             });
         } else {
+            newLink.inputNode = foundNode;
             foundNode.outputs.push(newLink);
         }
     }

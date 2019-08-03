@@ -1,9 +1,7 @@
 import { Node, NodeType } from './node';
 import { Connect } from './connect';
-import { Activation } from '../../neural-network';
 import { NeuralNetwork } from './neural-network';
 import { Genome } from '../genotype/genome';
-import { NodeGene } from '../genotype/node';
 
 beforeEach(() => {
     // Reset static variable before each test

@@ -1,6 +1,6 @@
 import { NodeGene, NodeType } from './node';
 import { Genome } from './genome';
-import { checkConnection, checkNode } from './common.spec';
+import { checkConnection, checkNode } from './common-spec';
 
 beforeEach(() => {
     // Reset static variable before each test

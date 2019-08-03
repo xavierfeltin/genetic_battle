@@ -148,7 +148,6 @@ export class Genome {
 
         // Connection into the new node weight of 1
         const anteConnect = new ConnectGene(anteConnectId, connect.inputNode, newNode, 1, true);
-        Genome.incrementInnovation();
         this.links.push(anteConnect);
         newNode.addInLink(anteConnect);
         connect.inputNode.addOutLink(anteConnect);

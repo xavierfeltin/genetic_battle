@@ -39,7 +39,7 @@ export function checkNode(node: NodeGene, conf: ExpectedNode) {
     expect(node.nodeType).toBe(conf.type);
     expect(node.layer).toBe(node.layer);
 
-    if (conf.inputs) {
+    if (conf.inputs && conf.inputs) {
         const inputsIds = node.inputs.map(i => i.innovation);
         const expectedInputsIds = conf.inputs.map(i => i.innovation);
         for (const id of expectedInputsIds) {
