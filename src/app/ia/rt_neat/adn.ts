@@ -21,6 +21,11 @@ export class RTADN extends ADN {
     public static readonly MUTATION_ALLOW_RECURRENT: number = 0.01;
     public static readonly MUTATION_SPLIT_CONNECT_RATE: number = 0.01;
 
+    public static DIST_DISJOINT = 1;
+    public static DIST_NORMALIZATION = 1;
+    public static DIST_EXCESS = 1;
+    public static DIST_DELTA_WEIGHT = 1;
+
     private g: Genome;
     private mutationActivationRate: number;
     private mutationConnectRate: number;
@@ -81,6 +86,10 @@ export class RTADN extends ADN {
         return link;
     }
 
+    public static deltaWeight(w1: number, w2: number) {
+        return Math.abs(w1 - w2);
+    }
+
     public get genome(): Genome {
         return this.g;
     }
@@ -110,14 +119,9 @@ export class RTADN extends ADN {
 
         // Make an union of all the innovation numbers
         for (const link of this.genome.connectGenes) {
-            // console.log('current link: ' + link.innovation);
-
             // Some innovations are present in the other set and not in the current genome
             while (index < adn.genome.connectGenes.length
                 && adn.genome.connectGenes[index].innovation < link.innovation) {
-
-                // console.log('previous disjoint/excess link: ' + adn.genome.connectGenes[index].innovation);
-
                 // Push it if this parent is the best or both have the same fitness
                 if (isBest >= 0) {
                     const newLink = adn.genome.connectGenes[index].copyWithoutDependencies();
@@ -134,9 +138,6 @@ export class RTADN extends ADN {
             // Innovations are present in both genomes
             if (index < adn.genome.connectGenes.length
                 && adn.genome.connectGenes[index].innovation === link.innovation) {
-
-                // console.log('link exists in both parents: ' + adn.genome.connectGenes[index].innovation);
-
                 // Set the link with the average of the weights from the 2 parents
                 const newLink = link.copyWithoutDependencies();
                 this.manageDependencies(link, newLink, unionNodes);
@@ -150,8 +151,6 @@ export class RTADN extends ADN {
                 unionLinks.push(newLink);
                 index++;
             } else {
-                // console.log('link exists only in current parent: ' + link.innovation);
-
                 // push it if this parent is the best or both have the same fitness
                 if (isBest <= 0) {
                     const newLink = link.copyWithoutDependencies();
@@ -166,11 +165,8 @@ export class RTADN extends ADN {
         }
 
         // Innovations remain in the other genome
-        // console.log('index other parent: ' + index);
         for (let i = index; i < adn.genome.connectGenes.length; i++) {
             const link = adn.genome.connectGenes[i];
-            // console.log('excess links in the other parent: ' + link.innovation);
-
             if (isBest >= 0) {
                 const newLink = link.copyWithoutDependencies();
                 this.manageDependencies(link, newLink, unionNodes);
@@ -181,12 +177,6 @@ export class RTADN extends ADN {
                 unionLinks.push(newLink);
             }
         }
-
-        // console.log('results links:');
-        // console.log(unionLinks);
-
-        // console.log('results nodes:');
-        // console.log(unionNodes);
 
         if (unionLinks.length === 0) {
             // if no links gets only the input, output and bias nodes
@@ -223,8 +213,6 @@ export class RTADN extends ADN {
         }
 
         if (this.mutationConnectRate !== 0 && Math.random() <= this.mutationConnectRate) {
-            console.log('Add a connection');
-
             const nodeIn = RTADN.selectInNode(newGenome.nodeGenes);
             const nodeOut = RTADN.selectOutNode(nodeIn, newGenome.nodeGenes);
 
@@ -259,21 +247,77 @@ export class RTADN extends ADN {
         }
 
         if (this.mutationSplitConnectRate !== 0 && Math.random() <= this.mutationSplitConnectRate) {
-            // TODO : check previously existing innovation to set the correct innovation number
-
             const link = RTADN.selectEnabledLink(newGenome.connectGenes);
-
             const sameExistingInnovation = Genome.historic.find(link.inputNode.identifier,
                                                 ModificationType.Split, link.outputNode.identifier);
             const innovationId = sameExistingInnovation === null ? -1 : sameExistingInnovation.innovationId;
             const nodeId  = sameExistingInnovation === null ? -1 : sameExistingInnovation.newNodeId;
-
-            console.log('split connection: ' + link.innovation + ', ' + innovationId + ', ' + nodeId);
             newGenome.splitConnection(link, innovationId, nodeId);
         }
 
         result.g = newGenome;
         return result;
+    }
+
+    public distance(adn: RTADN): number {
+        let nbExcessGenes = 0;
+        let nbDisjointGenes = 0;
+        let deltaAvgMatchingGenes = 0;
+        let nbMatchingGenes = 0;
+
+        let indexCurrent = 0;
+        let indexOther = 0;
+        for (const link of this.genome.connectGenes) {
+            // Some innovations are present in the other set and not in the current genome
+            while (indexOther < adn.genome.connectGenes.length
+                && adn.genome.connectGenes[indexOther].innovation < link.innovation) {
+
+                // We are before the beginning of the current ADN (should not happen) -> excess gene
+                if (indexCurrent === 0) {
+                    nbExcessGenes ++;
+                } else {
+                    // We are on disjoint genes in both adn
+                    nbDisjointGenes ++;
+                }
+
+                indexOther++;
+            }
+
+            // Innovations are present in both genomes
+            if (indexOther < adn.genome.connectGenes.length
+                && adn.genome.connectGenes[indexOther].innovation === link.innovation) {
+
+                // TODO: compute delta weights
+                deltaAvgMatchingGenes += RTADN.deltaWeight(adn.genome.connectGenes[indexOther].weight, link.weight);
+                nbMatchingGenes++;
+
+                indexOther++;
+                indexCurrent++;
+            } else {
+                // Innovations are present only in the current genome
+
+                // We are after the end of the other genome -> excess gene
+                if (indexOther === 0 || indexCurrent > adn.genome.connectGenes.length) {
+                    nbExcessGenes ++;
+                } else {
+                    // We are on disjoint genes in both adn
+                    nbDisjointGenes++;
+                }
+
+                indexCurrent++;
+            }
+        }
+
+        // Innovations remain in the other genome -> excess gene
+        for (let i = indexOther; i < adn.genome.connectGenes.length; i++) {
+            nbExcessGenes++;
+        }
+
+        const distance = (RTADN.DIST_DISJOINT * nbDisjointGenes) / RTADN.DIST_NORMALIZATION
+                        + (RTADN.DIST_EXCESS * nbExcessGenes) / RTADN.DIST_NORMALIZATION
+                        + RTADN.DIST_DELTA_WEIGHT * (deltaAvgMatchingGenes / nbMatchingGenes);
+
+        return distance;
     }
 
     public get rates(): RTADNRates {

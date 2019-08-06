@@ -20,7 +20,7 @@ export class ConnectGene {
             this.isRecurrent = (this.inNode.layer >= this.outNode.layer);
         } else {
             this.isRecurrent = false; // default value
-        }        
+        }
     }
 
     public activate(active: boolean) {

@@ -108,6 +108,15 @@ function generateActivateDeactivateGenome(): Genome {
     return g;
 }
 
+function generateComplexGenome(): Genome {
+    const g = generateDirectGenome(false);
+    g.addNode(NodeType.Input, -Infinity, 2);
+    g.addConnection(g.nodeGenes[2], g.nodeGenes[1], 1);
+    g.splitConnection(g.connectGenes[0], 0, 3);
+    g.splitConnection(g.connectGenes[1], 1, 4);
+    return g;
+}
+
 function generateComplexGenomes(): Genome[] {
     const g1 = generateDirectGenome(false);
     const g2 = generateDirectGenome(true);
@@ -367,7 +376,7 @@ describe('RTAdn', () => {
                 // force to return the input node
                 return nodeGenes[0];
             };
-            
+
             const newAdn = adnParent1.mutate();
             newAdn.genome.nodeGenes.sort(sortNodeGenesByIdentifier);
 
@@ -700,6 +709,33 @@ describe('RTAdn', () => {
                 inputs: [newAdn.genome.connectGenes[1]],
                 outputs: [newAdn.genome.connectGenes[2]]
             });
+        });
+    });
+
+    describe('distance', () => {
+        it('outputs the average delta weight between two identical genomes', () => {
+            const rates = getRateForSplitting();
+            const adn1 = new RTADN(-1, 1, rates);
+            adn1.genome = generateComplexGenome();
+
+            const adn2 = new RTADN(-1, 1, rates);
+            adn2.genome = generateComplexGenome();
+
+            RTADN.deltaWeight = (w1: number, w2: number) => {
+                // mock the weight difference to force strict equality btw them
+                return 1;
+            };
+
+            const distance = adn1.distance(adn2);
+            expect(distance).toBe(1 / adn1.genome.connectGenes.length);
+        });
+
+        it('outputs the excess nodes between a genome longer than the current one', () => {
+            // TO DO
+        });
+
+        it('outputs the disjoint nodes between a genome contained in the current one', () => {
+            // TO DO
         });
     });
 });

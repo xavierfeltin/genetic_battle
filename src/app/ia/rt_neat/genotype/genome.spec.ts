@@ -1,4 +1,4 @@
-import { NodeGene, NodeType } from './node';
+import { NodeType } from './node';
 import { Genome } from './genome';
 import { checkConnection, checkNode } from './common-spec';
 

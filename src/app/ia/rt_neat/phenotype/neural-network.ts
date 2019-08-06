@@ -2,8 +2,6 @@ import { Node } from './node';
 import { Connect } from './connect';
 import { Genome } from '../genotype/genome';
 import { NodeGene } from '../genotype/node';
-import { ConnectGene } from '../genotype/connect';
-
 
 export class NeuralNetwork {
     private inputs: Node[];
