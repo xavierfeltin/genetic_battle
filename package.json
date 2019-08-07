@@ -8,7 +8,8 @@
     "lint": "ng lint",
     "test": "jest",
     "test:watch": "jest --watch",
-    "test:cc": "jest --coverage"
+    "test:cc": "jest --coverage",
+    "clear_jest": "jest --clearCache"
   },
   "private": true,
   "dependencies": {
