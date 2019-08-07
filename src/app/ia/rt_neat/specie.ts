@@ -2,13 +2,19 @@ import { RTADN } from './adn';
 
 export class Specie {
     public static specieNumber = 0;
+    public static TOLERANCE = 1;
 
     private id: number;
     private organisms: RTADN[];
     private reference: RTADN;
 
-    constructor(id: number) {
+    constructor(id: number = -1) {
         this.id = id;
+        if (id === -1) {
+            this.id = Specie.nextSpecieNumber;
+            Specie.incrementSpecieNumber();
+        }
+        
         this.organisms = [];
     }
 
@@ -29,5 +35,10 @@ export class Specie {
 
     public isCompatible(organism: RTADN) {
         const distance = this.reference.distance(organism);
+        return distance < Specie.TOLERANCE;
+    }
+
+    public get nbOrganisms(): number {
+        return this.organisms.length;
     }
 }
