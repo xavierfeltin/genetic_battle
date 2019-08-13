@@ -3,7 +3,6 @@ import { Genome } from './genotype/genome';
 import { RTADN, RTADNRates } from './adn';
 import { checkConnection, checkNode } from './genotype/common-spec';
 import { ModificationType } from './genotype/historic';
-import { cpus } from 'os';
 
 beforeEach(() => {
     // Reset static variable before each test

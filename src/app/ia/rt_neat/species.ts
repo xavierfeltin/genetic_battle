@@ -34,7 +34,7 @@ export class Species {
             if (currentSpecie.nbOrganisms === 0) {
                 currentSpecie.addOrganism(organism);
                 found = true;
-            } else if (currentSpecie.isCompatible(organism)) {
+            } else if (currentSpecie.isCompatible(organism, this.compatThresold)) {
                 currentSpecie.addOrganism(organism);
                 found = true;
             } else {
@@ -62,12 +62,28 @@ export class Species {
         }
     }
 
+    public calculateAverageFitness() {
+        for (const specie of this.species) {
+            specie.calculateAverageFitness();
+        }
+    }
+
     public clear() {
         this.species = [];
         this.compatThresold = 0;
     }
 
-    public adjustcompatThresold() {
+    public clearSpecies(keepSpecies: boolean = true) {
+        if (keepSpecies) {
+            for (const specie of this.species) {
+                specie.clear();
+            }
+        } else {
+            this.clear();
+        }
+    }
+
+    public adjustCompatibilityThresold() {
         if (this.species.length < Species.TARGET_NUM_SPECIES) {
             this.compatThresold -= Species.COMPATIBILITY_MODIFICATOR;
         } else if (this.species.length > Species.TARGET_NUM_SPECIES) {
@@ -77,5 +93,30 @@ export class Species {
         if (this.compatThresold < Species.MIN_COMPATIBILITY_THRESOLD) {
             this.compatThresold = Species.MIN_COMPATIBILITY_THRESOLD;
         }
+    }
+
+    public removeOrganismFromSpecies(organism: RTADN) {
+        this.species[organism.specie].removeOrganism(organism);
+    }
+
+    public selectRandomSpecie(): Specie {
+        const probabilities = [];
+        let currentProbability = 0;
+        for (const specie of this.species) {
+            currentProbability += specie.averageFitness / this.species.length; 
+            probabilities.push(currentProbability);
+        }
+
+        // round to 1 last property
+        probabilities[probabilities.length -1] = 1;
+        const random = Math.random();
+        let index = 0;
+        for (const proba of probabilities) {
+            if (proba < random) {
+                index++;
+            }
+        }
+
+        return this.species[index];
     }
 }

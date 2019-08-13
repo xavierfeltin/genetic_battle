@@ -19,6 +19,8 @@ export interface RTMeta {
     isToRemove: boolean;
     fitness: number;
     adjustedFitness: number;
+    specieId: number;
+    age: number;
 }
 
 export class RTADN extends ADN {
@@ -26,12 +28,15 @@ export class RTADN extends ADN {
     public static readonly MUTATION_CONNECT_RATE: number = 0.01;
     public static readonly MUTATION_ALLOW_RECURRENT: number = 0.01;
     public static readonly MUTATION_SPLIT_CONNECT_RATE: number = 0.01;
+    public static readonly MINIMUM_AGE_TO_EVOLVE: number = 0.01;
 
     public static DIST_DISJOINT = 1;
     public static DIST_NORMALIZATION = 1;
     public static DIST_EXCESS = 1;
     public static DIST_DELTA_WEIGHT = 1;
+    public static rtADNId = -1;
 
+    public id: number;
     private g: Genome;
     private mutationActivationRate: number;
     private mutationConnectRate: number;
@@ -42,6 +47,7 @@ export class RTADN extends ADN {
     // TODO: add genome directly in constructor
     constructor(min: number, max: number, rates: RTADNRates) {
         super(0, min, max, rates.mutation, rates.crossOver);
+        this.id = RTADN.nextId;
         this.g = new Genome();
         this.mutationActivationRate = rates.mutationActivation;
         this.mutationConnectRate = rates.mutationConnect;
@@ -50,8 +56,15 @@ export class RTADN extends ADN {
         this.meta = {
             isToRemove: false,
             fitness: 0,
-            adjustedFitness: 0
+            adjustedFitness: 0,
+            specieId: -1,
+            age: 0
         };
+    }
+
+    public static get nextId(): number {
+        RTADN.rtADNId ++;
+        return RTADN.rtADNId;
     }
 
     public static selectInNode(nodeGenes: NodeGene[]) {
@@ -116,6 +129,46 @@ export class RTADN extends ADN {
 
     public set metadata(meta: RTMeta) {
         this.meta = meta;
+    }
+
+    public get isToRemove(): boolean {
+        return this.meta.isToRemove;
+    }
+
+    public set isToRemove(toRemove: boolean) {
+        this.meta.isToRemove = toRemove;
+    }
+
+    public get fitness(): number {
+        return this.meta.fitness;
+    }
+
+    public set fitness(score: number) {
+        this.meta.fitness = score;
+    }
+
+    public get adjustedFitness(): number {
+        return this.adjustedFitness;
+    }
+
+    public set adjustedFitness(score: number) {
+        this.meta.adjustedFitness = score;
+    }
+
+    public get specie(): number {
+        return this.meta.specieId;
+    }
+
+    public set specie(id: number) {
+        this.meta.specieId = id;
+    }
+
+    public get age(): number {
+        return this.meta.age;
+    }
+
+    public set age(val: number) {
+        this.meta.age = val;
     }
 
     // TODO:
