@@ -14,7 +14,7 @@ export class Specie {
             this.id = Specie.nextSpecieNumber;
             Specie.incrementSpecieNumber();
         }
-        
+
         this.organisms = [];
     }
 
@@ -38,7 +38,20 @@ export class Specie {
         return distance < Specie.TOLERANCE;
     }
 
+    public removeUnfitOrganisms() {
+        this.organisms = this.organisms.filter(organism => !organism.metadata.isToRemove);
+    }
+
     public get nbOrganisms(): number {
         return this.organisms.length;
+    }
+
+    /**
+     * Adjust the fitness to the number of organisms in the specie
+     */
+    public calculateAdjustedFitness() {
+        for (const organism of this.organisms) {
+            organism.metadata.adjustedFitness = organism.metadata.fitness / this.nbOrganisms;
+        }
     }
 }

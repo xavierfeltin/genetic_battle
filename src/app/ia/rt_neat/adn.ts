@@ -15,6 +15,12 @@ export interface RTADNRates {
     mutationSplitConnect: number;
 }
 
+export interface RTMeta {
+    isToRemove: boolean;
+    fitness: number;
+    adjustedFitness: number;
+}
+
 export class RTADN extends ADN {
     public static readonly MUTATION_ACTIVATION_RATE: number = 0.01;
     public static readonly MUTATION_CONNECT_RATE: number = 0.01;
@@ -31,6 +37,7 @@ export class RTADN extends ADN {
     private mutationConnectRate: number;
     private mutationAllowRecurrentRate: number;
     private mutationSplitConnectRate: number;
+    private meta: RTMeta;
 
     // TODO: add genome directly in constructor
     constructor(min: number, max: number, rates: RTADNRates) {
@@ -40,6 +47,11 @@ export class RTADN extends ADN {
         this.mutationConnectRate = rates.mutationConnect;
         this.mutationAllowRecurrentRate = rates.mutationAllowRecurrent;
         this.mutationSplitConnectRate = rates.mutationSplitConnect;
+        this.meta = {
+            isToRemove: false,
+            fitness: 0,
+            adjustedFitness: 0
+        };
     }
 
     public static selectInNode(nodeGenes: NodeGene[]) {
@@ -96,6 +108,14 @@ export class RTADN extends ADN {
 
     public set genome(gen: Genome) {
         this.g = gen;
+    }
+
+    public get metadata(): RTMeta {
+        return this.meta;
+    }
+
+    public set metadata(meta: RTMeta) {
+        this.meta = meta;
     }
 
     // TODO:
