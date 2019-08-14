@@ -4,11 +4,11 @@ import { Specie } from './specie';
 
 export class Population {
     private pop: RTADN[];
-    private species: Species;
+    private poolSpecies: Species;
 
     constructor() {
         this.pop = [];
-        this.species = new Species();
+        this.poolSpecies = new Species();
     }
 
     public get population(): RTADN[] {
@@ -21,24 +21,28 @@ export class Population {
         this.affectOrganismsToSpecies(keepSpecies);
     }
 
+    public get species(): Species {
+        return this.poolSpecies;
+    }
+
     /**
      * Generate a new organism and remove the worst organism
      * If no worst organism is found, return null
      */
     public evolve(): RTADN {
-        const worst = this.findWorstOrganism(); 
+        const worst = this.findWorstOrganism();
         if (worst !== null) {
-            this.species.calculateAdjustedFitness();
-            this.species.removeOrganismFromSpecies(worst); // remove worst organism and update avg fitness of specie
+            this.poolSpecies.calculateAdjustedFitness();
+            this.poolSpecies.removeOrganismFromSpecies(worst); // remove worst organism and update avg fitness of specie
             const parentSpecie = this.selectParent();
             const newOrganism = parentSpecie.generateOrganism();
             this.pop.push(newOrganism);
-            this.species.adjustCompatibilityThresold();
+            this.poolSpecies.adjustCompatibilityThresold();
             this.affectOrganismsToSpecies();
             return newOrganism;
         } else {
             return null;
-        }        
+        }
     }
 
     /**
@@ -46,15 +50,15 @@ export class Population {
      * with the referent organism of each existing specie
      */
     private affectOrganismsToSpecies(keepSpecies: boolean = true) {
-        this.species.clearSpecies(keepSpecies);
+        this.poolSpecies.clearSpecies(keepSpecies);
         for (const organism of this.pop) {
-            this.species.addOrganism(organism);
+            this.poolSpecies.addOrganism(organism);
         }
     }
 
-    private findWorstOrganism(): RTADN {
+    public findWorstOrganism(): RTADN {
         const sortedPop = this.pop.sort((a: RTADN, b: RTADN) => {
-            if(a.adjustedFitness < b.adjustedFitness) {
+            if (a.adjustedFitness < b.adjustedFitness) {
                 return -1;
             } else if (a.adjustedFitness > b.adjustedFitness) {
                 return 1;
@@ -70,11 +74,11 @@ export class Population {
                 break;
             }
         }
-        
+
         return worst;
     }
 
     private selectParent(): Specie {
-        return this.species.selectRandomSpecie();
+        return this.poolSpecies.selectRandomSpecie();
     }
 }

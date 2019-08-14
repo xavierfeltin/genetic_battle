@@ -2,16 +2,24 @@ import { Specie } from './specie';
 import { RTADN } from './adn';
 
 export class Species {
-    private static readonly TARGET_NUM_SPECIES = 4;
-    private static readonly MIN_COMPATIBILITY_THRESOLD = 0.3;
-    private static readonly COMPATIBILITY_MODIFICATOR = 0.1;
+    public static readonly TARGET_NUM_SPECIES = 4;
+    public static readonly MIN_COMPATIBILITY_THRESOLD = 0.3;
+    public static readonly COMPATIBILITY_MODIFICATOR = 0.1;
 
-    private species: Specie[];
+    private pool: Specie[];
     private compatThresold: number;
 
-    constructor() {
-        this.species = [];
-        this.compatThresold = 0;
+    constructor(compatibility: number = 0) {
+        this.pool = [];
+        this.compatThresold = compatibility;
+    }
+
+    public get species(): Specie[] {
+        return this.pool;
+    }
+
+    public get compatibilityThresold(): number {
+        return this.compatThresold;
     }
 
     /**
@@ -21,20 +29,17 @@ export class Species {
      * @param organism: organism to add in the species pool
      */
     public addOrganism(organism: RTADN) {
-        if (this.species.length === 0) {
+        if (this.pool.length === 0) {
             const specie = new Specie();
-            this.species.push(specie);
+            this.pool.push(specie);
         }
 
         let found = false;
         let i = 0;
-        while (!found && i < this.species.length) {
-            const currentSpecie = this.species[i];
+        while (!found && i < this.pool.length) {
+            const currentSpecie = this.pool[i];
 
-            if (currentSpecie.nbOrganisms === 0) {
-                currentSpecie.addOrganism(organism);
-                found = true;
-            } else if (currentSpecie.isCompatible(organism, this.compatThresold)) {
+            if (currentSpecie.isCompatible(organism, this.compatThresold)) {
                 currentSpecie.addOrganism(organism);
                 found = true;
             } else {
@@ -46,36 +51,36 @@ export class Species {
         if (!found) {
             const specie = new Specie();
             specie.addOrganism(organism);
-            this.species.push(specie);
+            this.pool.push(specie);
         }
     }
 
     public removeUnfitOrganisms() {
-        for (const specie of this.species) {
+        for (const specie of this.pool) {
             specie.removeUnfitOrganisms();
         }
     }
 
     public calculateAdjustedFitness() {
-        for (const specie of this.species) {
+        for (const specie of this.pool) {
             specie.calculateAdjustedFitness();
         }
     }
 
     public calculateAverageFitness() {
-        for (const specie of this.species) {
+        for (const specie of this.pool) {
             specie.calculateAverageFitness();
         }
     }
 
     public clear() {
-        this.species = [];
+        this.pool = [];
         this.compatThresold = 0;
     }
 
     public clearSpecies(keepSpecies: boolean = true) {
         if (keepSpecies) {
-            for (const specie of this.species) {
+            for (const specie of this.pool) {
                 specie.clear();
             }
         } else {
@@ -84,9 +89,9 @@ export class Species {
     }
 
     public adjustCompatibilityThresold() {
-        if (this.species.length < Species.TARGET_NUM_SPECIES) {
+        if (this.pool.length < Species.TARGET_NUM_SPECIES) {
             this.compatThresold -= Species.COMPATIBILITY_MODIFICATOR;
-        } else if (this.species.length > Species.TARGET_NUM_SPECIES) {
+        } else if (this.pool.length > Species.TARGET_NUM_SPECIES) {
             this.compatThresold += Species.COMPATIBILITY_MODIFICATOR;
         }
 
@@ -96,19 +101,19 @@ export class Species {
     }
 
     public removeOrganismFromSpecies(organism: RTADN) {
-        this.species[organism.specie].removeOrganism(organism);
+        this.pool[organism.specie].removeOrganism(organism);
     }
 
     public selectRandomSpecie(): Specie {
         const probabilities = [];
         let currentProbability = 0;
-        for (const specie of this.species) {
-            currentProbability += specie.averageFitness / this.species.length; 
+        for (const specie of this.pool) {
+            currentProbability += specie.averageFitness / this.pool.length;
             probabilities.push(currentProbability);
         }
 
         // round to 1 last property
-        probabilities[probabilities.length -1] = 1;
+        probabilities[probabilities.length - 1] = 1;
         const random = Math.random();
         let index = 0;
         for (const proba of probabilities) {
@@ -117,6 +122,6 @@ export class Species {
             }
         }
 
-        return this.species[index];
+        return this.pool[index];
     }
 }

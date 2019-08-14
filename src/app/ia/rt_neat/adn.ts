@@ -148,7 +148,7 @@ export class RTADN extends ADN {
     }
 
     public get adjustedFitness(): number {
-        return this.adjustedFitness;
+        return this.meta.adjustedFitness;
     }
 
     public set adjustedFitness(score: number) {
