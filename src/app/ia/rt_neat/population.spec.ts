@@ -58,7 +58,7 @@ describe('Population', () => {
             pop.population = organisms;
 
             const worst = pop.findWorstOrganism();
-            expect(worst.id).toBe(organism1.id);
+            expect(worst).toBeNull();
         });
         it('outputs the only organism set in the population with required minimum age to be picked', () => {
             const organism1 = new RTADN(-1, 1, Common.getBasicRates());
@@ -69,7 +69,7 @@ describe('Population', () => {
             const organism2 = new RTADN(-1, 1, Common.getBasicRates());
             const g2 = Common.generateDirectGenome(false);
             organism2.genome = g2;
-            organism1.metadata.age = RTADN.MINIMUM_AGE_TO_EVOLVE;
+            organism2.metadata.age = RTADN.MINIMUM_AGE_TO_EVOLVE;
 
             const organisms = [organism1, organism2];
 
@@ -78,6 +78,41 @@ describe('Population', () => {
 
             const worst = pop.findWorstOrganism();
             expect(worst.id).toBe(organism2.id);
+        });
+        it('outputs the organism with the smallest adjusted fitness score in the population', () => {
+            const organism1 = new RTADN(-1, 1, Common.getBasicRates());
+            const g1 = Common.generateComplexGenome();
+            organism1.genome = g1;
+            organism1.metadata.age = RTADN.MINIMUM_AGE_TO_EVOLVE;
+            organism1.metadata.adjustedFitness = 5;
+
+            const organism2 = new RTADN(-1, 1, Common.getBasicRates());
+            const g2 = Common.generateDirectGenome(false);
+            organism2.genome = g2;
+            organism2.metadata.age = RTADN.MINIMUM_AGE_TO_EVOLVE;
+            organism2.metadata.adjustedFitness = 6;
+
+            const organism3 = new RTADN(-1, 1, Common.getBasicRates());
+            const g3 = Common.generateDirectGenome(false);
+            organism3.genome = g3;
+            organism3.metadata.age = RTADN.MINIMUM_AGE_TO_EVOLVE;
+            organism3.metadata.adjustedFitness = 2;
+
+            const organisms = [organism1, organism2, organism3];
+
+            const pop = new Population();
+            pop.population = organisms;
+
+            const worst = pop.findWorstOrganism();
+            expect(worst.id).toBe(organism3.id);
+            expect(worst.specie).toBe(pop.species.species[1].id);
+        });
+    });
+    describe('evovle', () => {
+        it('outputs null if no organism is in age to be evoluted', () => {
+            const pop = new Population();
+            const newOrganism = pop.evolve();
+            expect(newOrganism).toBeNull();
         });
     });
 });

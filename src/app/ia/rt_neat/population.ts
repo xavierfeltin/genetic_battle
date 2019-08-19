@@ -8,7 +8,7 @@ export class Population {
 
     constructor() {
         this.pop = [];
-        this.poolSpecies = new Species();
+        this.poolSpecies = new Species(Species.MIN_COMPATIBILITY_THRESOLD);
     }
 
     public get population(): RTADN[] {

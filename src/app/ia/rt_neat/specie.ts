@@ -50,6 +50,7 @@ export class Specie {
         }
         this.pool.push(organism);
         this.avgFitness = ((this.avgFitness * (this.pool.length - 1)) + organism.fitness) / this.pool.length;
+        organism.specie = this.id;
     }
 
     public isCompatible(organism: RTADN, compatibilityThresold: number) {

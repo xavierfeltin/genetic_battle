@@ -3,15 +3,17 @@ import { RTADN } from './adn';
 
 export class Species {
     public static readonly TARGET_NUM_SPECIES = 4;
-    public static readonly MIN_COMPATIBILITY_THRESOLD = 0.3;
+    public static readonly MIN_COMPATIBILITY_THRESOLD = 2.0;
     public static readonly COMPATIBILITY_MODIFICATOR = 0.1;
 
     private pool: Specie[];
     private compatThresold: number;
+    private initCompatThresold: number;
 
     constructor(compatibility: number = 0) {
         this.pool = [];
         this.compatThresold = compatibility;
+        this.initCompatThresold = compatibility;
     }
 
     public get species(): Specie[] {
@@ -75,7 +77,7 @@ export class Species {
 
     public clear() {
         this.pool = [];
-        this.compatThresold = 0;
+        this.compatThresold = this.initCompatThresold;
     }
 
     public clearSpecies(keepSpecies: boolean = true) {

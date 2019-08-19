@@ -28,7 +28,7 @@ export class RTADN extends ADN {
     public static readonly MUTATION_CONNECT_RATE: number = 0.01;
     public static readonly MUTATION_ALLOW_RECURRENT: number = 0.01;
     public static readonly MUTATION_SPLIT_CONNECT_RATE: number = 0.01;
-    public static readonly MINIMUM_AGE_TO_EVOLVE: number = 0.01;
+    public static readonly MINIMUM_AGE_TO_EVOLVE: number = 1;
 
     public static DIST_DISJOINT = 1;
     public static DIST_NORMALIZATION = 1;
