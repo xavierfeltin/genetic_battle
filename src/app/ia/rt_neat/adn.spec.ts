@@ -32,11 +32,8 @@ describe('RTAdn', () => {
     describe('crossover', () => {
         it('outputs the crossover of two non connected genomes', () => {
             const rates: RTADNRates = Common.getBasicRates();
-            const adnParent1 = new RTADN(-1, 1, rates);
-            adnParent1.genome = Common.generateNonConnectedSimpleDirectGenome();
-
-            const adnParent2 = new RTADN(-1, 1, rates);
-            adnParent2.genome = Common.generateNonConnectedSimpleDirectGenome();
+            const adnParent1 = new RTADN(-1, 1, rates, Common.generateNonConnectedSimpleDirectGenome());
+            const adnParent2 = new RTADN(-1, 1, rates, Common.generateNonConnectedSimpleDirectGenome());
 
             const newAdn = adnParent1.crossOver(adnParent2, 0);
             newAdn.genome.nodeGenes.sort(Common.sortNodeGenesByIdentifier);
@@ -49,11 +46,8 @@ describe('RTAdn', () => {
 
         it('outputs the crossover of two identical direct genomes', () => {
             const rates: RTADNRates = Common.getBasicRates();
-            const adnParent1 = new RTADN(-1, 1, rates);
-            adnParent1.genome = Common.generateDirectGenome();
-
-            const adnParent2 = new RTADN(-1, 1, rates);
-            adnParent2.genome = Common.generateDirectGenome();
+            const adnParent1 = new RTADN(-1, 1, rates, Common.generateDirectGenome());
+            const adnParent2 = new RTADN(-1, 1, rates, Common.generateDirectGenome());
 
             const newAdn = adnParent1.crossOver(adnParent2, 0);
             newAdn.genome.nodeGenes.sort(Common.sortNodeGenesByIdentifier);
@@ -68,11 +62,8 @@ describe('RTAdn', () => {
 
         it('outputs the crossover of one direct genome and a genome with a split with equals fitness scores', () => {
             const rates: RTADNRates = Common.getBasicRates();
-            const adnParent1 = new RTADN(-1, 1, rates);
-            adnParent1.genome = Common.generateDirectGenome(true);
-
-            const adnParent2 = new RTADN(-1, 1, rates);
-            adnParent2.genome = Common.generateSimpleSplitGenome();
+            const adnParent1 = new RTADN(-1, 1, rates, Common.generateDirectGenome(true));
+            const adnParent2 = new RTADN(-1, 1, rates, Common.generateSimpleSplitGenome());
 
             const newAdn = adnParent1.crossOver(adnParent2, 0);
             newAdn.genome.nodeGenes.sort(Common.sortNodeGenesByIdentifier);
@@ -100,11 +91,8 @@ describe('RTAdn', () => {
 
         it('outputs the crossover of one split genome and one direct genome with equals fitness scores', () => {
             const rates: RTADNRates = Common.getBasicRates();
-            const adnParent1 = new RTADN(-1, 1, rates);
-            adnParent1.genome = Common.generateSimpleSplitGenome(true);
-
-            const adnParent2 = new RTADN(-1, 1, rates);
-            adnParent2.genome = Common.generateDirectGenome(false);
+            const adnParent1 = new RTADN(-1, 1, rates, Common.generateSimpleSplitGenome(true));
+            const adnParent2 = new RTADN(-1, 1, rates, Common.generateDirectGenome(false));
 
             const newAdn = adnParent1.crossOver(adnParent2, 0);
             newAdn.genome.nodeGenes.sort(Common.sortNodeGenesByIdentifier);
@@ -126,11 +114,8 @@ describe('RTAdn', () => {
 
         it('outputs the crossover of one direct genome and a genome with a split with different fitness scores', () => {
             const rates: RTADNRates = Common.getBasicRates();
-            const adnParent1 = new RTADN(-1, 1, rates);
-            adnParent1.genome = Common.generateDirectGenome(true);
-
-            const adnParent2 = new RTADN(-1, 1, rates);
-            adnParent2.genome = Common.generateSimpleSplitGenome();
+            const adnParent1 = new RTADN(-1, 1, rates, Common.generateDirectGenome(true));
+            const adnParent2 = new RTADN(-1, 1, rates, Common.generateSimpleSplitGenome());
 
             const newAdn = adnParent1.crossOver(adnParent2, -1);
             expect(newAdn.genome.nodeGenes.length).toBe(2);
@@ -148,11 +133,8 @@ describe('RTAdn', () => {
 
         it('outputs the crossover of one split genome and one direct genome with different fitness scores', () => {
             const rates: RTADNRates = Common.getBasicRates();
-            const adnParent1 = new RTADN(-1, 1, rates);
-            adnParent1.genome = Common.generateSimpleSplitGenome(true);
-
-            const adnParent2 = new RTADN(-1, 1, rates);
-            adnParent2.genome = Common.generateDirectGenome(false);
+            const adnParent1 = new RTADN(-1, 1, rates, Common.generateSimpleSplitGenome(true));
+            const adnParent2 = new RTADN(-1, 1, rates, Common.generateDirectGenome(false));
 
             const newAdn = adnParent1.crossOver(adnParent2, -1);
             newAdn.genome.nodeGenes.sort(Common.sortNodeGenesByIdentifier);
@@ -175,11 +157,8 @@ describe('RTAdn', () => {
         it('outputs the crossover of two more complex genomes with different fitness scores', () => {
             const rates: RTADNRates = Common.getBasicRates();
             const genomes = Common.generateComplexGenomes();
-            const adnParent1 = new RTADN(-1, 1, rates);
-            adnParent1.genome = genomes[0];
-
-            const adnParent2 = new RTADN(-1, 1, rates);
-            adnParent2.genome = genomes[1];
+            const adnParent1 = new RTADN(-1, 1, rates, genomes[0]);
+            const adnParent2 = new RTADN(-1, 1, rates, genomes[1]);
 
             const newAdn = adnParent1.crossOver(adnParent2, -1);
             newAdn.genome.nodeGenes.sort(Common.sortNodeGenesByIdentifier);
@@ -205,11 +184,8 @@ describe('RTAdn', () => {
         it('outputs the crossover of two more complex genomes with different fitness scores', () => {
             const rates: RTADNRates = Common.getBasicRates();
             const genomes = Common.generateComplexGenomes();
-            const adnParent1 = new RTADN(-1, 1, rates);
-            adnParent1.genome = genomes[1];
-
-            const adnParent2 = new RTADN(-1, 1, rates);
-            adnParent2.genome = genomes[0];
+            const adnParent1 = new RTADN(-1, 1, rates, genomes[1]);
+            const adnParent2 = new RTADN(-1, 1, rates, genomes[0]);
 
             const newAdn = adnParent1.crossOver(adnParent2, -1);
             newAdn.genome.nodeGenes.sort(Common.sortNodeGenesByIdentifier);
@@ -236,8 +212,7 @@ describe('RTAdn', () => {
     describe('mutate', () => {
         it('outputs the add connection mutation of a non connected genome', () => {
             const rates: RTADNRates = Common.getRateForConnecting();
-            const adnParent1 = new RTADN(-1, 1, rates);
-            adnParent1.genome = Common.generateNonConnectedSimpleDirectGenome();
+            const adnParent1 = new RTADN(-1, 1, rates, Common.generateNonConnectedSimpleDirectGenome());
 
             RTADN.selectInNode = (nodeGenes: NodeGene[]) => {
                 // force to return the input node
@@ -279,8 +254,7 @@ describe('RTAdn', () => {
 
         it('outputs no connection when adding a recurrent connection mutation on a non connected genome', () => {
             const rates: RTADNRates = Common.getRateForRecurrentConnecting();
-            const adnParent1 = new RTADN(-1, 1, rates);
-            adnParent1.genome = Common.generateNonConnectedSimpleDirectGenome();
+            const adnParent1 = new RTADN(-1, 1, rates, Common.generateNonConnectedSimpleDirectGenome());
 
             RTADN.selectInNode = (nodeGenes: NodeGene[]) => {
                 // force to return the output node
@@ -310,8 +284,7 @@ describe('RTAdn', () => {
 
         it('outputs forward connection when adding a forward connection mutation on a non connected genome even if recurrent rate at 1', () => {
             const rates: RTADNRates = Common.getRateForRecurrentConnecting();
-            const adnParent1 = new RTADN(-1, 1, rates);
-            adnParent1.genome = Common.generateNonConnectedSimpleDirectGenome();
+            const adnParent1 = new RTADN(-1, 1, rates, Common.generateNonConnectedSimpleDirectGenome());
 
             RTADN.selectInNode = (nodeGenes: NodeGene[]) => {
                 // force to return the output node
@@ -353,8 +326,7 @@ describe('RTAdn', () => {
 
         it('outputs opposite activation on connections when adding an activation mutation on a simple connected genome', () => {
             const rates: RTADNRates = Common.getRateForActivating();
-            const adnParent1 = new RTADN(-1, 1, rates);
-            adnParent1.genome = Common.generateActivateDeactivateGenome();
+            const adnParent1 = new RTADN(-1, 1, rates, Common.generateActivateDeactivateGenome());
 
             const newAdn = adnParent1.mutate();
             newAdn.genome.nodeGenes.sort(Common.sortNodeGenesByIdentifier);
@@ -383,8 +355,7 @@ describe('RTAdn', () => {
 
         it('outputs splitted connection when applying a split mutation on a simple connected genome', () => {
             const rates: RTADNRates = Common.getRateForSplitting();
-            const adnParent1 = new RTADN(-1, 1, rates);
-            adnParent1.genome = Common.generateDirectGenome(true);
+            const adnParent1 = new RTADN(-1, 1, rates, Common.generateDirectGenome(true));
 
             const newAdn = adnParent1.mutate();
             newAdn.genome.nodeGenes.sort(Common.sortNodeGenesByIdentifier);
@@ -582,11 +553,8 @@ describe('RTAdn', () => {
     describe('distance', () => {
         it('outputs the average delta weight between two identical genomes', () => {
             const rates = Common.getRateForSplitting();
-            const adn1 = new RTADN(-1, 1, rates);
-            adn1.genome = Common.generateComplexGenome();
-
-            const adn2 = new RTADN(-1, 1, rates);
-            adn2.genome = Common.generateComplexGenome();
+            const adn1 = new RTADN(-1, 1, rates, Common.generateComplexGenome());
+            const adn2 = new RTADN(-1, 1, rates, Common.generateComplexGenome());
 
             RTADN.deltaWeight = (w1: number, w2: number) => {
                 // mock the weight difference to force strict equality btw them
@@ -599,11 +567,8 @@ describe('RTAdn', () => {
 
         it('outputs the excess genes distance between a genome longer than the current one', () => {
             const rates = Common.getRateForSplitting();
-            const adn1 = new RTADN(-1, 1, rates);
-            adn1.genome = Common.generateComplexGenome();
-
-            const adn2 = new RTADN(-1, 1, rates);
-            adn2.genome = Common.generateComplexGenome();
+            const adn1 = new RTADN(-1, 1, rates, Common.generateComplexGenome());
+            const adn2 = new RTADN(-1, 1, rates, Common.generateComplexGenome());
             adn2.genome.splitConnection(adn2.genome.connectGenes[4], 5, 6);
 
             RTADN.deltaWeight = (w1: number, w2: number) => {
@@ -619,8 +584,7 @@ describe('RTAdn', () => {
 
         it('outputs the disjoint genes distance between a genome contained in the current one', () => {
             const rates = Common.getRateForSplitting();
-            const adn1 = new RTADN(-1, 1, rates);
-            adn1.genome = Common.generateComplexGenome();
+            const adn1 = new RTADN(-1, 1, rates, Common.generateComplexGenome());
             adn1.genome.splitConnection(adn1.genome.connectGenes[4], 5, 6);
 
             const adn2 = new RTADN(-1, 1, rates);
@@ -639,11 +603,8 @@ describe('RTAdn', () => {
 
         it ('outputs the distance between two complex genomes with matching, disjoint and excess genes', () => {
             const rates = Common.getRateForSplitting();
-            const adn1 = new RTADN(-1, 1, rates);
-            adn1.genome = Common.generateComplexGenome();
-
-            const adn2 = new RTADN(-1, 1, rates);
-            adn2.genome = Common.generateComplexGenome();
+            const adn1 = new RTADN(-1, 1, rates, Common.generateComplexGenome());
+            const adn2 = new RTADN(-1, 1, rates, Common.generateComplexGenome());
 
             adn1.genome.splitConnection(adn1.genome.connectGenes[3], 5, 6); // disjoint adn1
             adn2.genome.splitConnection(adn2.genome.connectGenes[4], 7, 7); // disjoint adn2

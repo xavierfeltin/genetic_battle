@@ -21,13 +21,8 @@ describe('Population', () => {
     });
     describe('set population', () => {
         it('affects and dispatches organisms to species', () => {
-            const organism1 = new RTADN(-1, 1, Common.getBasicRates());
-            const g1 = Common.generateComplexGenome();
-            organism1.genome = g1;
-
-            const organism2 = new RTADN(-1, 1, Common.getBasicRates());
-            const g2 = Common.generateDirectGenome(false);
-            organism2.genome = g2;
+            const organism1 = new RTADN(-1, 1, Common.getBasicRates(), Common.generateComplexGenome());
+            const organism2 = new RTADN(-1, 1, Common.getBasicRates(), Common.generateDirectGenome(false));
 
             const organisms = [organism1, organism2];
             const pop = new Population();
@@ -49,9 +44,7 @@ describe('Population', () => {
             expect(worst).toBeNull();
         });
         it('outputs null when no organism set in the population is at minimum age to be picked', () => {
-            const organism1 = new RTADN(-1, 1, Common.getBasicRates());
-            const g1 = Common.generateComplexGenome();
-            organism1.genome = g1;
+            const organism1 = new RTADN(-1, 1, Common.getBasicRates(), Common.generateComplexGenome());
             const organisms = [organism1];
 
             const pop = new Population();
@@ -61,14 +54,10 @@ describe('Population', () => {
             expect(worst).toBeNull();
         });
         it('outputs the only organism set in the population with required minimum age to be picked', () => {
-            const organism1 = new RTADN(-1, 1, Common.getBasicRates());
-            const g1 = Common.generateComplexGenome();
-            organism1.genome = g1;
+            const organism1 = new RTADN(-1, 1, Common.getBasicRates(), Common.generateComplexGenome());
             organism1.metadata.age = 0;
 
-            const organism2 = new RTADN(-1, 1, Common.getBasicRates());
-            const g2 = Common.generateDirectGenome(false);
-            organism2.genome = g2;
+            const organism2 = new RTADN(-1, 1, Common.getBasicRates(), Common.generateDirectGenome(false));
             organism2.metadata.age = RTADN.MINIMUM_AGE_TO_EVOLVE;
 
             const organisms = [organism1, organism2];
@@ -80,21 +69,15 @@ describe('Population', () => {
             expect(worst.id).toBe(organism2.id);
         });
         it('outputs the organism with the smallest adjusted fitness score in the population', () => {
-            const organism1 = new RTADN(-1, 1, Common.getBasicRates());
-            const g1 = Common.generateComplexGenome();
-            organism1.genome = g1;
+            const organism1 = new RTADN(-1, 1, Common.getBasicRates(), Common.generateComplexGenome());
             organism1.metadata.age = RTADN.MINIMUM_AGE_TO_EVOLVE;
             organism1.metadata.adjustedFitness = 5;
 
-            const organism2 = new RTADN(-1, 1, Common.getBasicRates());
-            const g2 = Common.generateDirectGenome(false);
-            organism2.genome = g2;
+            const organism2 = new RTADN(-1, 1, Common.getBasicRates(), Common.generateDirectGenome(false));
             organism2.metadata.age = RTADN.MINIMUM_AGE_TO_EVOLVE;
             organism2.metadata.adjustedFitness = 6;
 
-            const organism3 = new RTADN(-1, 1, Common.getBasicRates());
-            const g3 = Common.generateDirectGenome(false);
-            organism3.genome = g3;
+            const organism3 = new RTADN(-1, 1, Common.getBasicRates(), Common.generateDirectGenome(false));
             organism3.metadata.age = RTADN.MINIMUM_AGE_TO_EVOLVE;
             organism3.metadata.adjustedFitness = 2;
 
@@ -113,6 +96,35 @@ describe('Population', () => {
             const pop = new Population();
             const newOrganism = pop.evolve();
             expect(newOrganism).toBeNull();
+        });
+        it('outputs a new organism and update species pool', () => {
+            const organism1 = new RTADN(-1, 1, Common.getBasicRates(), Common.generateComplexGenome());
+            organism1.metadata.age = RTADN.MINIMUM_AGE_TO_EVOLVE;
+            organism1.metadata.adjustedFitness = 5;
+
+            const organism2 = new RTADN(-1, 1, Common.getBasicRates(), Common.generateDirectGenome(false));
+            organism2.metadata.age = RTADN.MINIMUM_AGE_TO_EVOLVE;
+            organism2.metadata.adjustedFitness = 6;
+
+            const organism3 = new RTADN(-1, 1, Common.getBasicRates(), Common.generateDirectGenome(false));
+            organism3.metadata.age = RTADN.MINIMUM_AGE_TO_EVOLVE;
+            organism3.metadata.adjustedFitness = 2;
+
+            const organisms = [organism1, organism2, organism3];
+
+            const pop = new Population();
+            pop.population = organisms;
+
+            const worst = pop.findWorstOrganism();
+            const beforEvolveLength = pop.species.species.length;
+            const newOrganism = pop.evolve();
+            const foundNewOrganism = pop.findOrganism(newOrganism.id);
+
+            expect(pop.species.species.length).toBe(beforEvolveLength);
+            expect(foundNewOrganism.id).toBe(newOrganism.id);
+            expect(newOrganism.specie).not.toBe(-1);
+            expect(pop.findOrganism(worst.id)).toBeNull();
+            expect(pop.isConsistent()).toBeTruthy();
         });
     });
 });

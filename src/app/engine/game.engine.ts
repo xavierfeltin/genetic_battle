@@ -510,8 +510,6 @@ export class GameEngine {
         if (GameEngine.MAX_DEAD_POPULATION < this.memoryShips.length) {
           this.memoryShips.pop();
         }
-
-
       } else {
         ship.acc.mul(0);
         ship.updateHeading();
@@ -628,6 +626,61 @@ export class GameEngine {
     }
 
     return newShips;
+  }
+
+
+  /**
+   * Evolve the worst ship if old enough to be evaluated
+   * If no ship is of age, do not perform an evolution
+   * Perform evolution only every X frames.
+   * TODO compute X
+   * TODO call this function instead of old function of evolution
+   */
+  private continuousEvolutionBasedOnWorst(): Ship {
+
+    let sorted = this.ships.sort((a, b) => {
+      if (a < b) {
+        return -1;
+      } else if (a > b) {
+        return 1;
+      } else {
+        return 0;
+      }
+    });
+
+    sorted = sorted.filter(ship => ship.age > 150);
+    let worst = null;
+    if (sorted.length > 0) {
+      worst = sorted[0];
+    }
+
+    let newShip = null;
+    if (worst) {
+      const shipsToEval = [...this.ships];
+      const individuals = [];
+      for (const ship of shipsToEval) {
+        const ind = {
+          id: ship.id,
+          adn: ship.getADN(),
+          fitness: ship.scoring()
+        };
+        individuals.push(ind);
+      }
+      this.ga.populate(individuals);
+      this.ga.computeProbas();
+
+      const parentInd1 = this.ga.pickOne(individuals);
+      const parentInd2 = this.ga.pickOne(individuals);
+      const parent1 = this.ships.find(ship => ship.id === parentInd1.id);
+      const parent2 = this.ships.find(ship => ship.id === parentInd2.id);
+
+      parent1.setPartner(parent2);
+      const newId = this.generateId();
+      const orientation = Math.random() * 360;
+      newShip = parent1.reproduce(newId, orientation);
+    }
+
+    return newShip;
   }
 
   private getOldestShip(ships: Ship[]): Ship {

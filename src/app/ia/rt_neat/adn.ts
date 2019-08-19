@@ -45,10 +45,10 @@ export class RTADN extends ADN {
     private meta: RTMeta;
 
     // TODO: add genome directly in constructor
-    constructor(min: number, max: number, rates: RTADNRates) {
+    constructor(min: number, max: number, rates: RTADNRates, genome: Genome = null) {
         super(0, min, max, rates.mutation, rates.crossOver);
         this.id = RTADN.nextId;
-        this.g = new Genome();
+        this.g = genome ? genome : new Genome();
         this.mutationActivationRate = rates.mutationActivation;
         this.mutationConnectRate = rates.mutationConnect;
         this.mutationAllowRecurrentRate = rates.mutationAllowRecurrent;

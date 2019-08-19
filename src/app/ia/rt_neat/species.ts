@@ -24,6 +24,14 @@ export class Species {
         return this.compatThresold;
     }
 
+    public get nbOrganisms(): number {
+        let nbOrganisms = 0;
+        for (const specie of this.species) {
+            nbOrganisms += specie.nbOrganisms;
+        }
+        return nbOrganisms;
+    }
+
     /**
      * Add an organism to the first specie compatible
      * or first empty specie

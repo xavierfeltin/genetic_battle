@@ -1,6 +1,7 @@
 import { RTADN } from './adn';
 import { Species } from './species';
 import { Specie } from './specie';
+import { cpus } from 'os';
 
 export class Population {
     private pop: RTADN[];
@@ -34,6 +35,7 @@ export class Population {
         if (worst !== null) {
             this.poolSpecies.calculateAdjustedFitness();
             this.poolSpecies.removeOrganismFromSpecies(worst); // remove worst organism and update avg fitness of specie
+            this.pop = this.pop.filter(organism => organism.id !== worst.id);
             const parentSpecie = this.selectParent();
             const newOrganism = parentSpecie.generateOrganism();
             this.pop.push(newOrganism);
@@ -76,6 +78,46 @@ export class Population {
         }
 
         return worst;
+    }
+
+    /**
+     * Return the organism if found in the population, null otherwise
+     * @param id id of the organism to find in the population
+     */
+    public findOrganism(id: number): RTADN {
+        const found1 = this.pop.find(organism => organism.id === id);
+        return found1 ? found1 : null;
+    }
+
+    /**
+     * Return true if all the organisms are present in the population
+     * and the species.
+     */
+    public isConsistent(): boolean {
+
+        const nbSpeciesOrganisms = this.species.nbOrganisms;
+        if (this.population.length !== nbSpeciesOrganisms) {
+            console.error('Population with ' + this.population.length
+                + ' organisms and species with ' + nbSpeciesOrganisms + ' organisms do not match');
+            return false;
+        }
+
+        for (const organism of this.population) {
+            let found = null;
+            let i = 0;
+            while (!found && i < this.poolSpecies.species.length) {
+                const specie = this.poolSpecies.species[i];
+                found = specie.findOrganism(organism.id);
+                i++;
+            }
+
+            if (!found) {
+                console.error('organism ' + organism.id + 'was not found in the species');
+                return false;
+            }
+        }
+
+        return true;
     }
 
     private selectParent(): Specie {

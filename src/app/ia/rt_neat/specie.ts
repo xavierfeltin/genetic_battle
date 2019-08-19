@@ -44,6 +44,15 @@ export class Specie {
         }
     }
 
+    public findOrganism(id: number): RTADN {
+        for (const organism of this.pool) {
+            if (organism.id === id) {
+                return organism;
+            }
+        }
+        return null;
+    }
+
     public addOrganism(organism: RTADN) {
         if (this.pool.length === 0) {
             this.reference = organism;
