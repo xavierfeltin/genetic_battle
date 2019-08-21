@@ -18,6 +18,7 @@ import { Phenotype } from '../models/phenotype.interface';
 import { ShipNeurEvo } from '../models/shipNeuroEvo.model';
 import { Matrix } from '../ia/matrix';
 import { ShipScoring } from '../models/shipScoring.model';
+import { objectExpression } from '@babel/types';
 
 export class GameEngine {
   private static readonly NB_HEALTH_WHEN_DIE: number = 1;
@@ -670,10 +671,44 @@ export class GameEngine {
 
     console.log('time evolution: ' + t);
 
+    const mean = new ShipScoring();
+    const names = mean.getCoefficientNames();
+    for (const key of names) {
+      mean.setCoefficient(key.toString(), 0);
+    }
+
+    const std = new ShipScoring();
+    for (const name of names) {
+      std.setCoefficient(name.toString(), 0);
+    }
+    
+    for (const ship of this.ships) {
+      for (const key of names) {
+        mean.setCoefficient(key.toString(), mean[key] + ship[key]);
+      } 
+    }
+
+    for (const key of names) {
+      mean.setCoefficient(key.toString(), mean[key] / this.ships.length);
+    }
+          
+    for (const ship of this.ships) {
+      for (const key of names) {        
+        std.setCoefficient(key.toString(), ((ship[key] - mean[key]) * (ship[key] - mean[key])));
+      }      
+    } 
+      
+    for (const key of names) {
+      std.setCoefficient(key.toString(), Math.sqrt((1 / this.ships.length) * std[key]));
+    }
+
     let sorted = this.ships.sort((a, b) => {
-      if (a.scoring() < b.scoring()) {
+      const aScore = a.scoring(mean, std);
+      const bScore = b.scoring(mean, std);
+
+      if (aScore < bScore) {
         return -1;
-      } else if (a.scoring() > b.scoring()) {
+      } else if (aScore > bScore) {
         return 1;
       } else {
         return 0;
@@ -694,7 +729,7 @@ export class GameEngine {
         const ind = {
           id: ship.id,
           adn: ship.getADN(),
-          fitness: ship.scoring() * ship.scoring()
+          fitness: ship.scoring(mean, std) * ship.scoring(mean, std)
         };
         individuals.push(ind);
       }

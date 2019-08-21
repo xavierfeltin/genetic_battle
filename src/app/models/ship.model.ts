@@ -266,17 +266,29 @@ export class Ship extends GameObject {
         return this.parentsID;
     }
 
-    public scoring(): number {
+    public scoring(mean: ShipScoring = null, std: ShipScoring = null): number {
         const coeffs = this.scoringCoefficients.getCoefficients();
         let score = 0;
+        
+        let meanCoeffs = null;
+        let stdCoeffs = null;
+        if (mean !== null && std !== null) {
+            meanCoeffs = mean.getCoefficients();
+            stdCoeffs = std.getCoefficients();
+        }
+
         // tslint:disable-next-line:forin
         for (const key in coeffs) {
-            score += coeffs[key] * this[key];
+            let value = this[key];
+            if (mean !== null && std !== null) {
+                value = (value - meanCoeffs[key]) / stdCoeffs[key];
+            }
+            score += coeffs[key] * value;
         }
 
         // Try to modelize an "expectation" indicator depending of lifespan
         const lifespan = this.getAgeInSeconds();
-        return score / Math.log(lifespan + Math.E) ;
+        return score; // / Math.log(lifespan + Math.E) ;
     }
 
     public getScore(): Scoring {
