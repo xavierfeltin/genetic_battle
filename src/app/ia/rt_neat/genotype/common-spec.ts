@@ -3,6 +3,7 @@ import { NodeType } from '../phenotype/node';
 import { ConnectGene } from './connect';
 import { RTADNRates } from '../adn';
 import { Genome } from './genome';
+import { expect } from 'jest-preset-angular';
 
 export interface ExpectedConnection {
     innovation: number;

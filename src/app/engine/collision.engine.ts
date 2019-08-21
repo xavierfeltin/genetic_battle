@@ -47,6 +47,47 @@ export class Collision {
         return new Vect2D(closestPointX, closestPointY);
     }
 
+    public static detectCollision(objA: GameObject, objB: GameObject, indexA: number, indexB: number,
+            previousCollision: Collision, firstCollision: Collision, newCollision: Collision, t: number, /*previousCollisions: {}*/) {
+
+        // Collision is not possible if ships are going in opposite directions
+        let collision: Collision = Collision.createEmptyCollision();
+
+        if ((objA.pos.x < objB.pos.x && objA.velo.x < 0.0 && objB.velo.x > 0.0)
+            || (objB.pos.x < objA.pos.x && objB.velo.x < 0.0 && objA.velo.x > 0.0)
+            || (objA.pos.y < objB.pos.y && objA.velo.y < 0.0 && objB.velo.y > 0.0)
+            || (objB.pos.y < objA.pos.y && objB.velo.y < 0.0 && objA.velo.y > 0.0)) {
+            collision = Collision.createEmptyCollision();
+        } else {
+            collision = Collision.getCollsion(objB, objA, indexA, indexB);
+        }
+
+        if (!collision.isEmpty()) {
+            const keyA = collision.objA.id + '_' + collision.objA.constructor.name;
+            const keyB = collision.objA.id + '_' + collision.objA.constructor.name;
+
+            if ((!previousCollision.isEmpty())
+                /*&& ((keyA in previousCollisions && previousCollisions[keyA].includes(keyB))
+                || (keyB in previousCollisions && previousCollisions[keyB].includes(keyA)))*/
+                && ((collision.objA === previousCollision.objA
+                && collision.objB === previousCollision.objB
+                && collision.collTime === previousCollision.collTime)
+                || (collision.objB === previousCollision.objA
+                && collision.objA === previousCollision.objB
+                && collision.collTime === previousCollision.collTime))) {
+                const emptyCollision = new Collision(null, null, -1, -1, -1.0);
+                newCollision.setCollision(emptyCollision);
+            } else {
+                newCollision.setCollision(collision);
+
+                // If the collision happens earlier than the current one we keep it
+                if ((newCollision.collTime + t) < 1.0 && (firstCollision.isEmpty() || newCollision.collTime < firstCollision.collTime)) {
+                    firstCollision.setCollision(newCollision);
+                }
+            }
+        }
+    }
+
     public static getCollsion(objA: GameObject, objB: GameObject, indexA: number, indexB: number): Collision {
         // Use square distance to avoid using root function
         const distanceToOther = objA.pos.distance2(objB.pos);

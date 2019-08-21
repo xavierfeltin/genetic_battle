@@ -119,7 +119,17 @@ export class Ship extends GameObject {
     private distanceMissileOnRadar: number;
     private distanceShipOnRadar: number;
     private distanceHealthOnRadar: number;
+    private angleWithMissileOnFOV: number;
+    private angleWithShipOnFOV: number;
+    private angleWithHealthOnFOV: number;
+    private angleWithMissileOnRadar: number;
+    private angleWithShipOnRadar: number;
+    private angleWithHealthOnRadar: number;
 
+    // TODO TEMPORARY to test worst evolution approach
+    public isDead(): boolean {
+        return false;
+    }
 
     constructor(id: number, generation: number, energyFuel: number,
                 energyFire: number, adnFactory: FactoryADN, isNeuroEvo: boolean = false,
@@ -168,9 +178,9 @@ export class Ship extends GameObject {
         this.fireRate = Math.round((Ship.MIN_FIRE_RATE + Ship.MAX_FIRE_RATE) / 2);
 
         this.scoringCoefficients =  scoringCoefficients;
-        this.isNeuroEvo = isNeuroEvo;        
+        this.isNeuroEvo = isNeuroEvo;
         if (this.isNeuroEvo) {
-            this.inputsNeuroEvo = neuroEvoInputs;        
+            this.inputsNeuroEvo = neuroEvoInputs;
             this.neuronalNetworkStructure = nnStructure;
             const activeInputs = this.inputsNeuroEvo.getActiveInputNames();
             this.nn = new NeuralNetwork(activeInputs.length, this.neuronalNetworkStructure, Ship.NN_OUTPUTS);
@@ -195,6 +205,12 @@ export class Ship extends GameObject {
         this.distanceMissileOnRadar = -1;
         this.distanceShipOnRadar = -1;
         this.distanceHealthOnRadar = -1;
+        this.angleWithMissileOnFOV = 0;
+        this.angleWithShipOnFOV = 0;
+        this.angleWithHealthOnFOV = 0;
+        this.angleWithMissileOnRadar = 0;
+        this.angleWithShipOnRadar = 0;
+        this.angleWithHealthOnRadar = 0;
     }
 
     public createADN(nbGenes: number, minimum: number, maximum: number) {
@@ -259,7 +275,7 @@ export class Ship extends GameObject {
         }
 
         // Try to modelize an "expectation" indicator depending of lifespan
-        const lifespan = this.getAge() / 30;
+        const lifespan = this.getAgeInSeconds();
         return score / Math.log(lifespan + Math.E) ;
     }
 
@@ -277,7 +293,7 @@ export class Ship extends GameObject {
             stamp: this.timer,
             state: this.isDead() ? 'Dead' : 'Alive',
             generation: this.generation,
-            lifespan: Math.round(this.getAge() / 30), // in second
+            lifespan: Math.round(this.getAgeInSeconds()), // in second
             life: this.life
         };
         return score;
@@ -619,6 +635,19 @@ export class Ship extends GameObject {
         this.distanceMissileOnRadar = this.detectedMissileOnRadar === null ? -1 : this.detectedMissileOnRadar.pos.distance(this.pos);
         this.distanceShipOnRadar = this.detectedShipOnRadar === null ? -1 : this.detectedShipOnRadar.pos.distance(this.pos);
         this.distanceHealthOnRadar = this.detectedHealthOnRadar === null ? -1 : this.detectedHealthOnRadar.pos.distance(this.pos);
+
+        this.angleWithMissileOnFOV = this.detectedMissileOnFOV === null ?
+            0 : this.heading.angleWithVector(Vect2D.sub(this.detectedMissileOnFOV.pos, this.pos));
+        this.angleWithShipOnFOV = this.detectedShipOnFOV === null ?
+            0 : this.heading.angleWithVector(Vect2D.sub(this.detectedShipOnFOV.pos, this.pos));
+        this.angleWithHealthOnFOV = this.detectedHealthOnFOV === null ?
+            0 : this.heading.angleWithVector(Vect2D.sub(this.detectedHealthOnFOV.pos, this.pos));
+        this.angleWithMissileOnRadar = this.detectedMissileOnRadar === null ?
+            0 : this.heading.angleWithVector(Vect2D.sub(this.detectedMissileOnRadar.pos, this.pos));
+        this.angleWithShipOnRadar = this.detectedShipOnRadar === null ?
+            0 : this.heading.angleWithVector(Vect2D.sub(this.detectedShipOnRadar.pos, this.pos));
+        this.angleWithHealthOnRadar = this.detectedHealthOnRadar === null ?
+            0 : this.heading.angleWithVector(Vect2D.sub(this.detectedHealthOnRadar.pos, this.pos));
     }
 
     public behaviors(missiles: GameObject[], healths: GameObject[], ships: GameObject[], wArea: number, hArea: number) {
@@ -836,6 +865,30 @@ export class Ship extends GameObject {
     private get inputDistanceDetectedShipRadar(): number {
         return this.distanceShipOnRadar === -1 ? 1 : this.distanceShipOnRadar / Ship.MAX_DISTANCE;
     }
+
+
+    // Radian angle normalized in the range [-1, 1]
+    // Undetected missile means missile is very far away
+    private get inputAngleWithDetectedMissileFOV(): number {
+        return this.distanceMissileOnFOV === -1 ? 0 : this.distanceMissileOnFOV / Math.PI;
+    }
+    private get inputAngleWithDetectedShipFOV(): number {
+        return this.distanceShipOnFOV === -1 ? 0 : this.distanceShipOnFOV / Math.PI;
+    }
+    private get inputAngleWithDetectedHealthFOV(): number {
+        return this.distanceHealthOnFOV === -1 ? 0 : this.distanceHealthOnFOV / Math.PI;
+    }
+    private get inputAngleWithDetectedMissileRadar(): number {
+        return this.distanceMissileOnRadar === -1 ? 0 : this.distanceMissileOnRadar / Math.PI;
+    }
+    private get inputAngleWithDetectedHealthRadar(): number {
+        return this.distanceHealthOnRadar === -1 ? 0 : this.distanceHealthOnRadar / Math.PI;
+    }
+    private get inputAngleWithDetectedShipRadar(): number {
+        return this.distanceShipOnRadar === -1 ? 0 : this.distanceShipOnRadar / Math.PI;
+    }
+
+
     private get inputAttractionMissile(): number {
         return this.attractMissile;
     }

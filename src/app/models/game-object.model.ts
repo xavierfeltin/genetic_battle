@@ -62,8 +62,11 @@ export class GameObject {
         this.yMax = 0;
     }
 
-    public getAge(): number {
-        return this.age;
+    /**
+     * Age of the ship in seconds
+     */
+    public getAgeInSeconds(): number {
+        return this.age / 30;
     }
 
     public getEnergy() {

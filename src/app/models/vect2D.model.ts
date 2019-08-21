@@ -80,4 +80,23 @@ export class Vect2D {
         this.x = Math.round(this.x * 1000) / 1000;
         this.y = Math.round(this.y * 1000) / 1000;
     }
+
+    /**
+     * Return the angle in radian between the current vector and the one given in argument
+     * The angle is in the range [-π, π] :
+     *  - sign if the vector has to turn clockwise
+     *  + sign if the vector has to turn anticlockwise
+     * @param v vector to compute the angle with
+     */
+    public angleWithVector(v: Vect2D): number {
+        let angle = Math.atan2(v.y, v.x) - Math.atan2(this.y, this.x);
+
+        if (angle > Math.PI) {
+            angle -= 2 * Math.PI;
+        } else if (angle <= - Math.PI) {
+            angle += 2 * Math.PI;
+        }
+
+        return angle;
+    }
 }

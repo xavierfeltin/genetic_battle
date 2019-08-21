@@ -1,7 +1,6 @@
 import { RTADN } from './adn';
 import { Species } from './species';
 import { Specie } from './specie';
-import { cpus } from 'os';
 
 export class Population {
     private pop: RTADN[];

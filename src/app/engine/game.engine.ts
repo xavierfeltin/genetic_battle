@@ -23,15 +23,18 @@ export class GameEngine {
   private static readonly NB_HEALTH_WHEN_DIE: number = 1;
   private static readonly NB_SHIPS: number = 20;
   private static readonly NB_INIT_HEALTH: number = 0; // 20;
-  private static readonly RATE_SPAWN_HEALTH: number = 0; // 0.01;
+  private static readonly RATE_SPAWN_HEALTH: number = 0.03; // 0.01;
   private static readonly RATE_CLONE_SHIP: number = 0.03;
   private static readonly BREEDING_RATE_SHIP: number = 0.001;
-  private static readonly MAX_POPULATION = 20;
+  private static readonly MAX_POPULATION = 10;
   private static readonly MAX_DEAD_POPULATION = 3;
+  private static readonly MAX_RANDOM_HEALTH_PACK = 6;
   private static readonly GAME_TIMER = 45; // 60; // in seconds
   private static readonly NEURO_EVO_MODE = 'neuroevol';
   private static readonly ALGO_EVO_MODE = 'geneticalgo';
   private static readonly EVOLUTION_MODE = GameEngine.NEURO_EVO_MODE;
+  private static readonly MINMUM_AGE_BEFORE_REPLACEMENT = 10; // in seconds
+  private static readonly LEVEL_OF_INEGIBILITY = 0.5; // pct of population with age < MINMUM_AGE_BEFORE_REPLACEMENT
 
   private canvas: HTMLCanvasElement;
   private ctx: CanvasRenderingContext2D;
@@ -73,6 +76,10 @@ export class GameEngine {
 
   private ga: FortuneWheelGA;
   private bestShip: Ship;
+  private minimumAgeBeforeReplacement: number;
+  private ticksBeforeReplacement: number;
+  private levelOfInegibility: number;
+  private lastEvaluationForReplacement: number;
 
   // Output variables
   private oldestShip: Ship;
@@ -125,6 +132,10 @@ export class GameEngine {
 
     this.ga = new FortuneWheelGA();
     this.bestShip = null;
+    this.minimumAgeBeforeReplacement = GameEngine.MINMUM_AGE_BEFORE_REPLACEMENT;
+    this.levelOfInegibility = GameEngine.LEVEL_OF_INEGIBILITY;
+    this.ticksBeforeReplacement = this.computeFrequencyOfReplacement();
+    this.lastEvaluationForReplacement = 0;
   }
 
   public setCanvas(idCanvas: string) {
@@ -219,11 +230,10 @@ export class GameEngine {
     needToReset = needToReset || isInputNeuroEvoDifferent;
 
     if (config.resetSimulation || needToReset) {
-      debugger;
+      // debugger;
       this.reset(true);
       this.initialize();
-    }
-    else {
+    } else {
         // Change current ships configuration
         if (config.energyFire !== this.shipFactory.getEnergyFire()
         || config.energyFuel !== this.shipFactory.getEnergyFuel()
@@ -292,6 +302,7 @@ export class GameEngine {
     this.health = [];
     this.missiles = [];
     this.startTime = Date.now();
+    this.lastEvaluationForReplacement = 0;
     this.game.reset();
 
     if (isHardReset) {
@@ -414,7 +425,7 @@ export class GameEngine {
 
   public playGame() {
     // Add possible new health
-    if (Math.random() < this.rateHealth) {
+    if (Math.random() < this.rateHealth && this.health.length <= GameEngine.MAX_RANDOM_HEALTH_PACK) {
       this.createHealth(this.generateId());
     }
 
@@ -447,10 +458,13 @@ export class GameEngine {
       }
     }
 
+    this.continuousEvolutionOfWorst();
+    /*
     const newShips = this.continuousEvolutionWithReference(this.ships);
     for (const newShip of newShips) {
       this.ships.push(newShip);
     }
+    */
 
     for (const ship of this.ships) {
       ship.behaviors(this.missiles, this.health, this.ships, this.width, this.height);
@@ -518,6 +532,14 @@ export class GameEngine {
         scoring.push(ship.getScore());
       }
     }
+
+    /*
+    TODO:
+    You could use the standard normalized scores: For each population (in this case each input collection)
+    you can calculate the score of an individual by subtracting the population mean from it, and then dividing it by their standard deviation.
+    This does not leave you with numbers between 0 and 1 but does allow you to compare two populations with each other
+    => Compute for each possible component in the fitness function and use this mean and std deviation when computing scoring of each ship
+    */
 
     const aliveOldestShip = this.getOldestShip(this.ships);
     if (aliveOldestShip !== null) {
@@ -628,41 +650,51 @@ export class GameEngine {
     return newShips;
   }
 
+  private computeFrequencyOfReplacement() {
+    return Math.ceil(this.minimumAgeBeforeReplacement / (this.nbStartingShips * this.levelOfInegibility));
+  }
 
   /**
    * Evolve the worst ship if old enough to be evaluated
    * If no ship is of age, do not perform an evolution
-   * Perform evolution only every X frames.
-   * TODO compute X
-   * TODO call this function instead of old function of evolution
+   * Perform evolution only every ticksBeforeReplacement seconds.
    */
-  private continuousEvolutionBasedOnWorst(): Ship {
+  private continuousEvolutionOfWorst() {
+
+    // Check if timing is right for checking if worst needs to be replaced ?
+    const t = this.getElapsedTimeInSeconds();
+    if ((t <= this.lastEvaluationForReplacement) || (t % this.ticksBeforeReplacement !== 0)) {
+      return;
+    }
+    this.lastEvaluationForReplacement = t;
+
+    console.log('time evolution: ' + t);
 
     let sorted = this.ships.sort((a, b) => {
-      if (a < b) {
+      if (a.scoring() < b.scoring()) {
         return -1;
-      } else if (a > b) {
+      } else if (a.scoring() > b.scoring()) {
         return 1;
       } else {
         return 0;
       }
     });
 
-    sorted = sorted.filter(ship => ship.age > 150);
-    let worst = null;
+    sorted = sorted.filter(ship => ship.getAgeInSeconds() >= GameEngine.MINMUM_AGE_BEFORE_REPLACEMENT);
+    let worst: Ship = null;
     if (sorted.length > 0) {
       worst = sorted[0];
     }
 
-    let newShip = null;
     if (worst) {
-      const shipsToEval = [...this.ships];
+      console.log('worst fitness: ' + worst.scoring());
+
       const individuals = [];
-      for (const ship of shipsToEval) {
+      for (const ship of this.ships) {
         const ind = {
           id: ship.id,
           adn: ship.getADN(),
-          fitness: ship.scoring()
+          fitness: ship.scoring() * ship.scoring()
         };
         individuals.push(ind);
       }
@@ -677,10 +709,14 @@ export class GameEngine {
       parent1.setPartner(parent2);
       const newId = this.generateId();
       const orientation = Math.random() * 360;
-      newShip = parent1.reproduce(newId, orientation);
-    }
+      const newShip = parent1.reproduce(newId, orientation);
+      newShip.setPosition(new Vect2D(400, 400));
+      // TODO set invulnerability
 
-    return newShip;
+      // replace worst ship by new one and position it in starting area
+      const index = this.ships.findIndex(ship => ship.id === worst.id);
+      this.ships[index] = newShip;
+    }
   }
 
   private getOldestShip(ships: Ship[]): Ship {
@@ -697,47 +733,6 @@ export class GameEngine {
       }
     }
     return result;
-  }
-
-  private detectCollision(objA: GameObject, objB: GameObject, indexA: number, indexB: number, previousCollision: Collision,
-                          firstCollision: Collision, newCollision: Collision, t: number,
-                          /*previousCollisions: {}*/) {
-    // Collision is not possible if ships are going in opposite directions
-    let collision: Collision = Collision.createEmptyCollision();
-
-    if ((objA.pos.x < objB.pos.x && objA.velo.x < 0.0 && objB.velo.x > 0.0)
-            || (objB.pos.x < objA.pos.x && objB.velo.x < 0.0 && objA.velo.x > 0.0)
-            || (objA.pos.y < objB.pos.y && objA.velo.y < 0.0 && objB.velo.y > 0.0)
-            || (objB.pos.y < objA.pos.y && objB.velo.y < 0.0 && objA.velo.y > 0.0)) {
-      collision = Collision.createEmptyCollision();
-    } else {
-      collision = Collision.getCollsion(objB, objA, indexA, indexB);
-    }
-
-    if (!collision.isEmpty()) {
-      const keyA = collision.objA.id + '_' + collision.objA.constructor.name;
-      const keyB = collision.objA.id + '_' + collision.objA.constructor.name;
-
-      if ((!previousCollision.isEmpty())
-              /*&& ((keyA in previousCollisions && previousCollisions[keyA].includes(keyB))
-                || (keyB in previousCollisions && previousCollisions[keyB].includes(keyA)))*/
-              && ((collision.objA === previousCollision.objA
-                && collision.objB === previousCollision.objB
-                && collision.collTime === previousCollision.collTime)
-                || (collision.objB === previousCollision.objA
-                  && collision.objA === previousCollision.objB
-                  && collision.collTime === previousCollision.collTime))) {
-          const emptyCollision = new Collision(null, null, -1, -1, -1.0);
-          newCollision.setCollision(emptyCollision);
-      } else {
-        newCollision.setCollision(collision);
-
-        // If the collision happens earlier than the current one we keep it
-        if ((newCollision.collTime + t) < 1.0 && (firstCollision.isEmpty() || newCollision.collTime < firstCollision.collTime)) {
-          firstCollision.setCollision(newCollision);
-        }
-      }
-    }
   }
 
   // Return an array with number of missiles which has touched ship A and ship B
@@ -774,7 +769,7 @@ export class GameEngine {
           }
 
           // Collision is not possible if ships are going in opposite directions
-          this.detectCollision(ship, missile, i, j, previousCollision, firstCollision, newCollision, t /*, previousCollisions*/);
+          Collision.detectCollision(ship, missile, i, j, previousCollision, firstCollision, newCollision, t /*, previousCollisions*/);
         }
 
         for (let j = i + 1; j < nMissiles; j++) {
@@ -787,7 +782,8 @@ export class GameEngine {
           }
 
           // Collision is not possible if otherMissiles are going in opposite directions
-          this.detectCollision(otherMissile, missile, i, j, previousCollision, firstCollision, newCollision, t /*, previousCollisions*/);
+          Collision.detectCollision(otherMissile, missile, i, j, previousCollision,
+            firstCollision, newCollision, t /*, previousCollisions*/);
         }
       }
 
@@ -803,7 +799,7 @@ export class GameEngine {
           }
 
           // Collision is not possible if ships are going in opposite directions
-          this.detectCollision(ship, health, i, j, previousCollision, firstCollision, newCollision, t /*, previousCollisions*/);
+          Collision.detectCollision(ship, health, i, j, previousCollision, firstCollision, newCollision, t /*, previousCollisions*/);
         }
       }
 
@@ -820,7 +816,7 @@ export class GameEngine {
           }
 
           // Collision is not possible if ships are going in opposite directions
-          this.detectCollision(shipA, shipB, i, j, previousCollision, firstCollision, newCollision, t); // , previousCollisions);
+          Collision.detectCollision(shipA, shipB, i, j, previousCollision, firstCollision, newCollision, t); // , previousCollisions);
         }
       }
 

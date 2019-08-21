@@ -66,8 +66,8 @@ export class HugeADN extends ADN {
                     pct = 0.01;
                 }
                 result[i] = this.genes[i] + MyMath.random(-pct, pct);
-                // result[i] = Math.max(result[i], this.minimum);
-                // result[i] = Math.min(result[i], this.maximum);
+                result[i] = Math.max(result[i], -8);
+                result[i] = Math.min(result[i], 8);
             } else {
                 result[i] = this.genes[i];
             }
@@ -80,12 +80,20 @@ export class HugeADN extends ADN {
         const result = new HugeADN(this.genes.length, this.minimum, this.maximum, this.mutationRate, this.crossOverRate);
 
         for (let i = 0; i < result.genes.length; i++) {
+
+            const probaSwitch = Math.random();
+            if (probaSwitch <= this.crossOverRate) {
+                result.genes[i] = (this.genes[i] + adn.getGenes()[i]) / 2;
+            }
+
+            /* Replace value approach
             const probaSwitch = Math.random();
             if (probaSwitch <= this.crossOverRate) {
                 result.genes[i] = this.genes[i];
             } else {
                 result.genes[i] = adn.getGenes()[i];
             }
+            */
         }
 
         return result;

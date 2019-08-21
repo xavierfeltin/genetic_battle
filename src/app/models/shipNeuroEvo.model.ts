@@ -57,6 +57,30 @@ export class ShipNeurEvo {
                 description: 'Distance ship on Radar',
                 status: true
             },
+            inputAngleWithDetectedMissileFOV: {
+                description: 'Angle with missile on FOV',
+                status: true
+            },
+            inputAngleWithDetectedShipFOV: {
+                description: 'Angle with ship on FOV',
+                status: true
+            },
+            inputAngleWithDetectedHealthFOV: {
+                description: 'Angle with health on FOV',
+                status: true
+            },
+            inputAngleWithDetectedMissileRadar: {
+                description: 'Angle with missile on Radar',
+                status: true
+            },
+            inputAngleWithDetectedHealthRadar: {
+                description: 'Angle with health on Radar',
+                status: true
+            },
+            inputAngleWithDetectedShipRadar: {
+                description: 'Angle with ship on Radar',
+                status: true
+            },
             inputAttractionMissile: {
                 description: 'Attraction to missiles',
                 status: false
