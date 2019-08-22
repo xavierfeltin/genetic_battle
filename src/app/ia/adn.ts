@@ -1,5 +1,21 @@
 import { MyMath } from '../tools/math.tools';
 
+export interface Meta {
+    // Identification
+    id?: number;
+
+    // Evaluation
+    fitness?: number;
+    stdFitness?: number; // standardized for computing proba
+    adjustedFitness: number;
+    proba?: number;
+
+    // Specific
+    specieId?: number;
+    isToRemove?: boolean;
+    age?: number;
+}
+
 export class ADN {
     public static readonly MUTATION_RATE = 0.02;
     public static readonly CROSSOVER_RATE = 0.8;
@@ -11,6 +27,7 @@ export class ADN {
     // Allowed range for each adn coefficients
     protected minimum: number;
     protected maximum: number;
+    protected meta: Meta;
 
     constructor(nbGenes: number, min: number, max: number, mutationRate: number, crossOverRate: number) {
         this.minimum = min;
@@ -22,6 +39,17 @@ export class ADN {
         for (let i = 0; i < nbGenes; i++) {
             this.genes.push(MyMath.random(this.minimum, this.maximum));
         }
+
+        this.meta = {
+            id: -1,
+            fitness: -1,
+            stdFitness: -1,
+            adjustedFitness: -1,
+            proba: -1,
+            specieId: -1,
+            isToRemove: false,
+            age: -1
+        };
     }
 
     public getGenes(): number[] {
@@ -40,6 +68,14 @@ export class ADN {
     public mutate(): ADN {
         const result = new ADN(this.genes.length, this.minimum, this.maximum, this.mutationRate, this.crossOverRate);
         return result;
+    }
+
+    public get metadata(): Meta {
+        return this.meta;
+    }
+
+    public set metadata(meta: Meta) {
+        this.meta = meta;
     }
 }
 

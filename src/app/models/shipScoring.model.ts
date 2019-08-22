@@ -103,4 +103,8 @@ export class ShipScoring {
     public setCoefficient(coeffName: string, value: number) {
         this.coefficients[coeffName].value = value;
     }
+
+    public getCoefficient(coeffName: string): number {
+        return this.coefficients[coeffName].value;
+    }
 }

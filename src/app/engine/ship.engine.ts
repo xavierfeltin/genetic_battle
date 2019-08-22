@@ -35,7 +35,7 @@ export class ShipRender {
 
         this.drawOldest(ship);
         this.drawLife(ship);
-        this.ctx.translate(ship.pos.x - this.w / 2, ship.pos.y - this.h / 2); //move to desired point
+        this.ctx.translate(ship.pos.x - this.w / 2, ship.pos.y - this.h / 2); // move to desired point
         this.ctx.translate(transX, transY);
         this.ctx.rotate(ship.orientation * Math.PI / 180); // rotate
         this.ctx.drawImage(this.sprite, -transX, -transY, this.w, this.h); // draws a chain link or dagger
@@ -70,7 +70,7 @@ export class ShipRender {
     public drawOldest(ship: Ship) {
         if (ship.isOldest) {
             this.ctx.beginPath();
-            this.ctx.strokeStyle = 'rgba(243, 243, 21)'; //metallic gold
+            this.ctx.strokeStyle = 'rgba(243, 243, 21)'; // metallic gold
             this.ctx.arc(ship.pos.x, ship.pos.y, ship.radius, 0, Math.PI * 2);
             this.ctx.stroke();
         }

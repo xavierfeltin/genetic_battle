@@ -1,5 +1,5 @@
 import { Genome } from './genotype/genome';
-import { ADN } from '../adn';
+import { ADN, Meta } from '../adn';
 import { MyMath } from '../../tools/math.tools';
 import { NodeGene } from './genotype/node';
 import { ConnectGene } from './genotype/connect';
@@ -13,14 +13,6 @@ export interface RTADNRates {
     mutationConnect: number;
     mutationAllowRecurrent: number;
     mutationSplitConnect: number;
-}
-
-export interface RTMeta {
-    isToRemove: boolean;
-    fitness: number;
-    adjustedFitness: number;
-    specieId: number;
-    age: number;
 }
 
 export class RTADN extends ADN {
@@ -42,7 +34,6 @@ export class RTADN extends ADN {
     private mutationConnectRate: number;
     private mutationAllowRecurrentRate: number;
     private mutationSplitConnectRate: number;
-    private meta: RTMeta;
 
     // TODO: add genome directly in constructor
     constructor(min: number, max: number, rates: RTADNRates, genome: Genome = null) {
@@ -53,13 +44,6 @@ export class RTADN extends ADN {
         this.mutationConnectRate = rates.mutationConnect;
         this.mutationAllowRecurrentRate = rates.mutationAllowRecurrent;
         this.mutationSplitConnectRate = rates.mutationSplitConnect;
-        this.meta = {
-            isToRemove: false,
-            fitness: 0,
-            adjustedFitness: 0,
-            specieId: -1,
-            age: 0
-        };
     }
 
     public static get nextId(): number {
@@ -121,14 +105,6 @@ export class RTADN extends ADN {
 
     public set genome(gen: Genome) {
         this.g = gen;
-    }
-
-    public get metadata(): RTMeta {
-        return this.meta;
-    }
-
-    public set metadata(meta: RTMeta) {
-        this.meta = meta;
     }
 
     public get isToRemove(): boolean {

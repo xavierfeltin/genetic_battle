@@ -56,6 +56,11 @@ export class Ship extends GameObject {
     public static readonly DUE_TO_MISSILE: number = 0;
     public static readonly DUE_TO_HEALTH_PACK: number = 1;
     public static readonly DUE_TO_OTHER: number = 2;
+
+    // Static properties
+    public static mean: ShipScoring = null;
+    public static std: ShipScoring = null;
+
     private readonly centerObject: GameObject;
 
     // Properties
@@ -66,6 +71,7 @@ export class Ship extends GameObject {
     private nbChildren: number;
     private adnFactory: FactoryADN;
     private scoringCoefficients: ShipScoring;
+    private score: number;
 
     // Variables to pilot a ship
     private attractHealth: number;
@@ -126,11 +132,6 @@ export class Ship extends GameObject {
     private angleWithShipOnRadar: number;
     private angleWithHealthOnRadar: number;
 
-    // TODO TEMPORARY to test worst evolution approach
-    public isDead(): boolean {
-        return false;
-    }
-
     constructor(id: number, generation: number, energyFuel: number,
                 energyFire: number, adnFactory: FactoryADN, isNeuroEvo: boolean = false,
                 scoringCoefficients: ShipScoring, neuroEvoInputs: ShipNeurEvo,
@@ -178,6 +179,8 @@ export class Ship extends GameObject {
         this.fireRate = Math.round((Ship.MIN_FIRE_RATE + Ship.MAX_FIRE_RATE) / 2);
 
         this.scoringCoefficients =  scoringCoefficients;
+        this.score = 0;
+
         this.isNeuroEvo = isNeuroEvo;
         if (this.isNeuroEvo) {
             this.inputsNeuroEvo = neuroEvoInputs;
@@ -211,6 +214,50 @@ export class Ship extends GameObject {
         this.angleWithMissileOnRadar = 0;
         this.angleWithShipOnRadar = 0;
         this.angleWithHealthOnRadar = 0;
+    }
+
+    public static updateStatistics(ships: Ship[]) {
+        Ship.mean = new ShipScoring();
+        const names = Ship.mean.getCoefficientNames();
+        for (const key of names) {
+            Ship.mean.setCoefficient(key.toString(), 0);
+        }
+
+        Ship.std = new ShipScoring();
+        for (const name of names) {
+            Ship.std.setCoefficient(name.toString(), 0);
+        }
+
+        for (const ship of ships) {
+            for (const key of names) {
+                const keyAsString = key.toString();
+                Ship.mean.setCoefficient(keyAsString, Ship.mean.getCoefficient(keyAsString) + ship[key]);
+            }
+        }
+
+        for (const key of names) {
+            const keyAsString = key.toString();
+            Ship.mean.setCoefficient(keyAsString, Ship.mean.getCoefficient(keyAsString) / ships.length);
+        }
+
+        for (const ship of ships) {
+            for (const key of names) {
+                const keyAsString = key.toString();
+                Ship.std.setCoefficient(keyAsString, ((ship[key] - Ship.mean.getCoefficient(keyAsString))
+                    * (ship[key] - Ship.mean.getCoefficient(keyAsString))));
+            }
+        }
+
+        for (const key of names) {
+            const keyAsString = key.toString();
+            Ship.std.setCoefficient(keyAsString, Math.sqrt((1 / ships.length) * Ship.std.getCoefficient(keyAsString)));
+        }
+    }
+
+
+    // TODO TEMPORARY to test worst evolution approach
+    public isDead(): boolean {
+        return false;
     }
 
     public createADN(nbGenes: number, minimum: number, maximum: number) {
@@ -266,29 +313,34 @@ export class Ship extends GameObject {
         return this.parentsID;
     }
 
-    public scoring(mean: ShipScoring = null, std: ShipScoring = null): number {
+
+    public updateScoring() {
+        const meanCoeffs = Ship.mean.getCoefficients();
+        const stdCoeffs = Ship.std.getCoefficients();
         const coeffs = this.scoringCoefficients.getCoefficients();
-        let score = 0;
-        
-        let meanCoeffs = null;
-        let stdCoeffs = null;
-        if (mean !== null && std !== null) {
-            meanCoeffs = mean.getCoefficients();
-            stdCoeffs = std.getCoefficients();
-        }
+        let newScore = 0;
+
+        const lifespan = this.getAgeInSeconds();
 
         // tslint:disable-next-line:forin
         for (const key in coeffs) {
-            let value = this[key];
-            if (mean !== null && std !== null) {
-                value = (value - meanCoeffs[key]) / stdCoeffs[key];
+            let std = stdCoeffs[key];
+            if (std === 0) {
+                std = 1;
+            } else if (std < 0.8) {
+                std = 0.8; // avoid huge scoring values
             }
-            score += coeffs[key] * value;
+
+            const value = (this[key] - meanCoeffs[key]) / std;
+            newScore += coeffs[key] * ( value /  Math.log(lifespan + Math.E));
         }
 
         // Try to modelize an "expectation" indicator depending of lifespan
-        const lifespan = this.getAgeInSeconds();
-        return score; // / Math.log(lifespan + Math.E) ;
+        this.score = newScore; // / Math.log(lifespan + Math.E) ;
+    }
+
+    public scoring(): number {
+        return this.score;
     }
 
     public getScore(): Scoring {
@@ -882,22 +934,22 @@ export class Ship extends GameObject {
     // Radian angle normalized in the range [-1, 1]
     // Undetected missile means missile is very far away
     private get inputAngleWithDetectedMissileFOV(): number {
-        return this.distanceMissileOnFOV === -1 ? 0 : this.distanceMissileOnFOV / Math.PI;
+        return this.distanceMissileOnFOV === -1 ? 0 : this.angleWithMissileOnFOV / Math.PI;
     }
     private get inputAngleWithDetectedShipFOV(): number {
-        return this.distanceShipOnFOV === -1 ? 0 : this.distanceShipOnFOV / Math.PI;
+        return this.distanceShipOnFOV === -1 ? 0 : this.angleWithShipOnFOV / Math.PI;
     }
     private get inputAngleWithDetectedHealthFOV(): number {
-        return this.distanceHealthOnFOV === -1 ? 0 : this.distanceHealthOnFOV / Math.PI;
+        return this.distanceHealthOnFOV === -1 ? 0 : this.angleWithHealthOnFOV / Math.PI;
     }
     private get inputAngleWithDetectedMissileRadar(): number {
-        return this.distanceMissileOnRadar === -1 ? 0 : this.distanceMissileOnRadar / Math.PI;
+        return this.distanceMissileOnRadar === -1 ? 0 : this.angleWithMissileOnRadar / Math.PI;
     }
     private get inputAngleWithDetectedHealthRadar(): number {
-        return this.distanceHealthOnRadar === -1 ? 0 : this.distanceHealthOnRadar / Math.PI;
+        return this.distanceHealthOnRadar === -1 ? 0 : this.angleWithHealthOnRadar / Math.PI;
     }
     private get inputAngleWithDetectedShipRadar(): number {
-        return this.distanceShipOnRadar === -1 ? 0 : this.distanceShipOnRadar / Math.PI;
+        return this.distanceShipOnRadar === -1 ? 0 : this.angleWithShipOnRadar / Math.PI;
     }
 
 

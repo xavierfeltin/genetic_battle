@@ -6,7 +6,6 @@ import { MissileRender } from './missile.engine';
 import { Game } from '../models/game.model';
 import { HealthRender } from './health.engine';
 import { Health, FactoryHealth } from '../models/health.model';
-import { GameObject } from '../models/game-object.model';
 import { Vect2D } from '../models/vect2D.model';
 import { MyMath } from '../tools/math.tools';
 import { Subject } from 'rxjs';
@@ -18,7 +17,8 @@ import { Phenotype } from '../models/phenotype.interface';
 import { ShipNeurEvo } from '../models/shipNeuroEvo.model';
 import { Matrix } from '../ia/matrix';
 import { ShipScoring } from '../models/shipScoring.model';
-import { objectExpression } from '@babel/types';
+import { Population } from '../ia/rt_neat/population';
+import { RTADN } from '../ia/rt_neat/adn';
 
 export class GameEngine {
   private static readonly NB_HEALTH_WHEN_DIE: number = 1;
@@ -460,6 +460,8 @@ export class GameEngine {
     }
 
     this.continuousEvolutionOfWorst();
+    // this.continuousEvolutionWithRTNeat();
+
     /*
     const newShips = this.continuousEvolutionWithReference(this.ships);
     for (const newShip of newShips) {
@@ -489,7 +491,18 @@ export class GameEngine {
       }
     }
 
-    // Manage ships (fire rate, dead ship, ....)
+    /*
+    TODO:
+    You could use the standard normalized scores: For each population (in this case each input collection)
+    you can calculate the score of an individual by subtracting the population mean from it,
+    and then dividing it by their standard deviation.
+    This does not leave you with numbers between 0 and 1 but does allow you to compare two populations with each other
+    => Compute for each possible component in the fitness function and use this mean and std deviation when computing scoring of each ship
+    */
+    const eligibleShips = this.ships.filter(ship => ship.getAgeInSeconds() >= GameEngine.MINMUM_AGE_BEFORE_REPLACEMENT);
+    Ship.updateStatistics(eligibleShips);
+
+    // Manage ships states after solving actions (fire rate, dead ship, ....)
     const phenotypes = [];
     const scoring = [];
     for (let i = this.ships.length - 1; i >= 0; i--) {
@@ -529,18 +542,11 @@ export class GameEngine {
         ship.acc.mul(0);
         ship.updateHeading();
         ship.older();
+        ship.updateScoring();
         phenotypes.push(ship.getPhenotype());
         scoring.push(ship.getScore());
       }
     }
-
-    /*
-    TODO:
-    You could use the standard normalized scores: For each population (in this case each input collection)
-    you can calculate the score of an individual by subtracting the population mean from it, and then dividing it by their standard deviation.
-    This does not leave you with numbers between 0 and 1 but does allow you to compare two populations with each other
-    => Compute for each possible component in the fitness function and use this mean and std deviation when computing scoring of each ship
-    */
 
     const aliveOldestShip = this.getOldestShip(this.ships);
     if (aliveOldestShip !== null) {
@@ -580,7 +586,7 @@ export class GameEngine {
 
     if (deltaPop > 0) {
 
-      //const shipsToEval = [...this.ships, ...this.memoryShips];
+      // const shipsToEval = [...this.ships, ...this.memoryShips];
       const shipsToEval = [...this.ships, ...this.memoryShips];
 
       // Select an individual to clone or reproduce
@@ -618,7 +624,7 @@ export class GameEngine {
 
         const picked = this.ga.pickOne(this.ga.getPopulation());
         const pickedShip = shipsToEval.find((value: Ship, index: number, allShips: Ship[]) => {
-          return value.id === picked.id;
+          return value.id === picked.metadata.id;
         });
         // pickedShip = pickedShip ? pickedShip : this.bestShip;
 
@@ -639,7 +645,7 @@ export class GameEngine {
         // const pickedGeneration = pickedShip ? pickedShip.getGeneration() + 1 : this.bestShip.getGeneration() + 1;
         // const pickedId = pickedShip ? pickedShip.id : this.bestShip.id;
         const ship = this.shipFactory.create(this.generateId(), pickedShip.getGeneration() + 1, [pickedShip.id]);
-        ship.setADN(newIndividuals[0].adn);
+        ship.setADN(newIndividuals[0]);
         const pos = new Vect2D(Math.random() * this.width, Math.random() * this.height);
         ship.setPosition(pos);
         ship.setOrientation(orientation);
@@ -653,6 +659,28 @@ export class GameEngine {
 
   private computeFrequencyOfReplacement() {
     return Math.ceil(this.minimumAgeBeforeReplacement / (this.nbStartingShips * this.levelOfInegibility));
+  }
+
+  private findWorstShip(ships: Ship[]): Ship {
+    const sorted = ships.sort((a, b) => {
+      const aScore = a.scoring();
+      const bScore = b.scoring();
+
+      if (aScore < bScore) {
+        return -1;
+      } else if (aScore > bScore) {
+        return 1;
+      } else {
+        return 0;
+      }
+    });
+
+    let worst: Ship = null;
+    if (sorted.length > 0) {
+      worst = sorted[0];
+    }
+
+    return worst;
   }
 
   /**
@@ -669,77 +697,25 @@ export class GameEngine {
     }
     this.lastEvaluationForReplacement = t;
 
-    console.log('time evolution: ' + t);
-
-    const mean = new ShipScoring();
-    const names = mean.getCoefficientNames();
-    for (const key of names) {
-      mean.setCoefficient(key.toString(), 0);
-    }
-
-    const std = new ShipScoring();
-    for (const name of names) {
-      std.setCoefficient(name.toString(), 0);
-    }
-    
-    for (const ship of this.ships) {
-      for (const key of names) {
-        mean.setCoefficient(key.toString(), mean[key] + ship[key]);
-      } 
-    }
-
-    for (const key of names) {
-      mean.setCoefficient(key.toString(), mean[key] / this.ships.length);
-    }
-          
-    for (const ship of this.ships) {
-      for (const key of names) {        
-        std.setCoefficient(key.toString(), ((ship[key] - mean[key]) * (ship[key] - mean[key])));
-      }      
-    } 
-      
-    for (const key of names) {
-      std.setCoefficient(key.toString(), Math.sqrt((1 / this.ships.length) * std[key]));
-    }
-
-    let sorted = this.ships.sort((a, b) => {
-      const aScore = a.scoring(mean, std);
-      const bScore = b.scoring(mean, std);
-
-      if (aScore < bScore) {
-        return -1;
-      } else if (aScore > bScore) {
-        return 1;
-      } else {
-        return 0;
-      }
-    });
-
-    sorted = sorted.filter(ship => ship.getAgeInSeconds() >= GameEngine.MINMUM_AGE_BEFORE_REPLACEMENT);
-    let worst: Ship = null;
-    if (sorted.length > 0) {
-      worst = sorted[0];
-    }
-
+    const eligibleShips = this.ships.filter(ship => ship.getAgeInSeconds() >= GameEngine.MINMUM_AGE_BEFORE_REPLACEMENT);
+    const worst = this.findWorstShip(eligibleShips);
     if (worst) {
       console.log('worst fitness: ' + worst.scoring());
 
-      const individuals = [];
-      for (const ship of this.ships) {
-        const ind = {
-          id: ship.id,
-          adn: ship.getADN(),
-          fitness: ship.scoring(mean, std) * ship.scoring(mean, std)
-        };
-        individuals.push(ind);
-      }
-      this.ga.populate(individuals);
+      const adns: ADN[] = this.ships.map(ship => {
+        const adn = ship.getADN();
+        adn.metadata.id = ship.id;
+        adn.metadata.fitness = ship.scoring() * ship.scoring();
+        return adn;
+      });
+
+      this.ga.populate(adns);
       this.ga.computeProbas();
 
-      const parentInd1 = this.ga.pickOne(individuals);
-      const parentInd2 = this.ga.pickOne(individuals);
-      const parent1 = this.ships.find(ship => ship.id === parentInd1.id);
-      const parent2 = this.ships.find(ship => ship.id === parentInd2.id);
+      const parentAdn1 = this.ga.pickOne(adns);
+      const parentAdn2 = this.ga.pickOne(adns);
+      const parent1 = this.ships.find(ship => ship.id === parentAdn1.metadata.id);
+      const parent2 = this.ships.find(ship => ship.id === parentAdn2.metadata.id);
 
       parent1.setPartner(parent2);
       const newId = this.generateId();
@@ -747,6 +723,35 @@ export class GameEngine {
       const newShip = parent1.reproduce(newId, orientation);
       newShip.setPosition(new Vect2D(400, 400));
       // TODO set invulnerability
+
+      // replace worst ship by new one and position it in starting area
+      const index = this.ships.findIndex(ship => ship.id === worst.id);
+      this.ships[index] = newShip;
+    }
+  }
+
+  continuousEvolutionWithRTNeat() {
+    // Check if timing is right for checking if worst needs to be replaced ?
+    const t = this.getElapsedTimeInSeconds();
+    if ((t <= this.lastEvaluationForReplacement) || (t % this.ticksBeforeReplacement !== 0)) {
+      return;
+    }
+    this.lastEvaluationForReplacement = t;
+
+    const eligibleShips = this.ships.filter(ship => ship.getAgeInSeconds() >= GameEngine.MINMUM_AGE_BEFORE_REPLACEMENT);
+    const worst = this.findWorstShip(eligibleShips);
+
+    const pop = new Population();
+    const adns = this.ships.map(ship => ship.getADN() as RTADN);
+    pop.population = adns;
+    const newADN = pop.evolve();
+    if (newADN !== null) {
+      const newId = this.generateId();
+      const newShip = this.shipFactory.create(newId, 0, []);
+      newShip.setADN(newADN);
+      const orientation = Math.random() * 360;
+      newShip.setOrientation(orientation);
+      newShip.setPosition(new Vect2D(400, 400));
 
       // replace worst ship by new one and position it in starting area
       const index = this.ships.findIndex(ship => ship.id === worst.id);
