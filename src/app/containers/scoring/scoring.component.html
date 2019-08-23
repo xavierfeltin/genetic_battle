@@ -1,6 +1,6 @@
 <div class="layout">
-  <app-linechart class="chart" title="Living score evolution" [population]="getPopulation$() | async" [labels]="getLabels$() | async"> </app-linechart>
-  <app-linechart class="chart" title="Dead score evolution" [population]="getDeadPopulation$() | async" [labels]="getLabels$() | async"> </app-linechart>
+  <app-linechart class="chart" title="Score evolution" [population]="getPopulation$() | async" [labels]="getLabels$() | async"> </app-linechart>
+  <app-linechart class="chart" title="Fitness evolution" [population]="getFitnessPopulation$() | async" [labels]="getLabels$() | async"> </app-linechart>
 </div>
 
 <diV>
@@ -8,8 +8,10 @@
     <tr>
       <th> ID </th>
       <th> Score </th>
-      <th> N° Gen. </th>
+      <th> Fitness </th>
+      <th> N° Eval. </th>
       <th> Lifespan </th>
+      <th> N° Gen. </th>
       <th> Life </th>
       <th> Nb H. Packs </th>
       <th> Damage </th>
@@ -23,8 +25,10 @@
     <tr *ngIf="i < nbRowsToDisplay">
       <td> {{score.id}} </td>
       <td> {{score.score.toFixed(2)}} </td>
-      <td> {{score.generation}} </td>
+      <td> {{score.fitness.toFixed(2)}} </td>
+      <td> {{score.evaluation}} </td>
       <td> {{score.lifespan}} </td>
+      <td> {{score.generation}} </td>
       <td> {{score.life}} </td>
       <td> {{score.nbHealthPack}} </td>
       <td> {{score.damageReceived}} </td>

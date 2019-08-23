@@ -30,7 +30,7 @@ export class GameEngine {
   private static readonly MAX_POPULATION = 10;
   private static readonly MAX_DEAD_POPULATION = 3;
   private static readonly MAX_RANDOM_HEALTH_PACK = 6;
-  private static readonly GAME_TIMER = 45; // 60; // in seconds
+  private static readonly GAME_TIMER = 30; // in seconds
   private static readonly NEURO_EVO_MODE = 'neuroevol';
   private static readonly ALGO_EVO_MODE = 'geneticalgo';
   private static readonly EVOLUTION_MODE = GameEngine.NEURO_EVO_MODE;
@@ -231,7 +231,6 @@ export class GameEngine {
     needToReset = needToReset || isInputNeuroEvoDifferent;
 
     if (config.resetSimulation || needToReset) {
-      // debugger;
       this.reset(true);
       this.initialize();
     } else {
@@ -499,8 +498,8 @@ export class GameEngine {
     This does not leave you with numbers between 0 and 1 but does allow you to compare two populations with each other
     => Compute for each possible component in the fitness function and use this mean and std deviation when computing scoring of each ship
     */
-    const eligibleShips = this.ships.filter(ship => ship.getAgeInSeconds() >= GameEngine.MINMUM_AGE_BEFORE_REPLACEMENT);
-    Ship.updateStatistics(eligibleShips);
+    // const eligibleShips = this.ships.filter(ship => ship.getAgeInSeconds() >= GameEngine.MINMUM_AGE_BEFORE_REPLACEMENT);
+    Ship.updateStatistics(this.ships);
 
     // Manage ships states after solving actions (fire rate, dead ship, ....)
     const phenotypes = [];
@@ -545,6 +544,12 @@ export class GameEngine {
         ship.updateScoring();
         phenotypes.push(ship.getPhenotype());
         scoring.push(ship.getScore());
+
+        // Evaluate the ship after its TTL
+        if (ship.needEvaluation()) {
+          ship.age = 0;
+          ship.evaluate();
+        }
       }
     }
 
@@ -663,8 +668,8 @@ export class GameEngine {
 
   private findWorstShip(ships: Ship[]): Ship {
     const sorted = ships.sort((a, b) => {
-      const aScore = a.scoring();
-      const bScore = b.scoring();
+      const aScore = a.getADN().metadata.age === 0 ?  a.scoring() : a.getADN().metadata.fitness;
+      const bScore = a.getADN().metadata.age === 0 ?  a.scoring() : a.getADN().metadata.fitness;
 
       if (aScore < bScore) {
         return -1;
@@ -700,12 +705,12 @@ export class GameEngine {
     const eligibleShips = this.ships.filter(ship => ship.getAgeInSeconds() >= GameEngine.MINMUM_AGE_BEFORE_REPLACEMENT);
     const worst = this.findWorstShip(eligibleShips);
     if (worst) {
-      console.log('worst fitness: ' + worst.scoring());
+      console.log('worst fitness: ' + worst.getADN().metadata.fitness);
 
       const adns: ADN[] = this.ships.map(ship => {
         const adn = ship.getADN();
         adn.metadata.id = ship.id;
-        adn.metadata.fitness = ship.scoring() * ship.scoring();
+        adn.metadata.fitness = adn.metadata.age === 0 ?  ship.scoring() : adn.metadata.fitness;
         return adn;
       });
 

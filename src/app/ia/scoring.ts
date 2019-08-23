@@ -8,9 +8,11 @@ export interface Scoring {
     destroyedEnnemies: number;
     missileDestroyed: number;
     score: number;
+    fitness?: number;
     state: string;
     stamp: number; // in seconds
     generation?: number;
+    evaluation?: number;
     lifespan?: number;
     life?: number;
 }

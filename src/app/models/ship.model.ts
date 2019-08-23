@@ -289,6 +289,10 @@ export class Ship extends GameObject {
         this.maxTimer = maxT;
     }
 
+    public needEvaluation(): boolean {
+        return this.getAgeInSeconds() >= this.maxTimer;
+    }
+
     public ennemyWounded() {
         this.nbEnnemiesTouched ++;
         this.hasTouchedEnnemy = true;
@@ -313,14 +317,11 @@ export class Ship extends GameObject {
         return this.parentsID;
     }
 
-
     public updateScoring() {
         const meanCoeffs = Ship.mean.getCoefficients();
         const stdCoeffs = Ship.std.getCoefficients();
         const coeffs = this.scoringCoefficients.getCoefficients();
         let newScore = 0;
-
-        const lifespan = this.getAgeInSeconds();
 
         // tslint:disable-next-line:forin
         for (const key in coeffs) {
@@ -332,15 +333,47 @@ export class Ship extends GameObject {
             }
 
             const value = (this[key] - meanCoeffs[key]) / std;
-            newScore += coeffs[key] * ( value /  Math.log(lifespan + Math.E));
+            newScore += coeffs[key] * value;
         }
 
         // Try to modelize an "expectation" indicator depending of lifespan
+        // const lifespan = this.getAgeInSeconds();
         this.score = newScore; // / Math.log(lifespan + Math.E) ;
     }
 
     public scoring(): number {
         return this.score;
+    }
+
+    /**
+     * Evaluate causes the ship to be back at the factory
+     */
+    public evaluate() {
+        this.adn.metadata.evaluateFitness(this.score);
+
+        // Restart as "new" from the factory
+        this.setPosition(new Vect2D(400, 400));
+        const orientation = Math.random() * 360;
+        this.setOrientation(orientation);
+        this.resetScore();
+    }
+
+    public resetScore() {
+        this.score = 0;
+        this.nbHealthPackPicked = 0;
+        this.nbReceivedDamage = 0;
+        this.missileAccuracy = 0;
+        this.nbMissilesLaunched = 0;
+        this.nbEnnemiesTouched = 0;
+        this.nbEnnemiesDestroyed = 0;
+        this.nbMissilesDestroyed = 0;
+
+        // flags previous frame
+        this.hasBeenShot = false;
+        this.hasBeenHealed = false;
+        this.hasFired = false;
+        this.hasTouchedEnnemy = false;
+        this.hasTouchedMissile = false;
     }
 
     public getScore(): Scoring {
@@ -354,9 +387,11 @@ export class Ship extends GameObject {
             missileLaunched: this.nbMissilesLaunched,
             accuracy: this.getAccuracy(),
             score: this.scoring(),
+            fitness: this.adn.metadata.fitness,
             stamp: this.timer,
             state: this.isDead() ? 'Dead' : 'Alive',
             generation: this.generation,
+            evaluation: this.adn.metadata.age,
             lifespan: Math.round(this.getAgeInSeconds()), // in second
             life: this.life
         };

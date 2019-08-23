@@ -1,19 +1,52 @@
 import { MyMath } from '../tools/math.tools';
 
-export interface Meta {
+export class Meta {
+    private static readonly MIN_AGE_FITNESS_EVALUATION = 4;
+    private static readonly COEFF_FORGETTING_FITNESS = 0.6;
+
     // Identification
-    id?: number;
+    public id: number;
 
     // Evaluation
-    fitness?: number;
-    stdFitness?: number; // standardized for computing proba
-    adjustedFitness: number;
-    proba?: number;
+    public fitness: number;
+    public stdFitness: number; // standardized for computing proba
+    public adjustedFitness: number;
+    public proba: number;
 
     // Specific
-    specieId?: number;
-    isToRemove?: boolean;
-    age?: number;
+    public specieId: number;
+    public isToRemove: boolean;
+    public age: number; // number of evaluation of this ADN
+
+    public constructor() {
+        this.id = -1;
+        this.fitness = 0;
+        this.stdFitness = 0;
+        this.adjustedFitness = 0;
+        this.proba = -1;
+        this.specieId = -1;
+        this.isToRemove = false;
+        this.age = 0;
+    }
+
+    /**
+     * No previous evaluation, take the score as such
+     * First evaluations, use the mean of previous fitnesses
+     * After, use a forgetting coefficient on older fitness
+     * @param score score of the last evaluation of the individual
+     */
+    public evaluateFitness(score: number) {
+        if (this.age === 0) {
+            this.fitness = score;
+        } else if (this.age <= Meta.MIN_AGE_FITNESS_EVALUATION) {
+            this.fitness = this.fitness * this.age;
+            this.fitness += score;
+            this.fitness /= (this.age + 1);
+        } else {
+            this.fitness = this.fitness + (score - this.fitness) * Meta.COEFF_FORGETTING_FITNESS;
+        }
+        this.age += 1;
+    }
 }
 
 export class ADN {
@@ -40,16 +73,7 @@ export class ADN {
             this.genes.push(MyMath.random(this.minimum, this.maximum));
         }
 
-        this.meta = {
-            id: -1,
-            fitness: -1,
-            stdFitness: -1,
-            adjustedFitness: -1,
-            proba: -1,
-            specieId: -1,
-            isToRemove: false,
-            age: -1
-        };
+        this.meta = new Meta();
     }
 
     public getGenes(): number[] {

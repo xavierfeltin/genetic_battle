@@ -17,7 +17,7 @@ export class ScoringComponent implements OnInit, OnDestroy {
 
   scores: Scoring[] = [];
   population: Point[][] = [];
-  deadPopulation: Point[][] = [];
+  fitnessPopulation: Point[][] = [];
   labels: string[] = ['Min', 'Avg', 'Max'];
 
   private deadMinScore: number = Infinity;
@@ -88,51 +88,61 @@ export class ScoringComponent implements OnInit, OnDestroy {
       }
     });
 
-    this.subscription2 = this.service.getDeadShipsScoring().subscribe(bufferedScores => {
+    this.subscription2 = this.service.getShipsScoring().subscribe(scores => {
 
-      if (this.deadPopulation.length !== 0
-        && this.deadPopulation[0].length !== 0
-        && this.time < this.deadPopulation[0][this.deadPopulation[0].length - 1].timer) {
-        this.resetReferenceValues();
-      }
+      if (scores.length > 0) {
+        this.scores = [];
+        let maxScore = -Infinity;
+        let minScore = Infinity;
+        let avgScore = 0;
 
-      for (const scores of bufferedScores) {
-        if (scores.length !== 0) {
-          this.nbDeads += scores.length;
+        for (const scoring of scores) {
+          this.scores.push(scoring);
 
-          for (const scoring of scores) {
-            if (scoring.score > this.deadMaxScore) {
-              this.deadMaxScore = scoring.score;
-            }
-
-            if (scoring.score <  this.deadMinScore) {
-              this.deadMinScore = scoring.score;
-            }
-
-            this.deadAvgScore += scoring.score;
+          if (scoring.fitness > maxScore) {
+            maxScore = scoring.fitness;
           }
+
+          if (scoring.fitness <  minScore) {
+            minScore = scoring.fitness;
+          }
+
+          avgScore += scoring.fitness;
         }
+        avgScore /= scores.length;
+
+        this.scores.sort((a: Scoring, b: Scoring): number => {
+          if (a.fitness < b.fitness) {
+            return 1;
+          } else if (a.fitness === b.fitness) {
+            return 0;
+          } else {
+            return -1;
+          }
+        });
+
+        this.time = this.scores[0].stamp;
+        this.timer = this.formatTime(this.time);
+        const minPoint: Point = {
+          data: minScore,
+          timer: this.time,
+          stamp: this.timer
+        };
+
+        const maxPoint: Point = {
+          data: maxScore,
+          timer: this.time,
+          stamp: this.timer
+        };
+
+        const avgPoint: Point = {
+          data: avgScore,
+          timer: this.time,
+          stamp: this.timer
+        };
+
+        this.fitnessPopulation = this.addData(this.fitnessPopulation, [minPoint, avgPoint, maxPoint]);
       }
-
-      const minPoint: Point = {
-        data: this.deadMinScore === Infinity ? 0 : this.deadMinScore,
-        timer: this.time,
-        stamp: this.timer
-      };
-
-      const maxPoint: Point = {
-        data: this.deadMaxScore === -Infinity ? 0 : this.deadMaxScore,
-        timer: this.time,
-        stamp: this.timer
-      };
-
-      const avgPoint: Point = {
-        data: this.nbDeads !== 0 ? this.deadAvgScore / this.nbDeads : 0,
-        timer: this.time,
-        stamp: this.timer
-      };
-
-      this.deadPopulation = this.addData(this.deadPopulation, [minPoint, avgPoint, maxPoint]);
     });
   }
 
@@ -170,8 +180,8 @@ export class ScoringComponent implements OnInit, OnDestroy {
     return of(this.population);
   }
 
-  public getDeadPopulation$(): Observable<Point[][]> {
-    return of(this.deadPopulation);
+  public getFitnessPopulation$(): Observable<Point[][]> {
+    return of(this.fitnessPopulation);
   }
 
   public getLabels$(): Observable<string[]> {

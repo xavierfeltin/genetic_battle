@@ -84,7 +84,7 @@ describe('Ship', () => {
         s.setPosition(new Vect2D(100, 100));
         s.setOrientation(0);
         s.setFOV(120);
-        
+
         const go = new GameObject(2);
         go.setPosition(new Vect2D(155, -30));
         expect(s.isInView(go)).toBeFalsy();
