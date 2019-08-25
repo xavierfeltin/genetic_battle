@@ -1,8 +1,7 @@
-import { RTADN, RTADNRates } from './adn';
-import { Species } from './species';
+import { RTADN } from './adn';
 import * as Common from './genotype/common-spec';
 import { Specie } from './specie';
-import { Population } from './population';
+import { RTADNGA } from './population';
 
 beforeEach(() => {
     // Reset static variable before each test
@@ -14,7 +13,7 @@ beforeEach(() => {
 describe('Population', () => {
     describe('constructor', () => {
         it('creates an empty population', () => {
-            const pop = new Population();
+            const pop = new RTADNGA();
             expect(pop.species.species.length).toBe(0);
             expect(pop.population.length).toBe(0);
         });
@@ -25,21 +24,21 @@ describe('Population', () => {
             const organism2 = new RTADN(-1, 1, Common.getBasicRates(), Common.generateDirectGenome(false));
 
             const organisms = [organism1, organism2];
-            const pop = new Population();
-            pop.population = organisms;
+            const ga = new RTADNGA();
+            ga.populate(organisms);
 
-            expect(pop.population.length).toBe(2);
-            expect(pop.species.species.length).toBe(2);
-            expect(pop.species.species[0].nbOrganisms).toBe(1);
-            expect(pop.species.species[0].organisms[0].id).toBe(0);
+            expect(ga.population.length).toBe(2);
+            expect(ga.species.species.length).toBe(2);
+            expect(ga.species.species[0].nbOrganisms).toBe(1);
+            expect(ga.species.species[0].organisms[0].id).toBe(0);
 
-            expect(pop.species.species[1].nbOrganisms).toBe(1);
-            expect(pop.species.species[1].organisms[0].id).toBe(1);
+            expect(ga.species.species[1].nbOrganisms).toBe(1);
+            expect(ga.species.species[1].organisms[0].id).toBe(1);
         });
     });
     describe('findWorstOrganism', () => {
         it('outputs null if no organism has been set in the population', () => {
-            const pop = new Population();
+            const pop = new RTADNGA();
             const worst = pop.findWorstOrganism();
             expect(worst).toBeNull();
         });
@@ -47,10 +46,10 @@ describe('Population', () => {
             const organism1 = new RTADN(-1, 1, Common.getBasicRates(), Common.generateComplexGenome());
             const organisms = [organism1];
 
-            const pop = new Population();
-            pop.population = organisms;
+            const ga = new RTADNGA();
+            ga.populate(organisms);
 
-            const worst = pop.findWorstOrganism();
+            const worst = ga.findWorstOrganism();
             expect(worst).toBeNull();
         });
         it('outputs the only organism set in the population with required minimum age to be picked', () => {
@@ -62,10 +61,10 @@ describe('Population', () => {
 
             const organisms = [organism1, organism2];
 
-            const pop = new Population();
-            pop.population = organisms;
+            const ga = new RTADNGA();
+            ga.populate(organisms);
 
-            const worst = pop.findWorstOrganism();
+            const worst = ga.findWorstOrganism();
             expect(worst.id).toBe(organism2.id);
         });
         it('outputs the organism with the smallest adjusted fitness score in the population', () => {
@@ -83,18 +82,18 @@ describe('Population', () => {
 
             const organisms = [organism1, organism2, organism3];
 
-            const pop = new Population();
-            pop.population = organisms;
+            const ga = new RTADNGA();
+            ga.populate(organisms);
 
-            const worst = pop.findWorstOrganism();
+            const worst = ga.findWorstOrganism();
             expect(worst.id).toBe(organism3.id);
-            expect(worst.specie).toBe(pop.species.species[1].id);
+            expect(worst.specie).toBe(ga.species.species[1].id);
         });
     });
     describe('evovle', () => {
         it('outputs null if no organism is in age to be evoluted', () => {
-            const pop = new Population();
-            const newOrganism = pop.evolve();
+            const pop = new RTADNGA();
+            const newOrganism = pop.evolve(1);
             expect(newOrganism).toBeNull();
         });
         it('outputs a new organism and update species pool', () => {
@@ -112,19 +111,19 @@ describe('Population', () => {
 
             const organisms = [organism1, organism2, organism3];
 
-            const pop = new Population();
-            pop.population = organisms;
+            const ga = new RTADNGA();
+            ga.populate(organisms);
 
-            const worst = pop.findWorstOrganism();
-            const beforEvolveLength = pop.species.species.length;
-            const newOrganism = pop.evolve();
-            const foundNewOrganism = pop.findOrganism(newOrganism.id);
+            const worst = ga.findWorstOrganism();
+            const beforEvolveLength = ga.species.species.length;
+            const newOrganism = ga.evolve(1)[0];
+            const foundNewOrganism = ga.findOrganism(newOrganism.id);
 
-            expect(pop.species.species.length).toBe(beforEvolveLength);
+            expect(ga.species.species.length).toBe(beforEvolveLength);
             expect(foundNewOrganism.id).toBe(newOrganism.id);
             expect(newOrganism.specie).not.toBe(-1);
-            expect(pop.findOrganism(worst.id)).toBeNull();
-            expect(pop.isConsistent()).toBeTruthy();
+            expect(ga.findOrganism(worst.id)).toBeNull();
+            expect(ga.isConsistent()).toBeTruthy();
         });
     });
 });

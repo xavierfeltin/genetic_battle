@@ -1,4 +1,4 @@
-import { RTADN, RTADNRates } from './adn';
+import { RTADN } from './adn';
 import { Species } from './species';
 import * as Common from './genotype/common-spec';
 import { Specie } from './specie';

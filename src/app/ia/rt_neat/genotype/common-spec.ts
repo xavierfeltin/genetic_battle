@@ -1,7 +1,7 @@
 import { NodeGene } from './node';
 import { NodeType } from '../phenotype/node';
 import { ConnectGene } from './connect';
-import { RTADNRates } from '../adn';
+import { Rates } from '../../adn';
 import { Genome } from './genome';
 import { expect } from 'jest-preset-angular';
 
@@ -61,7 +61,7 @@ export function checkNode(node: NodeGene, conf: ExpectedNode) {
     }
 }
 
-export function getBasicRates(): RTADNRates {
+export function getBasicRates(): Rates {
     return {
         mutation: 0.01,
         crossOver: 0.01,
@@ -72,7 +72,7 @@ export function getBasicRates(): RTADNRates {
     };
 }
 
-export function getRateForConnecting(): RTADNRates {
+export function getRateForConnecting(): Rates {
     return {
         mutation: 0.0,
         crossOver: 0.0,
@@ -83,7 +83,7 @@ export function getRateForConnecting(): RTADNRates {
     };
 }
 
-export function getRateForActivating(): RTADNRates {
+export function getRateForActivating(): Rates {
     return {
         mutation: 0.0,
         crossOver: 0.0,
@@ -94,7 +94,7 @@ export function getRateForActivating(): RTADNRates {
     };
 }
 
-export function getRateForRecurrentConnecting(): RTADNRates {
+export function getRateForRecurrentConnecting(): Rates {
     return {
         mutation: 0.0,
         crossOver: 0.0,
@@ -105,7 +105,7 @@ export function getRateForRecurrentConnecting(): RTADNRates {
     };
 }
 
-export function getRateForSplitting(): RTADNRates {
+export function getRateForSplitting(): Rates {
     return {
         mutation: 0.0,
         crossOver: 0.0,

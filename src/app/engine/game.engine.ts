@@ -11,20 +11,20 @@ import { MyMath } from '../tools/math.tools';
 import { Subject } from 'rxjs';
 import { Configuration } from '../models/configuration.interface';
 import { FactoryADN, ADN } from '../ia/adn';
-import { FortuneWheelGA } from '../ia/ga';
+import { FortuneWheelGA } from '../ia/fortunewheel';
 import { Scoring } from '../ia/scoring';
 import { Phenotype } from '../models/phenotype.interface';
 import { ShipNeurEvo } from '../models/shipNeuroEvo.model';
 import { Matrix } from '../ia/matrix';
 import { ShipScoring } from '../models/shipScoring.model';
-import { Population } from '../ia/rt_neat/population';
+import { RTADNGA } from '../ia/rt_neat/population';
 import { RTADN } from '../ia/rt_neat/adn';
 
 export class GameEngine {
   private static readonly NB_HEALTH_WHEN_DIE: number = 1;
-  private static readonly NB_SHIPS: number = 20;
+  private static readonly NB_SHIPS: number = 10;
   private static readonly NB_INIT_HEALTH: number = 0; // 20;
-  private static readonly RATE_SPAWN_HEALTH: number = 0.03; // 0.01;
+  private static readonly RATE_SPAWN_HEALTH: number = 0.05; // 0.01;
   private static readonly RATE_CLONE_SHIP: number = 0.03;
   private static readonly BREEDING_RATE_SHIP: number = 0.001;
   private static readonly MAX_POPULATION = 10;
@@ -458,7 +458,6 @@ export class GameEngine {
       }
     }
 
-    this.continuousEvolutionOfWorst();
     // this.continuousEvolutionWithRTNeat();
 
     /*
@@ -546,13 +545,12 @@ export class GameEngine {
         scoring.push(ship.getScore());
 
         // Evaluate the ship after its TTL
-        if (ship.needEvaluation()) {
-          ship.age = 0;
-          ship.evaluate();
-        }
+        ship.evaluate();
       }
     }
 
+    this.continuousEvolutionOfWorst();
+        
     const aliveOldestShip = this.getOldestShip(this.ships);
     if (aliveOldestShip !== null) {
       if (this.oldestShip.scoring() < aliveOldestShip.scoring()) {
@@ -583,6 +581,7 @@ export class GameEngine {
   // The ship is cloning itself if it was good enough
   // or a new ship is created based on two ships with a good score
   // private continuousEvolutionWithReference(shipToEvolve: Ship): Ship {
+  /*
   private continuousEvolutionWithReference(ships: Ship[]): Ship[] {
     const isCloning = Math.random() < this.cloneRate;
     const newShips = [];
@@ -637,15 +636,6 @@ export class GameEngine {
         this.ga.basicEvolve();
 
         const newIndividuals = this.ga.getPopulation();
-        /*
-        const newBest = this.ga.getBest();
-        if (this.bestShip === null || newBest.id !== this.bestShip.id) {
-          this.bestShip = ships.find((value: Ship, index: number, allShips: Ship[]) => {
-            return value.id === newBest.id;
-          });
-        }
-        */
-
         const orientation = Math.random() * 360;
         // const pickedGeneration = pickedShip ? pickedShip.getGeneration() + 1 : this.bestShip.getGeneration() + 1;
         // const pickedId = pickedShip ? pickedShip.id : this.bestShip.id;
@@ -661,6 +651,7 @@ export class GameEngine {
 
     return newShips;
   }
+  */
 
   private computeFrequencyOfReplacement() {
     return Math.ceil(this.minimumAgeBeforeReplacement / (this.nbStartingShips * this.levelOfInegibility));
@@ -668,8 +659,8 @@ export class GameEngine {
 
   private findWorstShip(ships: Ship[]): Ship {
     const sorted = ships.sort((a, b) => {
-      const aScore = a.getADN().metadata.age === 0 ?  a.scoring() : a.getADN().metadata.fitness;
-      const bScore = a.getADN().metadata.age === 0 ?  a.scoring() : a.getADN().metadata.fitness;
+      const aScore = a.getADN().metadata.fitness;
+      const bScore = b.getADN().metadata.fitness;
 
       if (aScore < bScore) {
         return -1;
@@ -697,7 +688,8 @@ export class GameEngine {
 
     // Check if timing is right for checking if worst needs to be replaced ?
     const t = this.getElapsedTimeInSeconds();
-    if ((t <= this.lastEvaluationForReplacement) || (t % this.ticksBeforeReplacement !== 0)) {
+    const isTooSoonForReplacement = (t <= this.lastEvaluationForReplacement) || (t % this.ticksBeforeReplacement !== 0);
+    if (isTooSoonForReplacement) {
       return;
     }
     this.lastEvaluationForReplacement = t;
@@ -710,22 +702,12 @@ export class GameEngine {
       const adns: ADN[] = this.ships.map(ship => {
         const adn = ship.getADN();
         adn.metadata.id = ship.id;
-        adn.metadata.fitness = adn.metadata.age === 0 ?  ship.scoring() : adn.metadata.fitness;
         return adn;
       });
 
       this.ga.populate(adns);
-      this.ga.computeProbas();
-
-      const parentAdn1 = this.ga.pickOne(adns);
-      const parentAdn2 = this.ga.pickOne(adns);
-      const parent1 = this.ships.find(ship => ship.id === parentAdn1.metadata.id);
-      const parent2 = this.ships.find(ship => ship.id === parentAdn2.metadata.id);
-
-      parent1.setPartner(parent2);
-      const newId = this.generateId();
-      const orientation = Math.random() * 360;
-      const newShip = parent1.reproduce(newId, orientation);
+      const newADN = this.ga.evolve(1)[0];
+      const newShip = this.shipFactory.createFromADN(this.generateId(), newADN);
       newShip.setPosition(new Vect2D(400, 400));
       // TODO set invulnerability
 
@@ -746,16 +728,13 @@ export class GameEngine {
     const eligibleShips = this.ships.filter(ship => ship.getAgeInSeconds() >= GameEngine.MINMUM_AGE_BEFORE_REPLACEMENT);
     const worst = this.findWorstShip(eligibleShips);
 
-    const pop = new Population();
+    const ga = new RTADNGA();
     const adns = this.ships.map(ship => ship.getADN() as RTADN);
-    pop.population = adns;
-    const newADN = pop.evolve();
+    ga.populate(adns);
+    const newADN = ga.evolve(1);
     if (newADN !== null) {
       const newId = this.generateId();
-      const newShip = this.shipFactory.create(newId, 0, []);
-      newShip.setADN(newADN);
-      const orientation = Math.random() * 360;
-      newShip.setOrientation(orientation);
+      const newShip = this.shipFactory.createFromADN(newId, newADN[0]);
       newShip.setPosition(new Vect2D(400, 400));
 
       // replace worst ship by new one and position it in starting area

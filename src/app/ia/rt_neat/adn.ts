@@ -1,19 +1,10 @@
 import { Genome } from './genotype/genome';
-import { ADN, Meta } from '../adn';
+import { ADN, Meta, Rates } from '../adn';
 import { MyMath } from '../../tools/math.tools';
 import { NodeGene } from './genotype/node';
 import { ConnectGene } from './genotype/connect';
 import { NodeType } from './phenotype/node';
 import { ModificationType } from './genotype/historic';
-
-export interface RTADNRates {
-    mutation: number;
-    crossOver: number;
-    mutationActivation: number;
-    mutationConnect: number;
-    mutationAllowRecurrent: number;
-    mutationSplitConnect: number;
-}
 
 export class RTADN extends ADN {
     public static readonly MUTATION_ACTIVATION_RATE: number = 0.01;
@@ -36,8 +27,8 @@ export class RTADN extends ADN {
     private mutationSplitConnectRate: number;
 
     // TODO: add genome directly in constructor
-    constructor(min: number, max: number, rates: RTADNRates, genome: Genome = null) {
-        super(0, min, max, rates.mutation, rates.crossOver);
+    constructor(min: number, max: number, rates: Rates, genome: Genome = null) {
+        super(0, min, max, rates);
         this.id = RTADN.nextId;
         this.g = genome ? genome : new Genome();
         this.mutationActivationRate = rates.mutationActivation;
@@ -250,7 +241,7 @@ export class RTADN extends ADN {
         }
 
         for (const link of newGenome.connectGenes) {
-            if (this.mutationRate !== 0  && Math.random() <= this.mutationRate) {
+            if (this.rates.mutation !== 0  && Math.random() <= this.rates.mutation) {
                 link.weight = link.weight + MyMath.random(-pct, pct);
                 link.weight = Math.max(link.weight, 8);
                 link.weight = Math.min(link.weight, -8);
@@ -369,10 +360,10 @@ export class RTADN extends ADN {
         return distance;
     }
 
-    public get rates(): RTADNRates {
+    public get RTADNRates(): Rates {
         return {
-            mutation: this.mutationRate,
-            crossOver: this.crossOverRate,
+            mutation: this.rates.mutation,
+            crossOver: this.rates.crossOver,
             mutationActivation: this.mutationActivationRate,
             mutationConnect: this.mutationConnectRate,
             mutationAllowRecurrent: this.mutationAllowRecurrentRate,

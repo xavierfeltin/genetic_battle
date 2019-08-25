@@ -348,14 +348,22 @@ export class Ship extends GameObject {
     /**
      * Evaluate causes the ship to be back at the factory
      */
-    public evaluate() {
-        this.adn.metadata.evaluateFitness(this.score);
+    public evaluate() {        
+        debugger;
+        if (this.needEvaluation()) {
+            // Evaluate the ship after its TTL
+            this.age = 0;
+            this.adn.metadata.evaluateFitness(this.score);
 
-        // Restart as "new" from the factory
-        this.setPosition(new Vect2D(400, 400));
-        const orientation = Math.random() * 360;
-        this.setOrientation(orientation);
-        this.resetScore();
+            // Restart as "new" from the factory
+            this.setPosition(new Vect2D(400, 400));
+            const orientation = Math.random() * 360;
+            this.setOrientation(orientation);
+            this.resetScore();
+        } else if (this.adn.metadata.age === 0) {
+            // Update fitness in real time if no predefined fitness has been established
+            this.adn.metadata.fitness = this.score;
+        }
     }
 
     public resetScore() {
@@ -580,6 +588,8 @@ export class Ship extends GameObject {
     }
 
     public reproduce(newId: number, orientation: number): Ship {
+        debugger; 
+
         const adn = (this.scoring() > this.partner.scoring()) ? this.adn.crossOver(this.partner.adn) : this.partner.adn.crossOver(this.adn);
         adn.mutate();
 
@@ -1102,10 +1112,11 @@ export class FactoryShip {
     private isNeuroEvolution: boolean;
     private shipNeuroEvo: ShipNeurEvo;
     private neuronalNetworkStructure: number[];
+    private borders: number[];
 
     public constructor(adnFactory: FactoryADN, energyFuel: number = Ship.DEFAULT_ENERGY_FUEL,
                        energyFire: number = Ship.DEFAULT_ENERGY_FIRE, isNeuroEvolution: boolean = false,
-                       nnStruture: number[] = Ship.DEFAULT_NN_HIDDEN_LAYERS) {
+                       nnStruture: number[] = Ship.DEFAULT_NN_HIDDEN_LAYERS, borders: number[] = [0, 800, 0, 800]) {
         this.energyFuel = energyFuel;
         this.energyFire = energyFire;
         this.adnFactory = adnFactory;
@@ -1113,6 +1124,7 @@ export class FactoryShip {
         this.isNeuroEvolution = isNeuroEvolution;
         this.neuronalNetworkStructure = nnStruture;
         this.shipNeuroEvo = new ShipNeurEvo();
+        this.borders = borders;
     }
 
     public getEnergyFuel(): number {
@@ -1163,5 +1175,16 @@ export class FactoryShip {
         return new Ship(id, generation, this.energyFuel, this.energyFire,
                         this.adnFactory, this.isNeuroEvolution, this.scoringCoefficients.copy(),
                         this.shipNeuroEvo.copy(), this.neuronalNetworkStructure, parentsID);
+    }
+
+    public createFromADN(id: number, adn: ADN) {
+        const ship = this.create(id, adn.metadata.generation, [adn.metadata.parentA, adn.metadata.parentB]);
+        ship.setADN(adn);
+        const pos = new Vect2D(Math.random() * this.borders[1], Math.random() * this.borders[3]);
+        ship.setPosition(pos);
+        const orientation = Math.random() % 360;
+        ship.setOrientation(orientation);
+        ship.setBorders(this.borders);
+        return ship;        
     }
 }

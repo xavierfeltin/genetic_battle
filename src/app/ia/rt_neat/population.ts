@@ -1,24 +1,26 @@
 import { RTADN } from './adn';
 import { Species } from './species';
 import { Specie } from './specie';
+import { GeneticAlgorithm } from '../ga';
 
-export class Population {
+export class RTADNGA extends GeneticAlgorithm {
     private pop: RTADN[];
     private poolSpecies: Species;
 
     constructor() {
+        super();
         this.pop = [];
         this.poolSpecies = new Species(Species.MIN_COMPATIBILITY_THRESOLD);
     }
 
-    public get population(): RTADN[] {
-        return this.pop;
-    }
-
-    public set population(pop: RTADN[]) {
+    public populate(pop: RTADN[]) {
         this.pop = pop;
         const keepSpecies = false;
         this.affectOrganismsToSpecies(keepSpecies);
+    }
+
+    public get population(): RTADN[] {
+        return this.pop;
     }
 
     public get species(): Species {
@@ -28,19 +30,26 @@ export class Population {
     /**
      * Generate a new organism and remove the worst organism
      * If no worst organism is found, return null
+     * Always return 1 individual
      */
-    public evolve(): RTADN {
+    public evolve(nbIndividuals: number): RTADN[] {
         const worst = this.findWorstOrganism();
         if (worst !== null) {
             this.poolSpecies.calculateAdjustedFitness();
             this.poolSpecies.removeOrganismFromSpecies(worst); // remove worst organism and update avg fitness of specie
             this.pop = this.pop.filter(organism => organism.id !== worst.id);
+
             const parentSpecie = this.selectParent();
-            const newOrganism = parentSpecie.generateOrganism();
+            const parents = parentSpecie.pickParents();
+            const newOrganism = parentSpecie.generateOrganism(parents[0], parents[1]);
+            newOrganism.metadata.parentA = parents[0].id;
+            newOrganism.metadata.parentA = parents[1].id;
+            newOrganism.metadata.generation = parents[0].metadata.generation + 1;
+
             this.pop.push(newOrganism);
             this.poolSpecies.adjustCompatibilityThresold();
             this.affectOrganismsToSpecies();
-            return newOrganism;
+            return [newOrganism];
         } else {
             return null;
         }
@@ -95,13 +104,13 @@ export class Population {
     public isConsistent(): boolean {
 
         const nbSpeciesOrganisms = this.species.nbOrganisms;
-        if (this.population.length !== nbSpeciesOrganisms) {
-            console.error('Population with ' + this.population.length
+        if (this.pop.length !== nbSpeciesOrganisms) {
+            console.error('Population with ' + this.pop.length
                 + ' organisms and species with ' + nbSpeciesOrganisms + ' organisms do not match');
             return false;
         }
 
-        for (const organism of this.population) {
+        for (const organism of this.pop) {
             let found = null;
             let i = 0;
             while (!found && i < this.poolSpecies.species.length) {

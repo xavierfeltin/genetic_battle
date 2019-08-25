@@ -106,7 +106,36 @@ export class Specie {
         return this.avgFitness;
     }
 
-    public generateOrganism(): RTADN {
+    public pickParents(): RTADN[] {
+        const probabilities = [];
+        let currentProbability = 0;
+        for (const organism of this.pool) {
+            currentProbability += organism.adjustedFitness;
+            probabilities.push(currentProbability);
+        }
+
+        // round to 1 last property
+        probabilities[probabilities.length - 1] = 1;
+        const random1 = Math.random();
+        const random2 = Math.random();
+        let index1 = 0;
+        let index2 = 0;
+        for (const proba of probabilities) {
+            if (proba < random1) {
+                index1++;
+            }
+
+            if (proba < random2) {
+                index2++;
+            }
+        }
+
+        const parentA = this.pool[index1];
+        const parentB = this.pool[index2];
+        return [parentA, parentB];
+    }
+
+    public generateOrganism(parentA: RTADN, parentB: RTADN): RTADN {
         const probabilities = [];
         let currentProbability = 0;
         for (const organism of this.pool) {
