@@ -185,7 +185,7 @@ export class Ship extends GameObject {
         this.scoringCoefficients =  scoringCoefficients;
         this.score = 0;
 
-        this.setupADN(FactoryADN.TYPE_RT_ADN, neuroEvoInputs, nnStructure, generation);
+        this.setupADN(FactoryADN.TYPE_HUGE_ADN, neuroEvoInputs, nnStructure, generation);
 
         this.detectedMissileOnFOV = null;
         this.detectedShipOnFOV = null;
@@ -261,8 +261,8 @@ export class Ship extends GameObject {
         }
 
         if (this.adnFactory.isRTAdn()) {
-            const rtadn = this.getADN() as RTADN;
-            this.nn = new RTNeuralNetwork(rtadn.genome);
+            // const rtadn = this.getADN() as RTADN;
+            // this.nn = new RTNeuralNetwork(rtadn.genome);
         }
 
         this.nbGenes = this.isNeuroEvo ? this.nn.getNbCoefficients() : Ship.NB_GENES;
@@ -297,7 +297,7 @@ export class Ship extends GameObject {
                 nn.setCoefficients(adn.getGenes());
             }
             else if (this.adnFactory.isRTAdn()) {
-                const nn = this.nn as RTADN;
+                // const nn = this.nn as RTADN;
                 // TODO transform new genes into rt adn neural network
             }
         }

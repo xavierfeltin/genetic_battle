@@ -4,14 +4,14 @@ import { Genome } from '../genotype/genome';
 import { NodeGene } from '../genotype/node';
 import { NeuralNetwork } from '../../neural-network';
 
-export class RTNeuralNetwork extends NeuralNetwork {
+export class RTNeuralNetwork /* extends NeuralNetwork */ {
     private inputs: Node[];
     private layers: Node[][];
     private outputs: Node[];
     private links: Connect[];
 
     constructor(genome: Genome = null) {
-        super();
+        // super();
         this.inputs = [];
         this.layers = [];
         this.outputs = [];
@@ -114,6 +114,9 @@ export class RTNeuralNetwork extends NeuralNetwork {
                 link.inputNode.saveInMemory();
             }
         }
+
+        // TODO
+        // Apply softmax layer at the end
 
         return this.outputs.map( out => out.value );
     }

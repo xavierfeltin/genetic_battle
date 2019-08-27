@@ -16,6 +16,19 @@ export class Genome {
         this.links = [];
     }
 
+    public static generate(nbInputs: number, nbOutputs: number): Genome {
+        const g = new Genome();
+        for(let i = 0; i < nbInputs; i++) {
+            g.addNode(NodeType.Input, -Infinity);
+        }
+
+        for(let i = 0; i < nbInputs; i++) {
+            g.addNode(NodeType.Output, Infinity);
+        }
+
+        return g;
+    }
+
     public static reset() {
         Genome.innovationNumber = 0;
         Genome.nodeNumber = 0;

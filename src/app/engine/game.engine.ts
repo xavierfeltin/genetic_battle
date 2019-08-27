@@ -132,8 +132,8 @@ export class GameEngine {
     this.isNeuroEvolution = true;
     this.shipFactory.setNeuroEvolution(this.isNeuroEvolution);
 
-    // this.ga = new FortuneWheelGA();
-    this.ga = new RTADNGA();
+    this.ga = new FortuneWheelGA();
+    // this.ga = new RTADNGA();
 
     this.bestShip = null;
     this.minimumAgeBeforeReplacement = GameEngine.MINMUM_AGE_BEFORE_REPLACEMENT;
