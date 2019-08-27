@@ -34,16 +34,13 @@ export class FortuneWheelGA extends GeneticAlgorithm {
             }
         });
 
-        const best = this.pop[0];
-        newPopulation.push(best);
-
         this.computeProbas();
         const nbChildren = nbIndividuals;
         for (let i = 0; i < nbChildren; i++) {
             const parentA = this.pickOne(this.pop);
             const parentB = this.pickOne(this.pop);
-            let childADN = parentA.crossOver(parentB);            
-            childADN = childADN.mutate();
+            const childADN = parentA.crossOver(parentB);
+            childADN.mutate();
             newPopulation.push(childADN);
         }
 
@@ -132,7 +129,7 @@ export class FortuneWheelGA extends GeneticAlgorithm {
 
         let sumFit = 0;
         for (const pop of this.pop) {
-            let stdFitness = minValue <= 0 ? 
+            const stdFitness = minValue <= 0 ?
                 pop.metadata.fitness + (minValue * -1) + 1 // start at 1 to avoid null share
                 : pop.metadata.fitness;
             pop.metadata.stdFitness = stdFitness * stdFitness;

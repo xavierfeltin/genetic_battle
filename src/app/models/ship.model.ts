@@ -1,5 +1,6 @@
 import { GameObject } from './game-object.model';
-import { ADN, FactoryADN } from '../ia/adn';
+import { ADN } from '../ia/adn';
+import { FactoryADN } from '../ia/adn.factory';
 import { Vect2D } from './vect2D.model';
 import { MyMath } from '../tools/math.tools';
 import { NeuralNetwork } from '../ia/neural-network';
@@ -7,7 +8,10 @@ import { Missile } from './missile.model';
 import { Scoring } from '../ia/scoring';
 import { Phenotype } from './phenotype.interface';
 import { ShipNeurEvo } from './shipNeuroEvo.model';
-import { ShipScoring } from './shipScoring.model';;
+import { ShipScoring } from './shipScoring.model';import { RTNeuralNetwork } from '../ia/rt_neat/phenotype/neural-network';
+import { RTADN } from '../ia/rt_neat/adn';
+import { Perceptron } from '../ia/perceptron';
+;
 
 export class Ship extends GameObject {
     // Constants
@@ -181,20 +185,7 @@ export class Ship extends GameObject {
         this.scoringCoefficients =  scoringCoefficients;
         this.score = 0;
 
-        this.isNeuroEvo = isNeuroEvo;
-        if (this.isNeuroEvo) {
-            this.inputsNeuroEvo = neuroEvoInputs;
-            this.neuronalNetworkStructure = nnStructure;
-            const activeInputs = this.inputsNeuroEvo.getActiveInputNames();
-            this.nn = new NeuralNetwork(activeInputs.length, this.neuronalNetworkStructure, Ship.NN_OUTPUTS);
-        }
-        this.nbGenes = this.isNeuroEvo ? this.nn.getNbCoefficients() : Ship.NB_GENES;
-        const minValue = Ship.MIN_ADN_VALUE * 1;
-        const maxValue = Ship.MAX_ADN_VALUE * 1;
-        this.generation = generation;
-
-        this.adnFactory.setIsHugeADN(this.isNeuroEvo); // will not change once the ship is created
-        this.createADN(this.nbGenes, minValue, maxValue);
+        this.setupADN(FactoryADN.TYPE_RT_ADN, neuroEvoInputs, nnStructure, generation);
 
         this.detectedMissileOnFOV = null;
         this.detectedShipOnFOV = null;
@@ -254,6 +245,33 @@ export class Ship extends GameObject {
         }
     }
 
+    private setupADN(adnType: number, neuroEvoInputs: ShipNeurEvo, nnStructure: number[], generation: number) {
+        // this.adnFactory.setIsHugeADN(this.isNeuroEvo); // will not change once the ship is created
+        this.adnFactory.setADNType(adnType); // will not change once the ship is created
+        this.isNeuroEvo = this.adnFactory.isHugeAdn() || this.adnFactory.isRTAdn();
+
+        if (this.isNeuroEvo) {
+            this.inputsNeuroEvo = neuroEvoInputs;
+        }
+
+        if (this.adnFactory.isHugeAdn()) {
+            const activeInputs = this.inputsNeuroEvo.getActiveInputNames();
+            this.neuronalNetworkStructure = nnStructure;
+            this.nn = new Perceptron(activeInputs.length, this.neuronalNetworkStructure, Ship.NN_OUTPUTS);
+        }
+
+        if (this.adnFactory.isRTAdn()) {
+            const rtadn = this.getADN() as RTADN;
+            this.nn = new RTNeuralNetwork(rtadn.genome);
+        }
+
+        this.nbGenes = this.isNeuroEvo ? this.nn.getNbCoefficients() : Ship.NB_GENES;
+        const minValue = Ship.MIN_ADN_VALUE * 1;
+        const maxValue = Ship.MAX_ADN_VALUE * 1;
+        this.generation = generation;
+
+        this.createADN(this.nbGenes, minValue, maxValue);
+    }
 
     // TODO TEMPORARY to test worst evolution approach
     public isDead(): boolean {
@@ -273,6 +291,15 @@ export class Ship extends GameObject {
         this.adn = adn;
         if (!this.isNeuroEvo) {
             this.expressADN();
+        } else {
+            if (this.adnFactory.isHugeAdn()) {
+                const nn = this.nn as Perceptron;
+                nn.setCoefficients(adn.getGenes());
+            }
+            else if (this.adnFactory.isRTAdn()) {
+                const nn = this.nn as RTADN;
+                // TODO transform new genes into rt adn neural network
+            }
         }
     }
 
@@ -348,8 +375,7 @@ export class Ship extends GameObject {
     /**
      * Evaluate causes the ship to be back at the factory
      */
-    public evaluate() {        
-        debugger;
+    public evaluate() {
         if (this.needEvaluation()) {
             // Evaluate the ship after its TTL
             this.age = 0;
@@ -588,8 +614,6 @@ export class Ship extends GameObject {
     }
 
     public reproduce(newId: number, orientation: number): Ship {
-        debugger; 
-
         const adn = (this.scoring() > this.partner.scoring()) ? this.adn.crossOver(this.partner.adn) : this.partner.adn.crossOver(this.adn);
         adn.mutate();
 
@@ -645,7 +669,8 @@ export class Ship extends GameObject {
                             this.inputsNeuroEvo, this.neuronalNetworkStructure, [this.id]);
         ship.setPosition(this.pos);
         ship.setOrientation(orientation);
-        ship.setADN(this.adn.mutate());
+        ship.setADN(this.adn.copy());
+        ship.getADN().mutate();
         ship.setBorders(this.getBorders());
 
         this.nbClones ++;
@@ -1185,6 +1210,6 @@ export class FactoryShip {
         const orientation = Math.random() % 360;
         ship.setOrientation(orientation);
         ship.setBorders(this.borders);
-        return ship;        
+        return ship;
     }
 }

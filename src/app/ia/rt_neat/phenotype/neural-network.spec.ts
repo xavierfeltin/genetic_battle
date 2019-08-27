@@ -1,6 +1,6 @@
 import { Node, NodeType } from './node';
 import { Connect } from './connect';
-import { NeuralNetwork } from './neural-network';
+import { RTNeuralNetwork } from './neural-network';
 import { Genome } from '../genotype/genome';
 
 beforeEach(() => {
@@ -155,7 +155,7 @@ function checkNode(node: Node, conf: ExpectedNode) {
 describe('Neural-network', () => {
     describe('constructor', () => {
         it('outputs a neural network with the correct attributes', () => {
-            const nn = new NeuralNetwork();
+            const nn = new RTNeuralNetwork();
             expect(nn.networkInputs.length).toBe(0);
             expect(nn.networkOutputs.length).toBe(0);
             expect(nn.networkLayers.length).toBe(0);
@@ -165,8 +165,7 @@ describe('Neural-network', () => {
     describe('init', () => {
         it('outputs an initialized a network 1 input and 1 output', () => {
             const genome = generateSimpleDirectGenome();
-            const nn = new NeuralNetwork();
-            nn.init(genome);
+            const nn = new RTNeuralNetwork(genome);
 
             const inputs = nn.networkInputs;
             expect(inputs.length).toBe(1);
@@ -204,8 +203,7 @@ describe('Neural-network', () => {
 
         it('outputs an initialized a network 1 input, 1 hidden and 1 output', () => {
             const genome = generateSimpleGenome();
-            const nn = new NeuralNetwork();
-            nn.init(genome);
+            const nn = new RTNeuralNetwork(genome);
 
             const inputs = nn.networkInputs;
             expect(inputs.length).toBe(1);
@@ -263,8 +261,7 @@ describe('Neural-network', () => {
 
         it('outputs an initialized a network 1 input, 2 hidden on 2 layers and 1 output', () => {
             const genome = generate2LayeredGenome();
-            const nn = new NeuralNetwork();
-            nn.init(genome);
+            const nn = new RTNeuralNetwork(genome);
 
             const hiddens = nn.networkLayers;
             expect(hiddens.length).toBe(2);
@@ -293,8 +290,7 @@ describe('Neural-network', () => {
 
         it ('outputs an initialized network with a recurrent link', () => {
             const genome = generateSimpleGenomeWithRecurrentLink();
-            const nn = new NeuralNetwork();
-            nn.init(genome);
+            const nn = new RTNeuralNetwork(genome);
 
             const inputs = nn.networkInputs;
             expect(inputs.length).toBe(1);
@@ -359,8 +355,7 @@ describe('Neural-network', () => {
 
         it('outputs an initialized a network without disabled connections', () => {
             const genome = generateWithDisabledLinksGenome();
-            const nn = new NeuralNetwork();
-            nn.init(genome);
+            const nn = new RTNeuralNetwork(genome);
 
             const hiddens = nn.networkLayers[0];
             expect(hiddens.length).toBe(1);
@@ -377,8 +372,7 @@ describe('Neural-network', () => {
 
         it('outputs an initialized a network without not connected nodes', () => {
             const genome = generateWithDisconnectedNodeGenome();
-            const nn = new NeuralNetwork();
-            nn.init(genome);
+            const nn = new RTNeuralNetwork(genome);
 
             const hiddens = nn.networkLayers[0];
             expect(hiddens.length).toBe(3);
@@ -391,8 +385,8 @@ describe('Neural-network', () => {
     describe('feed forward', () => {
         it('outputs the results of a direct neural network', () => {
             const genome = generateSimpleDirectGenome();
-            const nn = new NeuralNetwork();
-            nn.init(genome);
+            const nn = new RTNeuralNetwork(genome);
+
             const results = nn.feedForward([1]);
             expect(results.length).toBe(1);
             expect(results[0]).toBe(Math.tanh(nn.networkInputs[0].value * nn.networkConnections[0].weight));
@@ -400,8 +394,8 @@ describe('Neural-network', () => {
 
         it('outputs the results of a simple neural network', () => {
             const genome = generateSimpleGenome();
-            const nn = new NeuralNetwork();
-            nn.init(genome);
+            const nn = new RTNeuralNetwork(genome);
+
             const results = nn.feedForward([1]);
             expect(results.length).toBe(1);
 
@@ -412,8 +406,7 @@ describe('Neural-network', () => {
 
         it('outputs the results of a neural network with recurrent link', () => {
             const genome = generateSimpleGenomeWithRecurrentLink();
-            const nn = new NeuralNetwork();
-            nn.init(genome);
+            const nn = new RTNeuralNetwork(genome);
 
             // First feedforward with a memory at 0
             let results = nn.feedForward([1]);
@@ -438,8 +431,7 @@ describe('Neural-network', () => {
 
         it('outputs the results of a neural network with recurrent link on itself', () => {
             const genome = generateSimpleGenomeWithRecurrentLinkOnItself();
-            const nn = new NeuralNetwork();
-            nn.init(genome);
+            const nn = new RTNeuralNetwork(genome);
 
             // First feedforward with a memory at 0
             let results = nn.feedForward([1]);

@@ -1,7 +1,7 @@
 import { ADN } from './adn';
 
 export abstract class GeneticAlgorithm {
-    
+
     public abstract populate(pop: ADN[]): void;
     public abstract evolve(nbIndividuals: number): ADN[];
     public abstract get population(): ADN[];
@@ -36,7 +36,7 @@ export abstract class GeneticAlgorithm {
             this.population = [...individuals];
         }
     }
-    
+
     public populateReference(individuals: ADN[]) {
         this.refPopulation = [...individuals];
     }

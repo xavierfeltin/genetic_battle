@@ -10,7 +10,9 @@ import { Vect2D } from '../models/vect2D.model';
 import { MyMath } from '../tools/math.tools';
 import { Subject } from 'rxjs';
 import { Configuration } from '../models/configuration.interface';
-import { FactoryADN, ADN } from '../ia/adn';
+import { ADN } from '../ia/adn';
+import { FactoryADN } from '../ia/adn.factory';
+import { GeneticAlgorithm } from '../ia/ga';
 import { FortuneWheelGA } from '../ia/fortunewheel';
 import { Scoring } from '../ia/scoring';
 import { Phenotype } from '../models/phenotype.interface';
@@ -18,7 +20,6 @@ import { ShipNeurEvo } from '../models/shipNeuroEvo.model';
 import { Matrix } from '../ia/matrix';
 import { ShipScoring } from '../models/shipScoring.model';
 import { RTADNGA } from '../ia/rt_neat/population';
-import { RTADN } from '../ia/rt_neat/adn';
 
 export class GameEngine {
   private static readonly NB_HEALTH_WHEN_DIE: number = 1;
@@ -34,7 +35,7 @@ export class GameEngine {
   private static readonly NEURO_EVO_MODE = 'neuroevol';
   private static readonly ALGO_EVO_MODE = 'geneticalgo';
   private static readonly EVOLUTION_MODE = GameEngine.NEURO_EVO_MODE;
-  private static readonly MINMUM_AGE_BEFORE_REPLACEMENT = 10; // in seconds
+  private static readonly MINMUM_AGE_BEFORE_REPLACEMENT = 20; // in seconds
   private static readonly LEVEL_OF_INEGIBILITY = 0.5; // pct of population with age < MINMUM_AGE_BEFORE_REPLACEMENT
 
   private canvas: HTMLCanvasElement;
@@ -75,7 +76,7 @@ export class GameEngine {
   private breedingRate: number;
   private isNeuroEvolution: boolean;
 
-  private ga: FortuneWheelGA;
+  private ga: GeneticAlgorithm;
   private bestShip: Ship;
   private minimumAgeBeforeReplacement: number;
   private ticksBeforeReplacement: number;
@@ -131,7 +132,9 @@ export class GameEngine {
     this.isNeuroEvolution = true;
     this.shipFactory.setNeuroEvolution(this.isNeuroEvolution);
 
-    this.ga = new FortuneWheelGA();
+    // this.ga = new FortuneWheelGA();
+    this.ga = new RTADNGA();
+
     this.bestShip = null;
     this.minimumAgeBeforeReplacement = GameEngine.MINMUM_AGE_BEFORE_REPLACEMENT;
     this.levelOfInegibility = GameEngine.LEVEL_OF_INEGIBILITY;
@@ -550,7 +553,7 @@ export class GameEngine {
     }
 
     this.continuousEvolutionOfWorst();
-        
+
     const aliveOldestShip = this.getOldestShip(this.ships);
     if (aliveOldestShip !== null) {
       if (this.oldestShip.scoring() < aliveOldestShip.scoring()) {
@@ -705,41 +708,19 @@ export class GameEngine {
         return adn;
       });
 
+      debugger;
       this.ga.populate(adns);
-      const newADN = this.ga.evolve(1)[0];
-      const newShip = this.shipFactory.createFromADN(this.generateId(), newADN);
-      newShip.setPosition(new Vect2D(400, 400));
-      // TODO set invulnerability
+      const newADNs = this.ga.evolve(1);
+      if (newADNs !== null) {
+        const newADN = newADNs[0];
+        const newShip = this.shipFactory.createFromADN(this.generateId(), newADN);
+        newShip.setPosition(new Vect2D(400, 400));
+        // TODO set invulnerability
 
-      // replace worst ship by new one and position it in starting area
-      const index = this.ships.findIndex(ship => ship.id === worst.id);
-      this.ships[index] = newShip;
-    }
-  }
-
-  continuousEvolutionWithRTNeat() {
-    // Check if timing is right for checking if worst needs to be replaced ?
-    const t = this.getElapsedTimeInSeconds();
-    if ((t <= this.lastEvaluationForReplacement) || (t % this.ticksBeforeReplacement !== 0)) {
-      return;
-    }
-    this.lastEvaluationForReplacement = t;
-
-    const eligibleShips = this.ships.filter(ship => ship.getAgeInSeconds() >= GameEngine.MINMUM_AGE_BEFORE_REPLACEMENT);
-    const worst = this.findWorstShip(eligibleShips);
-
-    const ga = new RTADNGA();
-    const adns = this.ships.map(ship => ship.getADN() as RTADN);
-    ga.populate(adns);
-    const newADN = ga.evolve(1);
-    if (newADN !== null) {
-      const newId = this.generateId();
-      const newShip = this.shipFactory.createFromADN(newId, newADN[0]);
-      newShip.setPosition(new Vect2D(400, 400));
-
-      // replace worst ship by new one and position it in starting area
-      const index = this.ships.findIndex(ship => ship.id === worst.id);
-      this.ships[index] = newShip;
+        // replace worst ship by new one and position it in starting area
+        const index = this.ships.findIndex(ship => ship.id === worst.id);
+        this.ships[index] = newShip;
+      }
     }
   }
 

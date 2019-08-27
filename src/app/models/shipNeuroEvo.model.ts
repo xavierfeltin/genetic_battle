@@ -156,6 +156,7 @@ export class ShipNeurEvo {
     public copy(): ShipNeurEvo {
         const conf = new ShipNeurEvo() ;
         const activeInputs = this.getActiveInputNames();
+        // tslint:disable-next-line:forin
         for (const name in activeInputs) {
             conf.activateInput(name, true);
         }

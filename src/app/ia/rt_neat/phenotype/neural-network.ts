@@ -2,22 +2,28 @@ import { Node } from './node';
 import { Connect } from './connect';
 import { Genome } from '../genotype/genome';
 import { NodeGene } from '../genotype/node';
+import { NeuralNetwork } from '../../neural-network';
 
-export class NeuralNetwork {
+export class RTNeuralNetwork extends NeuralNetwork {
     private inputs: Node[];
     private layers: Node[][];
     private outputs: Node[];
     private links: Connect[];
 
-    constructor() {
+    constructor(genome: Genome = null) {
+        super();
         this.inputs = [];
         this.layers = [];
         this.outputs = [];
         this.links = [];
+
+        if (genome !== null) {
+            this.init(genome);
+        }
     }
 
     // Instanciate the neural network from a genome description
-    init(genome: Genome) {
+    private init(genome: Genome) {
         const nodes = genome.nodeGenes.sort((a: NodeGene, b: NodeGene): number => {
             return (a.layer > b.layer) ? -1 : (a.layer < b.layer) ? 1 : 0;
         });
@@ -78,12 +84,13 @@ export class NeuralNetwork {
 
         let indexes: number[] = Object.keys(split).map( i => parseInt(i) );
         indexes = indexes.sort();
+        // tslint:disable-next-line:forin
         for (const index in split) {
             this.layers.push(split[index]);
         }
     }
 
-    feedForward(values: number[]): number[] {
+    public feedForward(values: number[]): number[] {
         // Update inputs with new values
         for (let i = 0; i < values.length; i++) {
             this.inputs[i].value = values[i];
@@ -109,6 +116,11 @@ export class NeuralNetwork {
         }
 
         return this.outputs.map( out => out.value );
+    }
+
+    public getNbCoefficients(): number {
+        // TODO
+        return -1;
     }
 
     public get networkInputs(): Node[] {

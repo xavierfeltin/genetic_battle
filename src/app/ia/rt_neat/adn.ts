@@ -1,5 +1,5 @@
 import { Genome } from './genotype/genome';
-import { ADN, Meta, Rates } from '../adn';
+import { ADN, Rates } from '../adn';
 import { MyMath } from '../../tools/math.tools';
 import { NodeGene } from './genotype/node';
 import { ConnectGene } from './genotype/connect';
@@ -8,15 +8,24 @@ import { ModificationType } from './genotype/historic';
 
 export class RTADN extends ADN {
     public static readonly MUTATION_ACTIVATION_RATE: number = 0.01;
-    public static readonly MUTATION_CONNECT_RATE: number = 0.01;
+    public static readonly MUTATION_CONNECT_RATE: number = 0.03;
     public static readonly MUTATION_ALLOW_RECURRENT: number = 0.01;
-    public static readonly MUTATION_SPLIT_CONNECT_RATE: number = 0.01;
+    public static readonly MUTATION_SPLIT_CONNECT_RATE: number = 0.05; // Links need to be added more often than nodes
     public static readonly MINIMUM_AGE_TO_EVOLVE: number = 1;
+
+    public static readonly DEFAULT_RATES = {
+        mutation: ADN.MUTATION_RATE,
+        crossOver: ADN.CROSSOVER_RATE,
+        mutationActivation: RTADN.MUTATION_ACTIVATION_RATE,
+        mutationConnect: RTADN.MUTATION_CONNECT_RATE,
+        mutationAllowRecurrent: RTADN.MUTATION_ALLOW_RECURRENT,
+        mutationSplitConnect: RTADN.MUTATION_SPLIT_CONNECT_RATE
+    };
 
     public static DIST_DISJOINT = 1;
     public static DIST_NORMALIZATION = 1;
     public static DIST_EXCESS = 1;
-    public static DIST_DELTA_WEIGHT = 1;
+    public static DIST_DELTA_WEIGHT = 0.3; // weight difference has a low weight since population is small
     public static rtADNId = -1;
 
     public id: number;
@@ -27,7 +36,7 @@ export class RTADN extends ADN {
     private mutationSplitConnectRate: number;
 
     // TODO: add genome directly in constructor
-    constructor(min: number, max: number, rates: Rates, genome: Genome = null) {
+    constructor(min: number, max: number, rates: Rates = RTADN.DEFAULT_RATES, genome: Genome = null) {
         super(0, min, max, rates);
         this.id = RTADN.nextId;
         this.g = genome ? genome : new Genome();
@@ -88,6 +97,16 @@ export class RTADN extends ADN {
 
     public static deltaWeight(w1: number, w2: number) {
         return Math.abs(w1 - w2);
+    }
+
+    public copy(): ADN {
+        const result = new RTADN(this.minimum, this.maximum, {...this.rates}, this.genome.copy());
+        result.id = this.id;
+        result.meta = this.meta.copy();
+        for (let i = 0; i < result.genes.length; i++) {
+            result.genes[i] = this.genes[i];
+        }
+        return result;
     }
 
     public get genome(): Genome {
@@ -231,16 +250,13 @@ export class RTADN extends ADN {
         return result;
     }
 
-    public mutate(): RTADN {
-        const result = new RTADN(this.minimum, this.maximum, this.rates);
-        const newGenome = this.g.copy();
-
+    public mutate() {
         let pct = this.maximum * 0.5;
         if (pct === 0) {
             pct = 0.01;
         }
 
-        for (const link of newGenome.connectGenes) {
+        for (const link of this.g.connectGenes) {
             if (this.rates.mutation !== 0  && Math.random() <= this.rates.mutation) {
                 link.weight = link.weight + MyMath.random(-pct, pct);
                 link.weight = Math.max(link.weight, 8);
@@ -253,8 +269,8 @@ export class RTADN extends ADN {
         }
 
         if (this.mutationConnectRate !== 0 && Math.random() <= this.mutationConnectRate) {
-            const nodeIn = RTADN.selectInNode(newGenome.nodeGenes);
-            const nodeOut = RTADN.selectOutNode(nodeIn, newGenome.nodeGenes);
+            const nodeIn = RTADN.selectInNode(this.g.nodeGenes);
+            const nodeOut = RTADN.selectOutNode(nodeIn, this.g.nodeGenes);
 
             if (nodeOut) {
                 if (nodeOut.layer <= nodeIn.layer) {
@@ -266,37 +282,34 @@ export class RTADN extends ADN {
                         // Check previously existing innovation to set the correct innovation number
                         const sameExistingInnovation = Genome.historic.find(nodeIn.identifier, ModificationType.Add, nodeOut.identifier);
                         const innovationId = sameExistingInnovation === null ? -1 : sameExistingInnovation.innovationId;
-                        newGenome.addConnection(nodeIn, nodeOut, innovationId);
+                        this.g.addConnection(nodeIn, nodeOut, innovationId);
                     } else {
                         // prevent the recurrent by flipping the connection
 
                         // Check previously existing innovation to set the correct innovation number
                         const sameExistingInnovation = Genome.historic.find(nodeOut.identifier, ModificationType.Add, nodeIn.identifier);
                         const innovationId = sameExistingInnovation === null ? -1 : sameExistingInnovation.innovationId;
-                        newGenome.addConnection(nodeOut, nodeIn, innovationId);
+                        this.g.addConnection(nodeOut, nodeIn, innovationId);
                     }
                 } else {
                     // add a forward connection
                     // Check previously existing innovation to set the correct innovation number
                     const sameExistingInnovation = Genome.historic.find(nodeIn.identifier, ModificationType.Add, nodeOut.identifier);
                     const innovationId = sameExistingInnovation === null ? -1 : sameExistingInnovation.innovationId;
-                    newGenome.addConnection(nodeIn, nodeOut, innovationId);
+                    this.g.addConnection(nodeIn, nodeOut, innovationId);
                 }
             }
             // else could happen if output node is selected first without hidden nodes available
         }
 
         if (this.mutationSplitConnectRate !== 0 && Math.random() <= this.mutationSplitConnectRate) {
-            const link = RTADN.selectEnabledLink(newGenome.connectGenes);
+            const link = RTADN.selectEnabledLink(this.g.connectGenes);
             const sameExistingInnovation = Genome.historic.find(link.inputNode.identifier,
                                                 ModificationType.Split, link.outputNode.identifier);
             const innovationId = sameExistingInnovation === null ? -1 : sameExistingInnovation.innovationId;
             const nodeId  = sameExistingInnovation === null ? -1 : sameExistingInnovation.newNodeId;
-            newGenome.splitConnection(link, innovationId, nodeId);
+            this.g.splitConnection(link, innovationId, nodeId);
         }
-
-        result.g = newGenome;
-        return result;
     }
 
     public distance(adn: RTADN): number {
