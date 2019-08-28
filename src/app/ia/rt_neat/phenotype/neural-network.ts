@@ -3,23 +3,30 @@ import { Connect } from './connect';
 import { Genome } from '../genotype/genome';
 import { NodeGene } from '../genotype/node';
 import { NeuralNetwork } from '../../neural-network';
+import { Matrix } from '../../matrix';
 
-export class RTNeuralNetwork /* extends NeuralNetwork */ {
+export class RTNeuralNetwork extends NeuralNetwork {
     private inputs: Node[];
     private layers: Node[][];
     private outputs: Node[];
+    private outTemplate: number[];
     private links: Connect[];
 
-    constructor(genome: Genome = null) {
-        // super();
+    constructor(genome: Genome = null, outputsTemplate: number[] = []) {
+        super();
         this.inputs = [];
         this.layers = [];
         this.outputs = [];
+        this.outTemplate = outputsTemplate;
         this.links = [];
 
         if (genome !== null) {
             this.init(genome);
         }
+    }
+
+    public get outputsTemplate(): number[] {
+        return this.outTemplate;
     }
 
     // Instanciate the neural network from a genome description
@@ -82,6 +89,7 @@ export class RTNeuralNetwork /* extends NeuralNetwork */ {
             }
         }
 
+        // tslint:disable-next-line:radix
         let indexes: number[] = Object.keys(split).map( i => parseInt(i) );
         indexes = indexes.sort();
         // tslint:disable-next-line:forin
@@ -90,7 +98,7 @@ export class RTNeuralNetwork /* extends NeuralNetwork */ {
         }
     }
 
-    public feedForward(values: number[]): number[] {
+    public feedForward(values: number[]): number[][] {
         // Update inputs with new values
         for (let i = 0; i < values.length; i++) {
             this.inputs[i].value = values[i];
@@ -115,10 +123,18 @@ export class RTNeuralNetwork /* extends NeuralNetwork */ {
             }
         }
 
-        // TODO
         // Apply softmax layer at the end
+        const outLayer = Matrix.fromArray( this.outputs.map( out => out.value ), this.outputs.length, 1);
+        let solution = [];
+        let index = 0;
+        for (const nbNeurones of this.outTemplate) {
+            const subMatrix = outLayer.extract(index, nbNeurones);
+            const part = NeuralNetwork.activateOutput(subMatrix);
+            solution = [...solution, part];
+            index += nbNeurones;
+        }
 
-        return this.outputs.map( out => out.value );
+        return solution;
     }
 
     public getNbCoefficients(): number {

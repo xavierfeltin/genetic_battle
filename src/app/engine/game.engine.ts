@@ -114,7 +114,7 @@ export class GameEngine {
     this.canvas = null;
     this.nbGenerations = -1;
 
-    const adnFactory  = new FactoryADN();
+    const adnFactory  = new FactoryADN(ADN.DEFAULT_RATES, FactoryADN.TYPE_RT_ADN);
     this.shipFactory = new FactoryShip(adnFactory);
     this.missileFactory = new FactoryMissile();
     this.healthFactory = new FactoryHealth();
@@ -131,9 +131,9 @@ export class GameEngine {
 
     this.isNeuroEvolution = true;
     this.shipFactory.setNeuroEvolution(this.isNeuroEvolution);
+    // this.ga = new FortuneWheelGA();
 
-    this.ga = new FortuneWheelGA();
-    // this.ga = new RTADNGA();
+    this.ga = new RTADNGA();
 
     this.bestShip = null;
     this.minimumAgeBeforeReplacement = GameEngine.MINMUM_AGE_BEFORE_REPLACEMENT;
@@ -321,6 +321,7 @@ export class GameEngine {
       for (let i = 0; i < this.nbStartingShips; i++) {
         const pos = new Vect2D(Math.random() * this.width, Math.random() * this.height);
         const orientation = Math.random() * 360;
+        debugger;
         const ship = this.shipFactory.create(i, 1);
         ship.setPosition(pos);
         ship.setOrientation(orientation);

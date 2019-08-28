@@ -117,7 +117,7 @@ export class Perceptron extends NeuralNetwork {
         let index = 0;
         for (const nbNeurones of this.nOut) {
             const subMatrix = output.extract(index, nbNeurones);
-            const part = this.activateOutput(subMatrix);
+            const part = NeuralNetwork.activateOutput(subMatrix);
             solution = [...solution, part];
             index += nbNeurones;
         }
@@ -134,17 +134,6 @@ export class Perceptron extends NeuralNetwork {
             neurons.values[i][j] = Activation.tanh(val);
             }
         }
-    }
-
-    // neurons is a 1D-array of activated neurons
-    private activateOutput(neurons: Matrix): number[] {
-        let output = [];
-        if (neurons.rows === 1) {
-            output.push(Activation.tanh(neurons.toArray()[0])); // tanh(sum of neurons connected to this output)
-        } else {
-            output = Activation.softmax(neurons.toArray());
-        }
-        return output;
     }
 
     private computeNbCoefficients(): number {

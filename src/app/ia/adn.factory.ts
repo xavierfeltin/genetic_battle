@@ -1,5 +1,6 @@
 import { SmallADN, HugeADN, ADN, Rates } from './adn';
 import { RTADN } from './rt_neat/adn';
+import { Genome } from './rt_neat/genotype/genome';
 
 export class FactoryADN {
     public static readonly TYPE_SMALL_ADN = 0;
@@ -9,7 +10,7 @@ export class FactoryADN {
     private rates: Rates;
     private adnType: number;
 
-    public constructor(rates: Rates = ADN.DEFAULT_RATES, adnType: number = 1) {
+    public constructor(rates: Rates = ADN.DEFAULT_RATES, adnType: number = FactoryADN.TYPE_HUGE_ADN) {
         this.rates = rates;
         this.adnType = adnType;
     }
@@ -50,14 +51,15 @@ export class FactoryADN {
         return this.adnType === FactoryADN.TYPE_RT_ADN;
     }
 
-    public create(nbGenes: number, min: number, max: number): ADN {
+    public create(nbGenes: number, min: number, max: number, nbInputs: number, nbOutputs: number): ADN {
         switch (this.adnType) {
             case FactoryADN.TYPE_SMALL_ADN:
                 return new SmallADN(nbGenes, min, max, this.rates);
             case FactoryADN.TYPE_HUGE_ADN:
                 return new HugeADN(nbGenes, min, max, this.rates);
             case FactoryADN.TYPE_RT_ADN:
-                return new RTADN(min, max, this.rates);
+                const genomeTemplate = Genome.generate(nbInputs, nbOutputs);
+                return new RTADN(min, max, this.rates, genomeTemplate);
             default:
                 return new HugeADN(nbGenes, min, max, this.rates);
         }

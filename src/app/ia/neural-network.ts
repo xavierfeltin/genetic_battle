@@ -24,6 +24,18 @@ export class Activation {
 }
 
 export abstract class NeuralNetwork {
+
+  // neurons is a 1D-array of activated neurons
+  public static activateOutput(neurons: Matrix): number[] {
+    let output = [];
+    if (neurons.rows === 1) {
+        output.push(Activation.tanh(neurons.toArray()[0])); // tanh(sum of neurons connected to this output)
+    } else {
+        output = Activation.softmax(neurons.toArray());
+    }
+    return output;
+  }
+
   public abstract feedForward(inputArr: number[]): number[][];
   public abstract getNbCoefficients(): number;
 }

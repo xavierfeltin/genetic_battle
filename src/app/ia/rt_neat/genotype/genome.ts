@@ -16,14 +16,25 @@ export class Genome {
         this.links = [];
     }
 
+    /**
+     * Create a default genome configuration with deterministic ids for each node
+     * the nodeNumber is updated if no other modification has been done
+     */
     public static generate(nbInputs: number, nbOutputs: number): Genome {
         const g = new Genome();
-        for(let i = 0; i < nbInputs; i++) {
-            g.addNode(NodeType.Input, -Infinity);
+        let nbNodes = 0;
+        for (let i = 0; i < nbInputs; i++) {
+            g.addNode(NodeType.Input, -Infinity, nbNodes);
+            nbNodes++;
         }
 
-        for(let i = 0; i < nbInputs; i++) {
-            g.addNode(NodeType.Output, Infinity);
+        for (let i = 0; i < nbInputs; i++) {
+            g.addNode(NodeType.Output, Infinity, nbNodes);
+            nbNodes++;
+        }
+
+        if (Genome.nodeNumber === 0) {
+            Genome.nodeNumber = nbNodes;
         }
 
         return g;
