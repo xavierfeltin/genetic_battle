@@ -111,7 +111,8 @@ export class Species {
     }
 
     public removeOrganismFromSpecies(organism: RTADN) {
-        this.pool[organism.specie].removeOrganism(organism);
+        const index = this.pool.findIndex(s => s.id === organism.specie); //TODO check why specie id do not match index
+        this.pool[index].removeOrganism(organism);
     }
 
     public selectRandomSpecie(): Specie {

@@ -32,8 +32,8 @@ export class RTADNGA extends GeneticAlgorithm {
      * If no worst organism is found, return null
      * Always return 1 individual
      */
-    public evolve(nbIndividuals: number): RTADN[] {
-        const worst = this.findWorstOrganism();
+    public evolve(nbIndividuals: number, worst: RTADN): RTADN[] {
+        //const worst = this.findWorstOrganism();
         if (worst !== null) {
             this.poolSpecies.calculateAdjustedFitness();
             this.poolSpecies.removeOrganismFromSpecies(worst); // remove worst organism and update avg fitness of specie
@@ -67,6 +67,7 @@ export class RTADNGA extends GeneticAlgorithm {
     }
 
     public findWorstOrganism(): RTADN {
+        //TODO : rework the part with age (use metadata.age ? not sure ...)
         const sortedPop = this.pop.sort((a: RTADN, b: RTADN) => {
             if (a.adjustedFitness < b.adjustedFitness) {
                 return -1;

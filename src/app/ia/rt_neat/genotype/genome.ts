@@ -28,7 +28,7 @@ export class Genome {
             nbNodes++;
         }
 
-        for (let i = 0; i < nbInputs; i++) {
+        for (let i = 0; i < nbOutputs; i++) {
             g.addNode(NodeType.Output, Infinity, nbNodes);
             nbNodes++;
         }

@@ -302,7 +302,7 @@ export class RTADN extends ADN {
             // else could happen if output node is selected first without hidden nodes available
         }
 
-        if (this.mutationSplitConnectRate !== 0 && Math.random() <= this.mutationSplitConnectRate) {
+        if (this.mutationSplitConnectRate !== 0 && Math.random() <= this.mutationSplitConnectRate && this.g.connectGenes.length > 0) {
             const link = RTADN.selectEnabledLink(this.g.connectGenes);
             const sameExistingInnovation = Genome.historic.find(link.inputNode.identifier,
                                                 ModificationType.Split, link.outputNode.identifier);
@@ -366,9 +366,10 @@ export class RTADN extends ADN {
             nbExcessGenes++;
         }
 
+        const deltaWeight = nbMatchingGenes === 0 ? 0 : RTADN.DIST_DELTA_WEIGHT * (deltaAvgMatchingGenes / nbMatchingGenes);
         const distance = (RTADN.DIST_DISJOINT * nbDisjointGenes) / RTADN.DIST_NORMALIZATION
                         + (RTADN.DIST_EXCESS * nbExcessGenes) / RTADN.DIST_NORMALIZATION
-                        + RTADN.DIST_DELTA_WEIGHT * (deltaAvgMatchingGenes / nbMatchingGenes);
+                        + deltaWeight;
 
         return distance;
     }

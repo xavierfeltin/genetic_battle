@@ -258,21 +258,21 @@ export class Ship extends GameObject {
         if (this.isNeuroEvo) {
             this.inputsNeuroEvo = neuroEvoInputs;
             const activeInputs = this.inputsNeuroEvo.getActiveInputNames();
+            const nbNNInputs = activeInputs.length;
+            const nbNNOutputs = Ship.NN_OUTPUTS.reduce((accumulator, currentValue) => accumulator + currentValue);
 
             if (this.adnFactory.isHugeAdn()) {
                 this.neuronalNetworkStructure = nnStructure;
                 this.nn = new Perceptron(activeInputs.length, this.neuronalNetworkStructure, Ship.NN_OUTPUTS);
+                this.nbGenes = this.nn.getNbCoefficients();            
+                this.createADN(this.nbGenes, minValue, maxValue, nbNNInputs, nbNNOutputs);
             }
 
             if (this.adnFactory.isRTAdn()) {
+                this.createADN(-1, minValue, maxValue, nbNNInputs, nbNNOutputs);
                 const rtadn = this.getADN() as RTADN;
-                this.nn = new RTNeuralNetwork(rtadn.genome);
+                this.nn = new RTNeuralNetwork(rtadn.genome, Ship.NN_OUTPUTS);
             }
-
-            this.nbGenes = this.nn.getNbCoefficients();
-            const nbNNInputs = Ship.NN_OUTPUTS.reduce((accumulator, currentValue) => accumulator + currentValue);
-            const nbNNOutputs = Ship.NN_OUTPUTS.reduce((accumulator, currentValue) => accumulator + currentValue);
-            this.createADN(this.nbGenes, minValue, maxValue, nbNNInputs, nbNNOutputs);
         } else {
             this.createADN(Ship.NB_GENES, minValue, maxValue, 0, 0);
         }

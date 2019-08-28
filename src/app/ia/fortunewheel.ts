@@ -21,7 +21,7 @@ export class FortuneWheelGA extends GeneticAlgorithm {
         return this.pop;
     }
 
-    public evolve(nbIndividuals: number): ADN[] {
+    public evolve(nbIndividuals: number, worst: ADN): ADN[] {
         const newPopulation = [];
 
         this.pop.sort((a: ADN, b: ADN): number => {

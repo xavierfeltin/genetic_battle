@@ -20,6 +20,7 @@ import { ShipNeurEvo } from '../models/shipNeuroEvo.model';
 import { Matrix } from '../ia/matrix';
 import { ShipScoring } from '../models/shipScoring.model';
 import { RTADNGA } from '../ia/rt_neat/population';
+import { RTADN } from '../ia/rt_neat/adn';
 
 export class GameEngine {
   private static readonly NB_HEALTH_WHEN_DIE: number = 1;
@@ -35,7 +36,7 @@ export class GameEngine {
   private static readonly NEURO_EVO_MODE = 'neuroevol';
   private static readonly ALGO_EVO_MODE = 'geneticalgo';
   private static readonly EVOLUTION_MODE = GameEngine.NEURO_EVO_MODE;
-  private static readonly MINMUM_AGE_BEFORE_REPLACEMENT = 20; // in seconds
+  private static readonly MINMUM_AGE_BEFORE_REPLACEMENT = 5; // in seconds
   private static readonly LEVEL_OF_INEGIBILITY = 0.5; // pct of population with age < MINMUM_AGE_BEFORE_REPLACEMENT
 
   private canvas: HTMLCanvasElement;
@@ -114,7 +115,7 @@ export class GameEngine {
     this.canvas = null;
     this.nbGenerations = -1;
 
-    const adnFactory  = new FactoryADN(ADN.DEFAULT_RATES, FactoryADN.TYPE_RT_ADN);
+    const adnFactory  = new FactoryADN(RTADN.DEFAULT_RATES, FactoryADN.TYPE_RT_ADN);
     this.shipFactory = new FactoryShip(adnFactory);
     this.missileFactory = new FactoryMissile();
     this.healthFactory = new FactoryHealth();
@@ -709,9 +710,9 @@ export class GameEngine {
         return adn;
       });
 
-      debugger;
+      //debugger;
       this.ga.populate(adns);
-      const newADNs = this.ga.evolve(1);
+      const newADNs = this.ga.evolve(1, worst.getADN());
       if (newADNs !== null) {
         const newADN = newADNs[0];
         const newShip = this.shipFactory.createFromADN(this.generateId(), newADN);
