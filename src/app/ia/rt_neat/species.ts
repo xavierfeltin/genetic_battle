@@ -86,6 +86,7 @@ export class Species {
     public clear() {
         this.pool = [];
         this.compatThresold = this.initCompatThresold;
+        Specie.resetSpecieIds();
     }
 
     public clearSpecies(keepSpecies: boolean = true) {
@@ -118,7 +119,9 @@ export class Species {
     public selectRandomSpecie(): Specie {
         const probabilities = [];
         let currentProbability = 0;
-        for (const specie of this.pool) {
+
+        const nonEmptySpecies = this.pool.filter(s => s.nbOrganisms > 0); 
+        for (const specie of nonEmptySpecies) {
             currentProbability += specie.averageFitness / this.pool.length;
             probabilities.push(currentProbability);
         }
@@ -133,6 +136,6 @@ export class Species {
             }
         }
 
-        return this.pool[index];
+        return nonEmptySpecies[index];
     }
 }

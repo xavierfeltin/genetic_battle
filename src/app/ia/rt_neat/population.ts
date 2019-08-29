@@ -15,7 +15,7 @@ export class RTADNGA extends GeneticAlgorithm {
 
     public populate(pop: RTADN[]) {
         this.pop = pop;
-        const keepSpecies = true; // TODO check true age to delete unused species afterwards
+        const keepSpecies = false; // restart species each evaluation
         this.affectOrganismsToSpecies(keepSpecies);
     }
 
@@ -40,16 +40,22 @@ export class RTADNGA extends GeneticAlgorithm {
             this.pop = this.pop.filter(organism => organism.id !== worst.id);
 
             const parentSpecie = this.selectParent();
-            const parents = parentSpecie.pickParents();
-            const newOrganism = parentSpecie.generateOrganism(parents[0], parents[1]);
-            newOrganism.metadata.parentA = parents[0].id;
-            newOrganism.metadata.parentA = parents[1].id;
-            newOrganism.metadata.generation = parents[0].metadata.generation + 1;
+            if (parentSpecie.nbOrganisms !== 0) {
+                parentSpecie.computeProbas();
+                const parents = parentSpecie.pickParents();
+                const newOrganism = parentSpecie.generateOrganism(parents[0], parents[1]);
+                newOrganism.metadata.parentA = parents[0].id;
+                newOrganism.metadata.parentA = parents[1].id;
+                newOrganism.metadata.generation = parents[0].metadata.generation + 1;
 
-            this.pop.push(newOrganism);
-            this.poolSpecies.adjustCompatibilityThresold();
-            this.affectOrganismsToSpecies();
-            return [newOrganism];
+                this.pop.push(newOrganism);
+                this.poolSpecies.adjustCompatibilityThresold();
+                this.affectOrganismsToSpecies();
+                return [newOrganism];
+            } else {
+                debugger;
+                return null;
+            }
         } else {
             return null;
         }

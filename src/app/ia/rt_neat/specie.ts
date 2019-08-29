@@ -28,6 +28,10 @@ export class Specie {
         Specie.specieNumber++;
     }
 
+    public static resetSpecieIds() {
+        Specie.specieNumber = 0;
+    }
+
     public get id(): number {
         return this.specieId;
     }
@@ -108,36 +112,67 @@ export class Specie {
         return this.avgFitness;
     }
 
+    public computeProbas() {
+        let minValue = Infinity;
+        for (const pop of this.pool) {
+            pop.metadata.stdFitness = 0;
+            if (pop.metadata.adjustedFitness < minValue) {
+                minValue = pop.metadata.adjustedFitness;
+            }
+        }
+
+        let sumFit = 0;
+        for (const pop of this.pool) {
+            const stdFitness = minValue <= 0 ?
+                pop.metadata.adjustedFitness + (minValue * -1) + 1 // start at 1 to avoid null share
+                : pop.metadata.adjustedFitness;
+            pop.metadata.stdFitness = stdFitness * stdFitness;
+            sumFit += pop.metadata.stdFitness;
+        }
+
+        let previousProba = 0;
+        for (const pop of this.pool) {
+            const relativeFitness = pop.metadata.stdFitness / sumFit;
+            pop.metadata.proba = previousProba + relativeFitness;
+            previousProba = pop.metadata.proba;
+        }
+
+        // Round last probability to 1
+        this.pool[this.pool.length - 1].metadata.proba = 1;
+    }
+
     public pickParents(): RTADN[] {
-        const probabilities = [];
-        let currentProbability = 0;
-        for (const organism of this.pool) {
-            currentProbability += organism.adjustedFitness;
-            probabilities.push(currentProbability);
+        if (this.pool.length === 0) {
+            return null;
         }
 
-        // round to 1 last property
-        probabilities[probabilities.length - 1] = 1;
-        const random1 = Math.random();
-        const random2 = Math.random();
-        let index1 = 0;
-        let index2 = 0;
-        for (const proba of probabilities) {
-            if (proba < random1) {
-                index1++;
-            }
-
-            if (proba < random2) {
-                index2++;
-            }
+        let rand = Math.random();
+        let i = 0;
+        while (i < this.pool.length && this.pool[i].metadata.proba < rand) {
+            i += 1;
         }
 
-        const parentA = this.pool[index1];
-        const parentB = this.pool[index2];
-        return [parentA, parentB];
+        if (i === this.pool.length) {
+            i = i - 1;
+        }
+        const parent1 = this.pool[i];
+
+        rand = Math.random();
+        i = 0;
+        while (i < this.pool.length && this.pool[i].metadata.proba < rand) {
+            i += 1;
+        }
+
+        if (i === this.pool.length) {
+            i = i - 1;
+        }
+        const parent2 = this.pool[i];
+
+        return [parent1, parent2];
     }
 
     public generateOrganism(parentA: RTADN, parentB: RTADN): RTADN {
+        /*
         const probabilities = [];
         let currentProbability = 0;
         for (const organism of this.pool) {
@@ -163,7 +198,8 @@ export class Specie {
 
         const parent1 = this.pool[index1];
         const parent2 = this.pool[index2];
-        const newOrganism = parent1.crossOver(parent2);
+        */
+        const newOrganism = parentA.crossOver(parentB);
         newOrganism.mutate();
         return newOrganism;
     }
