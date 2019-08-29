@@ -85,16 +85,18 @@ export class Specie {
      */
     public calculateAdjustedFitness() {
         for (const organism of this.pool) {
-            organism.adjustedFitness = organism.fitness / this.nbOrganisms;
+            organism.adjustedFitness = this.nbOrganisms === 0 ? organism.fitness : (organism.fitness / this.nbOrganisms);
         }
     }
 
     public calculateAverageFitness() {
         this.avgFitness = 0;
-        for (const organism of this.pool) {
-            this.avgFitness += organism.fitness;
+        if ( this.pool.length > 0) {
+            for (const organism of this.pool) {
+                this.avgFitness += organism.fitness;
+            }
+            this.avgFitness = (this.avgFitness / this.pool.length);
         }
-        this.avgFitness /= this.pool.length;
     }
 
     public removeOrganism(organism: RTADN) {

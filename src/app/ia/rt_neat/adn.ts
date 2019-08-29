@@ -176,6 +176,12 @@ export class RTADN extends ADN {
         const unionNodes = []; // generated from the links kept during crossover
         let index = 0;
 
+        // Copy inputs / outputs nodes common to all genomes
+        const structuralNodes = this.genome.nodeGenes.filter((n: NodeGene) => n.nodeType !== NodeType.Hidden);
+        for (const node of structuralNodes) {
+            unionNodes.push(node.copyWithoutDependencies());
+        }
+
         // Make an union of all the innovation numbers
         for (const link of this.genome.connectGenes) {
             // Some innovations are present in the other set and not in the current genome
@@ -237,6 +243,7 @@ export class RTADN extends ADN {
             }
         }
 
+        /*
         if (unionLinks.length === 0) {
             // if no links gets only the input, output and bias nodes
             const structuralNodes = this.genome.nodeGenes.filter((n: NodeGene) => n.nodeType !== NodeType.Hidden);
@@ -244,7 +251,11 @@ export class RTADN extends ADN {
                 unionNodes.push(node.copyWithoutDependencies());
             }
         }
+        */
 
+        if (unionNodes.length < result.g.nodeGenes.length) {
+            debugger;
+        }
         result.g.nodeGenes = unionNodes;
         result.g.connectGenes = unionLinks;
         return result;

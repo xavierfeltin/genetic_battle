@@ -67,6 +67,9 @@ export class Genome {
     }
 
     public set nodeGenes(genes: NodeGene[]) {
+        if (genes.length < 32) {
+            debugger;
+        }
         this.nodes = genes;
     }
 
@@ -117,7 +120,7 @@ export class Genome {
         }
 
         const newNode = new NodeGene(idNode, type, position);
-        this.nodeGenes.push(newNode);
+        this.nodes.push(newNode);
     }
 
     // add a node to split an existing connection in two
@@ -142,7 +145,7 @@ export class Genome {
             Genome.incrementNodeId();
         }
         const newNode = new NodeGene(nodeId, NodeType.Hidden, newNodeLayer);
-        this.nodeGenes.push(newNode);
+        this.nodes.push(newNode);
 
         // Update the layer of the node at the end of the new connection and propagate the modification
         if (connect.reccurent) {

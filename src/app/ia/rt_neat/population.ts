@@ -15,7 +15,7 @@ export class RTADNGA extends GeneticAlgorithm {
 
     public populate(pop: RTADN[]) {
         this.pop = pop;
-        const keepSpecies = false;
+        const keepSpecies = true; // TODO check true age to delete unused species afterwards
         this.affectOrganismsToSpecies(keepSpecies);
     }
 
