@@ -264,7 +264,7 @@ export class Ship extends GameObject {
             if (this.adnFactory.isHugeAdn()) {
                 this.neuronalNetworkStructure = nnStructure;
                 this.nn = new Perceptron(activeInputs.length, this.neuronalNetworkStructure, Ship.NN_OUTPUTS);
-                this.nbGenes = this.nn.getNbCoefficients();            
+                this.nbGenes = this.nn.getNbCoefficients();
                 this.createADN(this.nbGenes, minValue, maxValue, nbNNInputs, nbNNOutputs);
             }
 
@@ -644,11 +644,14 @@ export class Ship extends GameObject {
     public setFOV(angle: number) {
         this.fov = angle;
         this.cosHalfFov = Math.cos((this.fov / 2) * Math.PI / 180);
+        const radAngle = this.fov * Math.PI / 180;
 
-        // const area = 2800; // constant FOV area
-        // const radAngle = this.fov * Math.PI / 180;
-        // this.fovLength = Math.round(Math.sqrt(2 * area / radAngle));
-        this.fovLength = Ship.MAX_LENGTH_FOV;
+        const oppositeSide = Math.sin(Ship.MIN_ANGLE_FOV * Math.PI / 180) * Ship.MAX_LENGTH_FOV;
+        const hyp = Math.sqrt(((oppositeSide / 2) * (oppositeSide / 2)) + (Ship.MAX_LENGTH_FOV * Ship.MAX_LENGTH_FOV));
+        const area = 0.5 * hyp * oppositeSide; // 4600; // constant FOV area
+
+        this.fovLength = Math.round(Math.sqrt(2 * area / radAngle));
+        // this.fovLength = Ship.MAX_LENGTH_FOV;
     }
 
     public setRadar(length: number) {

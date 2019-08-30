@@ -7,13 +7,16 @@ export class Genome {
     public static innovationNumber = 0;
     public static nodeNumber = 0;
     public static historic = new Historic();
+    public static readonly MAX_LAYERS = 6;
 
     private nodes: NodeGene[];
     private links: ConnectGene[];
+    private maxHiddenLayer: number;
 
     constructor() {
         this.nodes = [];
         this.links = [];
+        this.maxHiddenLayer = -1;
     }
 
     /**
@@ -67,9 +70,6 @@ export class Genome {
     }
 
     public set nodeGenes(genes: NodeGene[]) {
-        if (genes.length < 32) {
-            debugger;
-        }
         this.nodes = genes;
     }
 
@@ -79,6 +79,10 @@ export class Genome {
 
     public set connectGenes(genes: ConnectGene[]) {
         this.links = genes;
+    }
+
+    public get maxLayer(): number {
+        return this.maxHiddenLayer;
     }
 
     public static logInnovation(type: ModificationType, innovation: number, inNode: number, outNode: number, newNode: number = -1) {
@@ -121,6 +125,10 @@ export class Genome {
 
         const newNode = new NodeGene(idNode, type, position);
         this.nodes.push(newNode);
+
+        if (newNode.layer > this.maxHiddenLayer && newNode.layer !== Infinity) {
+            this.maxHiddenLayer = newNode.layer;
+        }
     }
 
     // add a node to split an existing connection in two
@@ -220,6 +228,10 @@ export class Genome {
         if (isNotItselft && needToMoveLayer) {
             current.layer += 1;
             this.propagateLayerUpdateAfterIncrement(current);
+
+            if (current.layer > this.maxHiddenLayer && current.layer !== Infinity) {
+                this.maxHiddenLayer = current.layer;
+            }
         }
     }
 

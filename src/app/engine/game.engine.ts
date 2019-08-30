@@ -24,14 +24,14 @@ import { RTADN } from '../ia/rt_neat/adn';
 
 export class GameEngine {
   private static readonly NB_HEALTH_WHEN_DIE: number = 1;
-  private static readonly NB_SHIPS: number = 10;
+  private static readonly NB_SHIPS: number = 20;
   private static readonly NB_INIT_HEALTH: number = 0; // 20;
   private static readonly RATE_SPAWN_HEALTH: number = 0.05; // 0.01;
   private static readonly RATE_CLONE_SHIP: number = 0.03;
   private static readonly BREEDING_RATE_SHIP: number = 0.001;
-  private static readonly MAX_POPULATION = 10;
+  private static readonly MAX_POPULATION = 20;
   private static readonly MAX_DEAD_POPULATION = 3;
-  private static readonly MAX_RANDOM_HEALTH_PACK = 6;
+  private static readonly MAX_RANDOM_HEALTH_PACK = GameEngine.MAX_POPULATION * 2;
   private static readonly GAME_TIMER = 30; // in seconds
   private static readonly NEURO_EVO_MODE = 'neuroevol';
   private static readonly ALGO_EVO_MODE = 'geneticalgo';
@@ -319,12 +319,15 @@ export class GameEngine {
     const phenotypes = [];
     const scores = [];
     if (ships.length === 0) {
+      // Evolution from worst require everyone starting with same conditions
+      const pos = new Vect2D(this.width / 2, this.height / 2);
+
       for (let i = 0; i < this.nbStartingShips; i++) {
-        const pos = new Vect2D(Math.random() * this.width, Math.random() * this.height);
-        const orientation = Math.random() * 360;
-        debugger;
+        // const pos = new Vect2D(Math.random() * this.width, Math.random() * this.height);
+        // const orientation = Math.random() * 360;
         const ship = this.shipFactory.create(i, 1);
         ship.setPosition(pos);
+        const orientation = Math.random() * 360;
         ship.setOrientation(orientation);
         ship.setBorders([0, this.width, 0, this.height]);
         ship.setTime(0, GameEngine.GAME_TIMER);
@@ -340,7 +343,6 @@ export class GameEngine {
     }
 
     // this._nbShips$.next(this.ships.length);
-
     this._ships$.next(phenotypes);
     this._shipsScoring$.next(scores);
     this._deadShipsScoring$.next(this.deadShips.map(ship => ship.getScore()));
@@ -430,7 +432,7 @@ export class GameEngine {
 
   public playGame() {
     // Add possible new health
-    if (Math.random() < this.rateHealth && this.health.length <= GameEngine.MAX_RANDOM_HEALTH_PACK) {
+    if (Math.random() < this.rateHealth && this.health.length < GameEngine.MAX_RANDOM_HEALTH_PACK) {
       this.createHealth(this.generateId());
     }
 
@@ -710,7 +712,6 @@ export class GameEngine {
         return adn;
       });
 
-      //debugger;
       this.ga.populate(adns);
       const newADNs = this.ga.evolve(1, worst.getADN());
       if (newADNs !== null) {

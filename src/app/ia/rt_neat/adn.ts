@@ -89,7 +89,7 @@ export class RTADN extends ADN {
         return nodeOut;
     }
 
-    public static selectEnabledLink(connectGenes: ConnectGene[]) {
+    public static selectEnabledLink(connectGenes: ConnectGene[]): ConnectGene {
         const enabledLinks = connectGenes.filter((l: ConnectGene) => l.isEnabled);
         const link = enabledLinks[Math.round(MyMath.random(0, enabledLinks.length - 1))];
         return link;
@@ -203,6 +203,7 @@ export class RTADN extends ADN {
             // Innovations are present in both genomes
             if (index < adn.genome.connectGenes.length
                 && adn.genome.connectGenes[index].innovation === link.innovation) {
+
                 // Set the link with the average of the weights from the 2 parents
                 const newLink = link.copyWithoutDependencies();
                 this.manageDependencies(link, newLink, unionNodes);
@@ -243,42 +244,12 @@ export class RTADN extends ADN {
             }
         }
 
-        /*
-        if (unionLinks.length === 0) {
-            // if no links gets only the input, output and bias nodes
-            const structuralNodes = this.genome.nodeGenes.filter((n: NodeGene) => n.nodeType !== NodeType.Hidden);
-            for (const node of structuralNodes) {
-                unionNodes.push(node.copyWithoutDependencies());
-            }
-        }
-        */
-
-        if (unionNodes.length < result.g.nodeGenes.length) {
-            debugger;
-        }
         result.g.nodeGenes = unionNodes;
         result.g.connectGenes = unionLinks;
         return result;
     }
 
     public mutate() {
-        let pct = this.maximum * 0.5;
-        if (pct === 0) {
-            pct = 0.01;
-        }
-
-        for (const link of this.g.connectGenes) {
-            if (this.rates.mutation !== 0  && Math.random() <= this.rates.mutation) {
-                link.weight = link.weight + MyMath.random(-pct, pct);
-                link.weight = Math.max(link.weight, 8);
-                link.weight = Math.min(link.weight, -8);
-            }
-
-            if (this.mutationActivationRate !== 0 && Math.random() <= this.mutationActivationRate) {
-                link.activate(!link.isEnabled);
-            }
-        }
-
         if (this.mutationConnectRate !== 0 && Math.random() <= this.mutationConnectRate) {
             const nodeIn = RTADN.selectInNode(this.g.nodeGenes);
             const nodeOut = RTADN.selectOutNode(nodeIn, this.g.nodeGenes);
@@ -311,15 +282,48 @@ export class RTADN extends ADN {
                 }
             }
             // else could happen if output node is selected first without hidden nodes available
-        }
-
-        if (this.mutationSplitConnectRate !== 0 && Math.random() <= this.mutationSplitConnectRate && this.g.connectGenes.length > 0) {
+        } else if (this.mutationSplitConnectRate !== 0
+            && Math.random() <= this.mutationSplitConnectRate
+            && this.g.connectGenes.length > 0) {
             const link = RTADN.selectEnabledLink(this.g.connectGenes);
-            const sameExistingInnovation = Genome.historic.find(link.inputNode.identifier,
-                                                ModificationType.Split, link.outputNode.identifier);
-            const innovationId = sameExistingInnovation === null ? -1 : sameExistingInnovation.innovationId;
-            const nodeId  = sameExistingInnovation === null ? -1 : sameExistingInnovation.newNodeId;
-            this.g.splitConnection(link, innovationId, nodeId);
+
+            // Prevent neural networks to be too deep
+            if (link.inputNode.layer < Genome.MAX_LAYERS) {
+                const sameExistingInnovation = Genome.historic.find(link.inputNode.identifier,
+                    ModificationType.Split, link.outputNode.identifier);
+                const innovationId = sameExistingInnovation === null ? -1 : sameExistingInnovation.innovationId;
+                const nodeId  = sameExistingInnovation === null ? -1 : sameExistingInnovation.newNodeId;
+                this.g.splitConnection(link, innovationId, nodeId);
+            }
+        } else {
+            // If no structural change was done
+
+            let pct = this.maximum * 0.5;
+            if (pct === 0) {
+                pct = 0.01;
+            }
+
+            // Change weight
+            if (this.rates.mutation !== 0
+                && Math.random() <= this.rates.mutation
+                && this.g.connectGenes.length > 0) {
+
+                const index = Math.floor(MyMath.random(0, this.g.connectGenes.length - 1));
+                const link = this.g.connectGenes[index];
+                link.weight = link.weight + MyMath.random(-pct, pct);
+                link.weight = Math.max(link.weight, 8);
+                link.weight = Math.min(link.weight, -8);
+            }
+
+            // Toggle link
+            if (this.mutationActivationRate !== 0
+                && Math.random() <= this.mutationActivationRate
+                && this.g.connectGenes.length > 0) {
+
+                const index = Math.floor(MyMath.random(0, this.g.connectGenes.length - 1));
+                const link = this.g.connectGenes[index];
+                link.activate(!link.isEnabled);
+            }
         }
     }
 
@@ -397,6 +401,7 @@ export class RTADN extends ADN {
     }
 
     // TODO: replace by a more effective search algorithm
+    // At the moment the nodes parameter are not sorted by layers
     private searchByLayer(node: NodeGene, nodes: NodeGene[]): NodeGene {
         let found = null;
 
@@ -404,11 +409,6 @@ export class RTADN extends ADN {
             // The node is already present
             if (n.identifier === node.identifier) {
                 found = n;
-                break;
-            }
-
-            // The node will not be present
-            if (node.layer < n.layer) {
                 break;
             }
         }
