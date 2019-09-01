@@ -2,15 +2,18 @@ import { RTADN } from './adn';
 import { Species } from './species';
 import { Specie } from './specie';
 import { GeneticAlgorithm } from '../ga';
+import { Meta } from '../adn';
 
 export class RTADNGA extends GeneticAlgorithm {
     private pop: RTADN[];
     private poolSpecies: Species;
+    private worst: RTADN;
 
     constructor() {
         super();
         this.pop = [];
         this.poolSpecies = new Species(Species.MIN_COMPATIBILITY_THRESOLD);
+        this.worst = null;
     }
 
     public populate(pop: RTADN[]) {
@@ -27,17 +30,21 @@ export class RTADNGA extends GeneticAlgorithm {
         return this.poolSpecies;
     }
 
+    public get worstIndividual(): RTADN {
+        return this.worst;
+    }
+
     /**
      * Generate a new organism and remove the worst organism
      * If no worst organism is found, return null
      * Always return 1 individual
      */
-    public evolve(nbIndividuals: number, worst: RTADN): RTADN[] {
-        // const worst = this.findWorstOrganism();
-        if (worst !== null) {
+    public evolve(nbIndividuals: number): RTADN[] {
+        this.setWorstOrganism();
+        if (this.worst !== null) {
             this.poolSpecies.calculateAdjustedFitness();
-            this.poolSpecies.removeOrganismFromSpecies(worst); // remove worst organism and update avg fitness of specie
-            this.pop = this.pop.filter(organism => organism.id !== worst.id);
+            this.poolSpecies.removeOrganismFromSpecies(this.worst); // remove worst organism and update avg fitness of specie
+            this.pop = this.pop.filter(organism => organism.id !== this.worst.id);
 
             const parentSpecie = this.selectParent();
             if (parentSpecie.nbOrganisms !== 0) {
@@ -72,7 +79,7 @@ export class RTADNGA extends GeneticAlgorithm {
     }
 
     // TODO : rework the part with age (use metadata.age ? not sure ...)
-    public findWorstOrganism(): RTADN {
+    public setWorstOrganism() {
         const sortedPop = this.pop.sort((a: RTADN, b: RTADN) => {
             if (a.adjustedFitness < b.adjustedFitness) {
                 return -1;
@@ -83,15 +90,13 @@ export class RTADNGA extends GeneticAlgorithm {
             }
         });
 
-        let worst = null;
+        this.worst = null;
         for (const pop of sortedPop) {
-            if (pop.age >= RTADN.MINIMUM_AGE_TO_EVOLVE) {
-                worst = pop;
+            if (pop.metadata.individualAge >= Meta.MINIMUM_AGE_TO_EVOLVE) {
+                this.worst = pop;
                 break;
             }
         }
-
-        return worst;
     }
 
     /**

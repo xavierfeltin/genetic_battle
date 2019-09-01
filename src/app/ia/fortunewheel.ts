@@ -1,14 +1,16 @@
 import { GeneticAlgorithm } from './ga';
-import { ADN } from './adn';
+import { ADN, Meta } from './adn';
 
 export class FortuneWheelGA extends GeneticAlgorithm {
-    public pop: ADN[];
+    private pop: ADN[];
+    private worst: ADN;
     // public refPopulation: ADN[];
     // protected best: ADN;
 
     constructor() {
         super();
         this.pop = [];
+        this.worst = null
         // this.refPopulation = [];
         // this.best = null;
     }
@@ -21,7 +23,11 @@ export class FortuneWheelGA extends GeneticAlgorithm {
         return this.pop;
     }
 
-    public evolve(nbIndividuals: number, worst: ADN): ADN[] {
+    public get worstIndividual(): ADN {
+        return this.worst;
+    }
+
+    public evolve(nbIndividuals: number): ADN[] {
         const newPopulation = [];
 
         this.pop.sort((a: ADN, b: ADN): number => {
@@ -47,59 +53,25 @@ export class FortuneWheelGA extends GeneticAlgorithm {
         return newPopulation;
     }
 
-    /*
-    public basicEvolve() {
-        const newPopulation = [];
-        for (const popAdn of this.population) {
-            const childADN = popAdn.mutate();
-            newPopulation.push(childADN);
-        }
-        this.population = newPopulation;
-    }
-
-    public evolveFromReference() {
-        if (this.population.length === 0 || this.refPopulation.length === 0) {
-            return;
-        }
-
-        const newPopulation = [];
-        this.refPopulation.sort((a: ADN, b: ADN): number => {
+    public setWorstOrganism() {
+        const sortedPop = this.pop.sort((a: ADN, b: ADN) => {
             if (a.metadata.fitness < b.metadata.fitness) {
-                return 1;
-            } else if (a.metadata.fitness === b.metadata.fitness) {
-                return 0;
-            } else {
                 return -1;
+            } else if (a.metadata.fitness > b.metadata.fitness) {
+                return 1;
+            } else {
+                return 0;
             }
         });
 
-        const scoreAvg = (this.refPopulation[0].metadata.fitness + this.refPopulation[this.refPopulation.length - 1].metadata.fitness) / 2;
-        this.refPopulation.push(this.best);
-        this.computeProbas();
-
-        for (const popAdn of this.population) {
-            let childADN: ADN = null;
-
-            if (this.best === null ||  this.best.metadata.fitness < popAdn.metadata.fitness ) {
-                this.best = popAdn;
-                this.computeProbas();
+        this.worst = null;
+        for (const pop of sortedPop) {
+            if (pop.metadata.individualAge >= Meta.MINIMUM_AGE_TO_EVOLVE) {
+                this.worst = pop;
+                break;
             }
-
-            if (scoreAvg < popAdn.metadata.fitness) {
-                childADN = popAdn;
-            } else {
-                const parentA = popAdn;
-                const parentB = this.pickOne(this.refPopulation);
-                childADN = (parentA.metadata.fitness > parentB.metadata.fitness) ? parentA.crossOver(parentB) : parentB.crossOver(parentA);
-            }
-
-            childADN = childADN.mutate();
-            newPopulation.push(childADN);
         }
-
-        this.population = newPopulation;
     }
-    */
 
     private pickOne(population: ADN[]): ADN {
         if (population.length === 0) {

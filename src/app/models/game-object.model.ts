@@ -81,10 +81,6 @@ export class GameObject {
         return this.life <= 0;
     }
 
-    public older() {
-        this.age ++;
-    }
-
     public setOldest(isOldest: boolean) {
         this.isOldest = isOldest;
     }

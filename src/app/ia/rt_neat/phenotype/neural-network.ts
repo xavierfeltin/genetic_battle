@@ -98,7 +98,7 @@ export class RTNeuralNetwork extends NeuralNetwork {
         }
     }
 
-    public feedForward(values: number[]): number[][] {
+    public feedForward(values: number[]): number[] {
         // Update inputs with new values
         for (let i = 0; i < values.length; i++) {
             this.inputs[i].value = values[i];
@@ -123,7 +123,8 @@ export class RTNeuralNetwork extends NeuralNetwork {
             }
         }
 
-        // Apply softmax layer at the end
+        /* 
+        Apply softmax layer at the end
         const outLayer = Matrix.fromArray( this.outputs.map( out => out.value ), this.outputs.length, 1);
         let solution = [];
         let index = 0;
@@ -133,8 +134,9 @@ export class RTNeuralNetwork extends NeuralNetwork {
             solution = [...solution, part];
             index += nbNeurones;
         }
-
         return solution;
+        */
+        return this.outputs.map( out => out.value );
     }
 
     public getNbCoefficients(): number {

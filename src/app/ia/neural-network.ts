@@ -36,6 +36,6 @@ export abstract class NeuralNetwork {
     return output;
   }
 
-  public abstract feedForward(inputArr: number[]): number[][];
+  public abstract feedForward(inputArr: number[]): number[];
   public abstract getNbCoefficients(): number;
 }

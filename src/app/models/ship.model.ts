@@ -11,8 +11,30 @@ import { ShipNeurEvo } from './shipNeuroEvo.model';
 import { ShipScoring } from './shipScoring.model';import { RTNeuralNetwork } from '../ia/rt_neat/phenotype/neural-network';
 import { RTADN } from '../ia/rt_neat/adn';
 import { Perceptron } from '../ia/perceptron';
-import { Genome } from '../ia/rt_neat/genotype/genome';
-;
+
+export interface ShipActions{
+    turnRight: boolean,
+    turnLeft: boolean,
+    reduceFOV: boolean,
+    increaseFOV: boolean,
+    reduceRadar: boolean,
+    increaseRadar: boolean,
+    fire: boolean
+};
+
+export interface ShipAttractions{
+    reduceFromHealth: boolean,
+    increaseToHealth: boolean,
+    reduceFromMissiles: boolean,
+    increaseToMissiles: boolean,
+    reduceFromShips: boolean,
+    increaseToShips: boolean,
+    reduceFOV: boolean,
+    increaseFOV: boolean,
+    reduceRadar: boolean,
+    increaseRadar: boolean,
+    fire: boolean
+};
 
 export class Ship extends GameObject {
     // Constants
@@ -35,8 +57,9 @@ export class Ship extends GameObject {
     public static readonly MAX_FIRE_RATE: number = 100;
 
     private static readonly NB_GENES: number = 6;
-    // private static readonly NN_OUTPUTS: number[] = [3, 3, 3, 3, 3, 1];
-    private static readonly NN_OUTPUTS: number[] = [3, 3, 3, 1];
+    // private static readonly NN_OUTPUTS: number[] = [3, 3, 3, 3, 3, 1]; // attractions approach
+    //private static readonly NN_OUTPUTS: number[] = [3, 3, 3, 1]; // actions approach
+    private static readonly NN_OUTPUTS: number[] = [2, 2, 2, 1]; // actions approach simplified
     public static readonly IS_ACTION_DRIVEN: boolean = true;
 
     private static readonly NB_NN_INPUT: number = 10;
@@ -180,7 +203,7 @@ export class Ship extends GameObject {
         const length = Math.round((Ship.MIN_LENGTH_RADAR + Ship.MAX_LENGTH_RADAR) / 2);
         this.setRadar(length);
 
-        this.fireRate = Math.round((Ship.MIN_FIRE_RATE + Ship.MAX_FIRE_RATE) / 2);
+        this.fireRate = 0; //Math.round((Ship.MIN_FIRE_RATE + Ship.MAX_FIRE_RATE) / 2);
 
         this.scoringCoefficients =  scoringCoefficients;
         this.score = 0;
@@ -205,6 +228,11 @@ export class Ship extends GameObject {
         this.angleWithMissileOnRadar = 0;
         this.angleWithShipOnRadar = 0;
         this.angleWithHealthOnRadar = 0;
+    }
+
+    public older() {
+        this.age ++;
+        this.adn.metadata.individualAge = this.getAgeInSeconds();
     }
 
     public static updateStatistics(ships: Ship[]) {
@@ -476,104 +504,122 @@ export class Ship extends GameObject {
         this.setRadar(length);
     }
 
-    private getSolution(output: number[]): number {
-        /*
-        const score = [];
-        let sum = 0;
-        if (output.length > 1) {
-            for (const out of output) {
-                sum += out;
-                score.push(sum);
-            }
-            score[score.length - 1] = 1; // force last value to be 1 for probabilities
-            const rand = Math.random();
-            let i = 0;
-            while (i < score.length && score[i] < rand) {
-                i += 1;
-            }
-            return i;
-        } else {
-            return output[0];
-        }
-        */
-
-        let maxIndex = -1;
-        let max = -Infinity;
-        if (output.length > 1) {
-            for (let i = 0; i < output.length; i++) {
-                const out = output[i];
-                if (max < out) {
-                    max = out;
-                    maxIndex = i;
-                }
-            }
-            return maxIndex;
-        } else {
-            return output[0];
-        }
+    private getFlagFromNumber(value: number): boolean {
+        return Math.round(value) === 1;
     }
 
-    private matchAttributesNeuroEvo(output: number[][]) {
+    private convertNNIntoActions(output: number[]): ShipActions {        
+        const actions = {
+            turnRight: this.getFlagFromNumber(output[0]),
+            turnLeft: this.getFlagFromNumber(output[1]),
+            reduceFOV: this.getFlagFromNumber(output[2]),
+            increaseFOV: this.getFlagFromNumber(output[3]),
+            reduceRadar: this.getFlagFromNumber(output[4]),
+            increaseRadar: this.getFlagFromNumber(output[5]),
+            fire: this.getFlagFromNumber(output[6])
+        };
+        return actions;
+    }
+
+    private convertNNIntoAttractions(output: number[]): ShipAttractions {
+        const attractions = {
+            reduceFromHealth: this.getFlagFromNumber(output[0]),
+            increaseToHealth: this.getFlagFromNumber(output[1]),
+            reduceFromMissiles: this.getFlagFromNumber(output[2]),
+            increaseToMissiles: this.getFlagFromNumber(output[3]),
+            reduceFromShips: this.getFlagFromNumber(output[4]),
+            increaseToShips: this.getFlagFromNumber(output[5]),
+            reduceFOV: this.getFlagFromNumber(output[6]),
+            increaseFOV: this.getFlagFromNumber(output[7]),
+            reduceRadar: this.getFlagFromNumber(output[8]),
+            increaseRadar: this.getFlagFromNumber(output[9]),
+            fire: this.getFlagFromNumber(output[10])
+        };
+        return attractions;
+    }
+
+    private matchAttributesNeuroEvo(output: number[]) {
 
         if (Ship.IS_ACTION_DRIVEN) {
-            let i = this.getSolution(output[0]);
-            let delta = (i === 0 || i === 2)  ? ((i === 0) ? -2 : 2 ) : 0;
-            if (delta !== 0) {
+            const actions = this.convertNNIntoActions(output);
+            const deltaAngle = 2;
+            const deltaFOV = 1;
+            const deltaRadar = 1;
+
+
+            if (actions.turnLeft !== actions.turnRight) { // XOR operator
+                const delta = actions.turnLeft ? -deltaAngle : deltaAngle; 
                 const newAngle = (this.orientation + delta) % 360;
                 this.setOrientation(newAngle);
             }
 
-            i = this.getSolution(output[1]);
-            delta = (i === 0 || i === 2)  ? ((i === 0) ? -1 : 1 ) : 0;
-            delta = (this.fov + delta > Ship.MAX_ANGLE_FOV) ? 0 : delta;
-            delta = (this.fov + delta < Ship.MIN_ANGLE_FOV) ? 0 : delta;
-            if (delta !== 0) {
-                this.setFOV(Math.round(this.getFOV() + delta));
+            if (actions.increaseFOV !== actions.reduceFOV) {
+                let delta = actions.reduceFOV ? -deltaFOV : deltaFOV;
+                delta = (this.fov + deltaFOV > Ship.MAX_ANGLE_FOV) ? 0 : deltaFOV;
+                if (delta !== 0) {
+                    this.setFOV(Math.round(this.getFOV() + delta));
+                }    
             }
 
-            i = this.getSolution(output[2]);
-            delta = (i === 0 || i === 2)  ? ((i === 0) ? -1 : 1 ) : 0;
-            delta = (this.radarLength + delta > Ship.MAX_LENGTH_RADAR) ? 0 : delta;
-            delta = (this.radarLength + delta < Ship.MIN_LENGTH_RADAR) ? 0 : delta;
-            if (delta !== 0) {
-                this.setRadar(this.radarLength + delta);
+            if (actions.increaseRadar !== actions.reduceRadar) {
+                let delta = actions.reduceRadar ? -deltaRadar : deltaRadar;
+                delta = (this.radarLength + deltaRadar > Ship.MAX_LENGTH_RADAR) ? 0 : deltaRadar;
+                if (delta !== 0) {
+                    this.setRadar(this.radarLength + delta);
+                }
             }
 
-            i = this.getSolution(output[3]);
-            this.fireRate = (i <= 0 ) ? 0 : 100;
-        } else {
-            let i = this.getSolution(output[0]);
-            let delta = (i === 0 || i === 2)  ? ((i === 0) ? -0.05 : 0.05 ) : 0;
-            this.attractHealth += delta;
-            this.attractHealth = Math.min(this.attractHealth + delta, Ship.MAX_ATTRACTION);
-            this.attractHealth = Math.max(this.attractHealth, Ship.MIN_ATTRACTION);
+            this.fireRate = actions.fire ? 100 : 0;
+        }
+        else {
+            const attractions = this.convertNNIntoAttractions(output);
+            const deltaHealth = 0.05;
+            const deltaMissile = 0.05;
+            const deltaShip = 0.05;
+            const deltaFOV = 1;
+            const deltaRadar = 1;
 
-            i = this.getSolution(output[1]);
-            delta = (i === 0 || i === 2)  ? ((i === 0) ? -0.05 : 0.05 ) : 0;
-            this.attractMissile += delta;
-            this.attractMissile = Math.min(this.attractMissile, Ship.MAX_ATTRACTION);
-            this.attractMissile = Math.max(this.attractMissile, Ship.MIN_ATTRACTION);
+            if (attractions.increaseToHealth !== attractions.reduceFromHealth) {
+                let delta = attractions.reduceFromHealth ? -deltaHealth : deltaHealth;
+                delta = (this.attractHealth + deltaHealth > Ship.MAX_ATTRACTION) ? 0 : deltaHealth;
+                if (delta !== 0) {
+                    this.attractHealth += delta;
+                }    
+            }
 
-            i = this.getSolution(output[2]);
-            delta = (i === 0 || i === 2)  ? ((i === 0) ? -0.05 : 0.05 ) : 0;
-            this.attractShip += delta;
-            this.attractShip = Math.min(this.attractShip, Ship.MAX_ATTRACTION);
-            this.attractShip = Math.max(this.attractShip, Ship.MIN_ATTRACTION);
+            if (attractions.increaseToMissiles !== attractions.reduceFromMissiles) {
+                let delta = attractions.reduceFromMissiles ? -deltaMissile : deltaMissile;
+                delta = (this.attractMissile + deltaMissile > Ship.MAX_ATTRACTION) ? 0 : deltaMissile;
+                if (delta !== 0) {
+                    this.attractMissile += delta;
+                }    
+            }
 
-            i = this.getSolution(output[3]);
-            delta = (i === 0 || i === 2)  ? ((i === 0) ? -1 : 1 ) : 0;
-            delta = (this.fov + delta > Ship.MAX_ANGLE_FOV) ? 0 : delta;
-            delta = (this.fov + delta < Ship.MIN_ANGLE_FOV) ? 0 : delta;
-            this.setFOV(Math.round(this.getFOV() + delta));
+            if (attractions.increaseToShips !== attractions.reduceFromShips) {
+                let delta = attractions.reduceFromShips ? -deltaShip : deltaShip;
+                delta = (this.attractShip + deltaShip > Ship.MAX_ATTRACTION) ? 0 : deltaShip;
+                if (delta !== 0) {
+                    this.attractShip += delta;
+                }    
+            }
 
-            i = this.getSolution(output[4]);
-            delta = (i === 0 || i === 2)  ? ((i === 0) ? -1 : 1 ) : 0;
-            delta = (this.radarLength + delta > Ship.MAX_LENGTH_RADAR) ? 0 : delta;
-            delta = (this.radarLength + delta < Ship.MIN_LENGTH_RADAR) ? 0 : delta;
-            this.setRadar(this.radarLength + delta);
+            if (attractions.increaseFOV !== attractions.reduceFOV) {
+                let delta = attractions.reduceFOV ? -deltaFOV : deltaFOV;
+                delta = (this.fov + deltaFOV > Ship.MAX_ANGLE_FOV) ? 0 : deltaFOV;
+                if (delta !== 0) {
+                    this.setFOV(Math.round(this.getFOV() + delta));
+                }    
+            }
 
-            i = this.getSolution(output[5]);
-            this.fireRate = (i <= 0 ) ? 0 : 100;
+            if (attractions.increaseRadar !== attractions.reduceRadar) {
+                let delta = attractions.reduceRadar ? -deltaRadar : deltaRadar;
+                delta = (this.radarLength + deltaRadar > Ship.MAX_LENGTH_RADAR) ? 0 : deltaRadar;
+                if (delta !== 0) {
+                    this.setRadar(this.radarLength + delta);
+                }
+            }
+
+            this.fireRate = attractions.fire ? 100 : 0;
         }
     }
 
@@ -721,7 +767,7 @@ export class Ship extends GameObject {
 
     public fire(ships: Ship[], missiles: Missile[]): boolean {
         const proba = Math.random() * 100;
-        if (this.canFire(ships, missiles) && (proba <= this.fireRate)) {
+        if (this.canFire(ships, missiles) && (proba <= this.fireRate) && this.fireRate > 0) {
             this.updateLife(this.energy, Ship.DUE_TO_OTHER); // firing consume energy
             this.coolDown = 10; // this.fireRate;
             this.hasFired = true;

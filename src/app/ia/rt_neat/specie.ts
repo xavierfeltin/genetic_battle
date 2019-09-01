@@ -105,7 +105,11 @@ export class Specie {
 
     public removeOrganism(organism: RTADN) {
         this.pool = this.pool.filter(o => o.id !== organism.id);
-        this.avgFitness = ((this.avgFitness * (this.pool.length + 1)) - organism.fitness) / this.pool.length;
+        if (this.pool.length > 0) {
+            this.avgFitness = ((this.avgFitness * (this.pool.length + 1)) - organism.fitness) / this.pool.length;
+        } else {
+            this.avgFitness = 0;
+        }
     }
 
     public get averageFitness(): number {

@@ -12,6 +12,7 @@ export interface Rates {
 }
 
 export class Meta {
+    public static readonly MINIMUM_AGE_TO_EVOLVE = 5;    
     private static readonly MIN_AGE_FITNESS_EVALUATION = 4;
     private static readonly COEFF_FORGETTING_FITNESS = 0.5;
 
@@ -20,6 +21,7 @@ export class Meta {
     public parentA?: number;
     public parentB?: number;
     public generation?: number;
+    public individualAge: number;
 
     // Evaluation
     public fitness: number;

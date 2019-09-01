@@ -11,7 +11,6 @@ export class RTADN extends ADN {
     public static readonly MUTATION_CONNECT_RATE: number = 0.03;
     public static readonly MUTATION_ALLOW_RECURRENT: number = 0.01;
     public static readonly MUTATION_SPLIT_CONNECT_RATE: number = 0.05; // Links need to be added more often than nodes
-    public static readonly MINIMUM_AGE_TO_EVOLVE: number = 1;
 
     public static readonly DEFAULT_RATES = {
         mutation: ADN.MUTATION_RATE,

@@ -89,7 +89,7 @@ export class Perceptron extends NeuralNetwork {
         this.OBias.setValues(coefficients);
     }
 
-    public feedForward(inputArr: number[]): number[][] {
+    public feedForward(inputArr: number[]): number[] {
         let input = Matrix.fromArray(inputArr, 1, inputArr.length);
         input = input.transpose();
 
@@ -113,6 +113,8 @@ export class Perceptron extends NeuralNetwork {
         output.add(this.OBias);
 
         // activation function for output nodes
+        /*
+        Approach with softmax
         let solution = [];
         let index = 0;
         for (const nbNeurones of this.nOut) {
@@ -121,10 +123,11 @@ export class Perceptron extends NeuralNetwork {
             solution = [...solution, part];
             index += nbNeurones;
         }
+        //return solution;
+        */
 
         // generating output array
-        // return output.toArray();
-        return solution;
+        return output.toArray();        
     }
 
     private activate(neurons: Matrix) {

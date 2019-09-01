@@ -26,17 +26,17 @@ export class GameEngine {
   private static readonly NB_HEALTH_WHEN_DIE: number = 1;
   private static readonly NB_SHIPS: number = 20;
   private static readonly NB_INIT_HEALTH: number = 0; // 20;
-  private static readonly RATE_SPAWN_HEALTH: number = 0.05; // 0.01;
+  private static readonly RATE_SPAWN_HEALTH: number = 0.03; // 0.01;
   private static readonly RATE_CLONE_SHIP: number = 0.03;
   private static readonly BREEDING_RATE_SHIP: number = 0.001;
   private static readonly MAX_POPULATION = 20;
   private static readonly MAX_DEAD_POPULATION = 3;
-  private static readonly MAX_RANDOM_HEALTH_PACK = GameEngine.MAX_POPULATION * 2;
+  private static readonly MAX_RANDOM_HEALTH_PACK = GameEngine.MAX_POPULATION;
   private static readonly GAME_TIMER = 30; // in seconds
   private static readonly NEURO_EVO_MODE = 'neuroevol';
   private static readonly ALGO_EVO_MODE = 'geneticalgo';
   private static readonly EVOLUTION_MODE = GameEngine.NEURO_EVO_MODE;
-  private static readonly MINMUM_AGE_BEFORE_REPLACEMENT = 5; // in seconds
+  private static readonly MINMUM_AGE_BEFORE_REPLACEMENT = 10; // in seconds
   private static readonly LEVEL_OF_INEGIBILITY = 0.5; // pct of population with age < MINMUM_AGE_BEFORE_REPLACEMENT
 
   private canvas: HTMLCanvasElement;
@@ -713,15 +713,18 @@ export class GameEngine {
       });
 
       this.ga.populate(adns);
-      const newADNs = this.ga.evolve(1, worst.getADN());
+      const newADNs = this.ga.evolve(1);
       if (newADNs !== null) {
         const newADN = newADNs[0];
         const newShip = this.shipFactory.createFromADN(this.generateId(), newADN);
         newShip.setPosition(new Vect2D(400, 400));
+        const orientation = Math.random() * 360;
+        newShip.setOrientation(orientation);
         // TODO set invulnerability
 
         // replace worst ship by new one and position it in starting area
-        const index = this.ships.findIndex(ship => ship.id === worst.id);
+        const worst = this.ga.worstIndividual;
+        const index = this.ships.findIndex(ship => ship.id === worst.metadata.id);
         this.ships[index] = newShip;
       }
     }
