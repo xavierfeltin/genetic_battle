@@ -24,12 +24,12 @@ import { RTADN } from '../ia/rt_neat/adn';
 
 export class GameEngine {
   private static readonly NB_HEALTH_WHEN_DIE: number = 1;
-  private static readonly NB_SHIPS: number = 20;
+  private static readonly NB_SHIPS: number = 12;
   private static readonly NB_INIT_HEALTH: number = 0; // 20;
   private static readonly RATE_SPAWN_HEALTH: number = 0.03; // 0.01;
   private static readonly RATE_CLONE_SHIP: number = 0.03;
   private static readonly BREEDING_RATE_SHIP: number = 0.001;
-  private static readonly MAX_POPULATION = 20;
+  private static readonly MAX_POPULATION = 12;
   private static readonly MAX_DEAD_POPULATION = 3;
   private static readonly MAX_RANDOM_HEALTH_PACK = GameEngine.MAX_POPULATION;
   private static readonly GAME_TIMER = 30; // in seconds
@@ -723,8 +723,8 @@ export class GameEngine {
         // TODO set invulnerability
 
         // replace worst ship by new one and position it in starting area
-        const worst = this.ga.worstIndividual;
-        const index = this.ships.findIndex(ship => ship.id === worst.metadata.id);
+        const worstADN = this.ga.worstIndividual;
+        const index = this.ships.findIndex(ship => ship.id === worstADN.metadata.id);
         this.ships[index] = newShip;
       }
     }

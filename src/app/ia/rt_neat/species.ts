@@ -4,7 +4,7 @@ import { RTADN } from './adn';
 export class Species {
     public static readonly TARGET_NUM_SPECIES = 4;
     public static readonly MIN_COMPATIBILITY_THRESOLD = 1.0;
-    public static readonly COMPATIBILITY_MODIFICATOR = 0.1;
+    public static readonly COMPATIBILITY_MODIFICATOR = 1.0;
 
     private pool: Specie[];
     private compatThresold: number;
@@ -120,15 +120,15 @@ export class Species {
         const probabilities = [];
         let sum = 0;
 
-        const nonEmptySpecies = this.pool.filter(s => s.nbOrganisms > 0); 
+        const nonEmptySpecies = this.pool.filter(s => s.nbOrganisms > 0);
         for (const specie of nonEmptySpecies) {
-            sum += specie.averageFitness;            
+            sum += specie.averageFitness;
         }
 
         for (const specie of nonEmptySpecies) {
-            probabilities.push(specie.averageFitness / sum);            
+            probabilities.push(specie.averageFitness / sum);
         }
-        
+
         // round to 1 last property
         probabilities[probabilities.length - 1] = 1;
         const random = Math.random();

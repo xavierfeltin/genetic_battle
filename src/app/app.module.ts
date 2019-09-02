@@ -1,8 +1,8 @@
 import { BrowserModule } from '@angular/platform-browser';
 import { NgModule } from '@angular/core';
-import { NgxsModule } from '@ngxs/store';
 import { AppComponent } from './app.component';
 import { SceneComponent } from './containers/scene/scene.component';
+import { NetworkVisualizationComponent } from './containers/network-visualization/network-visualization.component';
 import { GameViewerComponent } from './containers/game-viewer/game-viewer.component';
 import { OldestShipsComponent } from './containers/oldest-ships/oldest-ships.component';
 import { SimuConfigComponent } from './containers/simu-config/simu-config.component';
@@ -18,6 +18,7 @@ import { ScoringComponent } from './containers/scoring/scoring.component';
   declarations: [
     AppComponent,
     SceneComponent,
+    NetworkVisualizationComponent,
     GameViewerComponent,
     OldestShipsComponent,
     SimuConfigComponent,

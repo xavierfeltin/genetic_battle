@@ -12,29 +12,29 @@ import { ShipScoring } from './shipScoring.model';import { RTNeuralNetwork } fro
 import { RTADN } from '../ia/rt_neat/adn';
 import { Perceptron } from '../ia/perceptron';
 
-export interface ShipActions{
-    turnRight: boolean,
-    turnLeft: boolean,
-    reduceFOV: boolean,
-    increaseFOV: boolean,
-    reduceRadar: boolean,
-    increaseRadar: boolean,
-    fire: boolean
-};
+export interface ShipActions {
+    turnRight: boolean;
+    turnLeft: boolean;
+    reduceFOV: boolean;
+    increaseFOV: boolean;
+    reduceRadar: boolean;
+    increaseRadar: boolean;
+    fire: boolean;
+}
 
-export interface ShipAttractions{
-    reduceFromHealth: boolean,
-    increaseToHealth: boolean,
-    reduceFromMissiles: boolean,
-    increaseToMissiles: boolean,
-    reduceFromShips: boolean,
-    increaseToShips: boolean,
-    reduceFOV: boolean,
-    increaseFOV: boolean,
-    reduceRadar: boolean,
-    increaseRadar: boolean,
-    fire: boolean
-};
+export interface ShipAttractions {
+    reduceFromHealth: boolean;
+    increaseToHealth: boolean;
+    reduceFromMissiles: boolean;
+    increaseToMissiles: boolean;
+    reduceFromShips: boolean;
+    increaseToShips: boolean;
+    reduceFOV: boolean;
+    increaseFOV: boolean;
+    reduceRadar: boolean;
+    increaseRadar: boolean;
+    fire: boolean;
+}
 
 export class Ship extends GameObject {
     // Constants
@@ -58,7 +58,7 @@ export class Ship extends GameObject {
 
     private static readonly NB_GENES: number = 6;
     // private static readonly NN_OUTPUTS: number[] = [3, 3, 3, 3, 3, 1]; // attractions approach
-    //private static readonly NN_OUTPUTS: number[] = [3, 3, 3, 1]; // actions approach
+    // private static readonly NN_OUTPUTS: number[] = [3, 3, 3, 1]; // actions approach
     private static readonly NN_OUTPUTS: number[] = [2, 2, 2, 1]; // actions approach simplified
     public static readonly IS_ACTION_DRIVEN: boolean = true;
 
@@ -203,7 +203,7 @@ export class Ship extends GameObject {
         const length = Math.round((Ship.MIN_LENGTH_RADAR + Ship.MAX_LENGTH_RADAR) / 2);
         this.setRadar(length);
 
-        this.fireRate = 0; //Math.round((Ship.MIN_FIRE_RATE + Ship.MAX_FIRE_RATE) / 2);
+        this.fireRate = 0; // Math.round((Ship.MIN_FIRE_RATE + Ship.MAX_FIRE_RATE) / 2);
 
         this.scoringCoefficients =  scoringCoefficients;
         this.score = 0;
@@ -228,11 +228,6 @@ export class Ship extends GameObject {
         this.angleWithMissileOnRadar = 0;
         this.angleWithShipOnRadar = 0;
         this.angleWithHealthOnRadar = 0;
-    }
-
-    public older() {
-        this.age ++;
-        this.adn.metadata.individualAge = this.getAgeInSeconds();
     }
 
     public static updateStatistics(ships: Ship[]) {
@@ -271,6 +266,11 @@ export class Ship extends GameObject {
             const keyAsString = key.toString();
             Ship.std.setCoefficient(keyAsString, Math.sqrt((1 / ships.length) * Ship.std.getCoefficient(keyAsString)));
         }
+    }
+
+    public older() {
+        this.age ++;
+        this.adn.metadata.individualAge = this.getAgeInSeconds();
     }
 
     private setupADN(adnType: number, neuroEvoInputs: ShipNeurEvo, nnStructure: number[],
@@ -508,7 +508,7 @@ export class Ship extends GameObject {
         return Math.round(value) === 1;
     }
 
-    private convertNNIntoActions(output: number[]): ShipActions {        
+    private convertNNIntoActions(output: number[]): ShipActions {
         const actions = {
             turnRight: this.getFlagFromNumber(output[0]),
             turnLeft: this.getFlagFromNumber(output[1]),
@@ -548,7 +548,7 @@ export class Ship extends GameObject {
 
 
             if (actions.turnLeft !== actions.turnRight) { // XOR operator
-                const delta = actions.turnLeft ? -deltaAngle : deltaAngle; 
+                const delta = actions.turnLeft ? -deltaAngle : deltaAngle;
                 const newAngle = (this.orientation + delta) % 360;
                 this.setOrientation(newAngle);
             }
@@ -558,7 +558,7 @@ export class Ship extends GameObject {
                 delta = (this.fov + deltaFOV > Ship.MAX_ANGLE_FOV) ? 0 : deltaFOV;
                 if (delta !== 0) {
                     this.setFOV(Math.round(this.getFOV() + delta));
-                }    
+                }
             }
 
             if (actions.increaseRadar !== actions.reduceRadar) {
@@ -570,8 +570,7 @@ export class Ship extends GameObject {
             }
 
             this.fireRate = actions.fire ? 100 : 0;
-        }
-        else {
+        } else {
             const attractions = this.convertNNIntoAttractions(output);
             const deltaHealth = 0.05;
             const deltaMissile = 0.05;
@@ -584,7 +583,7 @@ export class Ship extends GameObject {
                 delta = (this.attractHealth + deltaHealth > Ship.MAX_ATTRACTION) ? 0 : deltaHealth;
                 if (delta !== 0) {
                     this.attractHealth += delta;
-                }    
+                }
             }
 
             if (attractions.increaseToMissiles !== attractions.reduceFromMissiles) {
@@ -592,7 +591,7 @@ export class Ship extends GameObject {
                 delta = (this.attractMissile + deltaMissile > Ship.MAX_ATTRACTION) ? 0 : deltaMissile;
                 if (delta !== 0) {
                     this.attractMissile += delta;
-                }    
+                }
             }
 
             if (attractions.increaseToShips !== attractions.reduceFromShips) {
@@ -600,7 +599,7 @@ export class Ship extends GameObject {
                 delta = (this.attractShip + deltaShip > Ship.MAX_ATTRACTION) ? 0 : deltaShip;
                 if (delta !== 0) {
                     this.attractShip += delta;
-                }    
+                }
             }
 
             if (attractions.increaseFOV !== attractions.reduceFOV) {
@@ -608,7 +607,7 @@ export class Ship extends GameObject {
                 delta = (this.fov + deltaFOV > Ship.MAX_ANGLE_FOV) ? 0 : deltaFOV;
                 if (delta !== 0) {
                     this.setFOV(Math.round(this.getFOV() + delta));
-                }    
+                }
             }
 
             if (attractions.increaseRadar !== attractions.reduceRadar) {
