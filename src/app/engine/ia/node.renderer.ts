@@ -7,9 +7,13 @@ export class NodeRenderer {
     private ctx: CanvasRenderingContext2D;
 
     constructor(ctx: CanvasRenderingContext2D) {
-        this.radius = 20;
+        this.radius = 10;
         this.color = 'rgba(50, 50, 50)';
         this.ctx = ctx;
+    }
+
+    public get size(): number {
+        return this.radius;
     }
 
     public draw(pos: Vect2D) {

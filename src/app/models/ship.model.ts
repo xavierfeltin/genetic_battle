@@ -373,6 +373,10 @@ export class Ship extends GameObject {
         return this.adn;
     }
 
+    public getNeuralNetwork(): NeuralNetwork {
+        return this.nn;
+    }
+
     public getParentsID(): number[] {
         return this.parentsID;
     }

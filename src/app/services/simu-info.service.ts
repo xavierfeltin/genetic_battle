@@ -6,6 +6,7 @@ import { throttleTime, bufferTime } from 'rxjs/operators';
 import { Point } from '../tools/statistics.tools';
 import { Scoring } from '../ia/scoring';
 import { Phenotype } from '../models/phenotype.interface';
+import { RTNeuralNetwork } from '../ia/rt_neat/phenotype/neural-network';
 
 @Injectable({
   providedIn: 'root'
@@ -31,6 +32,10 @@ export class SimuInfoService {
 
   public getDeadShipsScoring(): Observable<(Scoring[])[]> {
     return this.game.deadShipsScoring$.pipe(bufferTime(1000));
+  }
+
+  public getNeuralNetwork(): Observable<RTNeuralNetwork> {
+    return this.game.selectedShipNN$.pipe(throttleTime(1000));
   }
 
   /*

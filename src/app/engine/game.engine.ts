@@ -21,6 +21,7 @@ import { Matrix } from '../ia/matrix';
 import { ShipScoring } from '../models/shipScoring.model';
 import { RTADNGA } from '../ia/rt_neat/population';
 import { RTADN } from '../ia/rt_neat/adn';
+import { RTNeuralNetwork } from '../ia/rt_neat/phenotype/neural-network';
 
 export class GameEngine {
   private static readonly NB_HEALTH_WHEN_DIE: number = 1;
@@ -101,6 +102,9 @@ export class GameEngine {
 
   private _elapsedTime$ = new Subject<number>();
   public get elapsedTime$() { return this._elapsedTime$.asObservable() }
+
+  private _selectedShipNN$ = new Subject<RTNeuralNetwork>();
+  public get selectedShipNN$() { return this._selectedShipNN$.asObservable() }
 
   constructor() {
     // seedrandom('hello.', { global: true });
@@ -350,6 +354,7 @@ export class GameEngine {
     this.oldestShip = this.ships[0];
     // this._oldestShip$.next(this.oldestShip);
     this._aliveOldestShip$.next(this.oldestShip.getPhenotype());
+    this._selectedShipNN$.next(this.oldestShip.getNeuralNetwork() as RTNeuralNetwork);
 
     for (let i = 0; i < this.nbStartingHealth; i++) {
       this.createHealth(i);

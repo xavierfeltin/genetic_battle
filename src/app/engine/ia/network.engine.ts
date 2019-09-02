@@ -1,7 +1,7 @@
 import { NodeRenderer } from './node.renderer';
 import { LinkRenderer } from './link.renderer';
 import { Vect2D } from '../../models/vect2D.model';
-import { ViewChild } from '@angular/core';
+import { RTNeuralNetwork } from 'src/app/ia/rt_neat/phenotype/neural-network';
 
 export class NetworkEngine {
     // Rendering variables
@@ -20,6 +20,9 @@ export class NetworkEngine {
     private delta: number;
     private startTime: number;
 
+    // NN to display
+    private nn: RTNeuralNetwork;
+
     constructor() {
         this.fps = 0;
         this.now = 0;
@@ -27,6 +30,8 @@ export class NetworkEngine {
         this.interval = 0;
         this.delta = 0;
         this.startTime = 0;
+
+        this.nn = null;
     }
 
     public setCanvas(idCanvas: string) {
@@ -38,6 +43,10 @@ export class NetworkEngine {
 
         this.nodeRenderer = new NodeRenderer(this.ctx);
         this.linkRenderer = new LinkRenderer(this.ctx);
+    }
+
+    public set neuralNetwork(net: RTNeuralNetwork) {
+        this.nn = net;
     }
 
     public run() {
@@ -64,8 +73,23 @@ export class NetworkEngine {
         // Draw the frame after time interval is expired
         this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
         this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
-        this.nodeRenderer.draw(new Vect2D(50, 400));
-        this.nodeRenderer.draw(new Vect2D(600, 400));
-        this.linkRenderer.draw(new Vect2D(50, 400), new Vect2D(600, 400));
+
+        if (this.nn === null) {
+            return;
+        }
+
+        const inputs = this.nn.networkInputs;
+        const nodesHeight = inputs.length * this.nodeRenderer.size;
+        const gapHeight = Math.min((this.canvasHeight - nodesHeight) / (inputs.length + 1), 30); // do not want the nodes to afar from each other  
+        const yBegin = this.canvasHeight - (nodesHeight +  (inputs.length + 1) * gapHeight);
+        let y = yBegin + this.nodeRenderer.size + gapHeight;
+        for (const input of inputs) {
+            this.nodeRenderer.draw(new Vect2D(50, y));
+            y += gapHeight + this.nodeRenderer.size;    
+        }
+
+        // this.nodeRenderer.draw(new Vect2D(50, 400));
+        // this.nodeRenderer.draw(new Vect2D(600, 400));
+        // this.linkRenderer.draw(new Vect2D(50, 400), new Vect2D(600, 400));
     }
 }
