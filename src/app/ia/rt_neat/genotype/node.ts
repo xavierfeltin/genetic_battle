@@ -11,16 +11,22 @@ export class NodeGene {
 
     private id: number;
     private type: NodeType;
+    private label: string;
     private position: number;
     private inLinks: ConnectGene[];
     private outLinks: ConnectGene[];
 
-    constructor(id: number, type: NodeType, position: number) {
+    constructor(id: number, type: NodeType, position: number, label: string) {
         this.id = id;
         this.type = type;
         this.position = position;
+        this.label = label;
         this.inLinks = [];
         this.outLinks = [];
+    }
+
+    public get name(): string {
+        return this.label;
     }
 
     public get identifier(): number {
@@ -73,7 +79,7 @@ export class NodeGene {
     // The copy does not copy the links
     // The links have to be set by adding inputs and outputs links
     public copyWithoutDependencies(): NodeGene {
-        const node = new NodeGene(this.id, this.type, this.position);
+        const node = new NodeGene(this.id, this.type, this.position, this.label);
         return node;
     }
 }

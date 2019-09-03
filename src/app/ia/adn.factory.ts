@@ -51,14 +51,14 @@ export class FactoryADN {
         return this.adnType === FactoryADN.TYPE_RT_ADN;
     }
 
-    public create(nbGenes: number, min: number, max: number, nbInputs: number, nbOutputs: number): ADN {
+    public create(nbGenes: number, min: number, max: number, nbInputs: number, nbOutputs: number, labelsInputs: string[], labelsOutputs: string[]): ADN {
         switch (this.adnType) {
             case FactoryADN.TYPE_SMALL_ADN:
                 return new SmallADN(nbGenes, min, max, this.rates);
             case FactoryADN.TYPE_HUGE_ADN:
                 return new HugeADN(nbGenes, min, max, this.rates);
             case FactoryADN.TYPE_RT_ADN:
-                const genomeTemplate = Genome.generate(nbInputs, nbOutputs);
+                const genomeTemplate = Genome.generate(nbInputs, nbOutputs, labelsInputs, labelsOutputs);
                 return new RTADN(min, max, this.rates, genomeTemplate);
             default:
                 return new HugeADN(nbGenes, min, max, this.rates);

@@ -38,14 +38,17 @@ export class RTNeuralNetwork extends NeuralNetwork {
         const hiddens: Node[] = [];
         for (const node of nodes) {
             if (node.isInput()) {
-                const newNode = new Node(node.identifier, node.nodeType, node.layer, 'none');
+                const newNode = new Node(node.identifier, node.nodeType, node.layer, 'none', node.name, 0);
                 this.inputs.push(newNode);
             } else if (node.isOutput()) {
-                const newNode = new Node(node.identifier, node.nodeType, node.layer, 'tanh');
+                const newNode = new Node(node.identifier, node.nodeType, node.layer, 'tanh', node.name, 0);
                 this.outputs.push(newNode);
             } else {
-                const newNode = new Node(node.identifier, node.nodeType, node.layer, 'tanh');
-                hiddens.push(newNode);
+                // Do not copy node without outputs
+                if (node.outputs.length > 0) {
+                    const newNode = new Node(node.identifier, node.nodeType, node.layer, 'tanh', '', 0);
+                    hiddens.push(newNode);
+                }                
             }
         }
 
@@ -70,10 +73,12 @@ export class RTNeuralNetwork extends NeuralNetwork {
                     outNode = hiddens.find((value: Node) => value.identifier === link.outputNode.identifier);
                 }
 
-                const newLink = new Connect(link.innovation, inNode, outNode, link.weight);
-                inNode.addOutput(newLink);
-                outNode.addInput(newLink);
-                this.links.push(newLink);
+                if (inNode !== null && outNode !== null) {
+                    const newLink = new Connect(link.innovation, inNode, outNode, link.weight);
+                    inNode.addOutput(newLink);
+                    outNode.addInput(newLink);
+                    this.links.push(newLink);
+                }                
             }
         }
 

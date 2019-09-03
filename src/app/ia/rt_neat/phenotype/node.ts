@@ -13,21 +13,27 @@ export class Node {
     private id: number;
     private type: NodeType;
     private position: number;
+    private label: string;
     private activation: string;
     private val: number;
     private mem: number;
     private inLinks: Connect[];
     private outLinks: Connect[];
 
-    constructor(id: number, type: NodeType, layer: number, activationName: string, value: number = 0) {
+    constructor(id: number, type: NodeType, layer: number, activationName: string, label: string, value: number) {
         this.id = id;
         this.type = type;
         this.position = layer;
+        this.label = label;
         this.activation = activationName;
         this.val = value;
         this.mem = 0;
         this.inLinks = [];
         this.outLinks = [];
+    }
+
+    public get name(): string {
+        return this.label;
     }
 
     public addInput(link: Connect) {

@@ -72,6 +72,19 @@ export class NetworkEngine {
     }
 
     private renderNetwork() {
+
+        /*
+        TODO: scaling
+        var newWidth = width * scale;
+        var newHeight = height * scale;
+        ctx.save();
+        ctx.translate(-((newWidth-width)/2), -((newHeight-height)/2));
+        ctx.scale(scale, scale);
+        ctx.clearRect(0, 0, width, height);
+        ctx.drawImage(copiedCanvas, 0, 0);
+        ctx.restore();
+        */
+
         // Draw the frame after time interval is expired
         this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
         this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
@@ -94,10 +107,10 @@ export class NetworkEngine {
 
         // 50px: size allowed to node text
         // do not want the layers to afar from each other
-        const gapWidth = Math.min(this.canvasWidth - (nbLayersToDraw * NodeRenderer.RADIUS + 2 * 50), 100);
+        const gapWidth = Math.min(this.canvasWidth - (nbLayersToDraw * NodeRenderer.RADIUS + 2 * NodeRenderer.TEXT_BOX_SIZE), 75);
 
-        const xBegin = (this.canvasHeight - (nodesWidth +  (nbLayersToDraw + 1) * gapWidth) + 2 * 50) / 2 ; // centered
-        let xPos = xBegin + 50 + NodeRenderer.RADIUS;
+        const xBegin = (this.canvasHeight - (nodesWidth +  (nbLayersToDraw + 1) * gapWidth) + 2 * NodeRenderer.TEXT_BOX_SIZE) / 2 ; // centered
+        let xPos = xBegin + NodeRenderer.RADIUS;
 
         this.drawLayer(inputs, xPos);
         xPos += gapWidth + NodeRenderer.RADIUS;
@@ -119,11 +132,27 @@ export class NetworkEngine {
         const yBegin = (this.canvasHeight - (nodesHeight +  (nodes.length + 1) * gapHeight)) / 2 ; // centered
         let y = yBegin + NodeRenderer.RADIUS + gapHeight;
         for (const node of nodes) {
-            const renderer = new NodeRenderer(this.ctx, new Vect2D(xPos, y), '', NodeRenderer.LEFT_ALIGNMENT);
+            const renderer = new NodeRenderer(this.ctx, new Vect2D(xPos, y), node.name, this.getAlignmentFromLayer(node.layer));
             this.nodeRenderers[node.identifier] = renderer;
             renderer.draw(new Vect2D(xPos, y));
             y += gapHeight + NodeRenderer.RADIUS;
         }
+    }
+
+    private getAlignmentFromLayer(layer: number): number {
+        let alignment = 0;
+        switch(layer){
+            case -Infinity: 
+                alignment = NodeRenderer.LEFT_ALIGNMENT;     
+                break;
+            case Infinity: 
+                alignment = NodeRenderer.RIGHT_ALIGNMENT;     
+                break;
+            default:
+                alignment = NodeRenderer.NONE_ALIGNMENT;     
+                break; 
+        }
+        return alignment;
     }
 
     private drawLinks() {

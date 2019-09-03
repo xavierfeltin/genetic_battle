@@ -288,21 +288,27 @@ export class Ship extends GameObject {
             const activeInputs = this.inputsNeuroEvo.getActiveInputNames();
             const nbNNInputs = activeInputs.length;
             const nbNNOutputs = Ship.NN_OUTPUTS.reduce((accumulator, currentValue) => accumulator + currentValue);
+            const inputLabels = activeInputs.map(i => i.toString()
+                                                .replace('input', '')
+                                                .replace('Distance', 'Dist')
+                                                .replace('With', '')
+                                                .replace('Detected', 'Found'));
+            const outputLabels = ['left', 'right', 'incFOV', 'decFOV', 'incRadar', 'decRadar', 'fire'];
 
             if (this.adnFactory.isHugeAdn()) {
                 this.neuronalNetworkStructure = nnStructure;
                 this.nn = new Perceptron(activeInputs.length, this.neuronalNetworkStructure, Ship.NN_OUTPUTS);
                 this.nbGenes = this.nn.getNbCoefficients();
-                this.createADN(this.nbGenes, minValue, maxValue, nbNNInputs, nbNNOutputs);
+                this.createADN(this.nbGenes, minValue, maxValue, nbNNInputs, nbNNOutputs, inputLabels, outputLabels);
             }
 
             if (this.adnFactory.isRTAdn()) {
-                this.createADN(-1, minValue, maxValue, nbNNInputs, nbNNOutputs);
+                this.createADN(-1, minValue, maxValue, nbNNInputs, nbNNOutputs, inputLabels, outputLabels);
                 const rtadn = this.getADN() as RTADN;
                 this.nn = new RTNeuralNetwork(rtadn.genome, Ship.NN_OUTPUTS);
             }
         } else {
-            this.createADN(Ship.NB_GENES, minValue, maxValue, 0, 0);
+            this.createADN(Ship.NB_GENES, minValue, maxValue, 0, 0, [], []);
         }
     }
 
@@ -311,8 +317,11 @@ export class Ship extends GameObject {
         return false;
     }
 
-    public createADN(nbGenes: number, minimum: number, maximum: number, nbNNInputs, nbNNOutputs) {
-        this.adn = this.adnFactory.create(nbGenes, minimum, maximum, nbNNInputs, nbNNOutputs);
+    public createADN(nbGenes: number, minimum: number, maximum: number, 
+        nbNNInputs: number, nbNNOutputs: number, inputLabels: string[], outputLabels: string[]) {        
+        
+        this.adn = this.adnFactory.create(nbGenes, minimum, maximum, 
+            nbNNInputs, nbNNOutputs, inputLabels, outputLabels);
 
         if (!this.isNeuroEvo) {
             // In GA, phenotype is processed once
@@ -828,17 +837,17 @@ export class Ship extends GameObject {
         this.distanceHealthOnRadar = this.detectedHealthOnRadar === null ? -1 : this.detectedHealthOnRadar.pos.distance(this.pos);
 
         this.angleWithMissileOnFOV = this.detectedMissileOnFOV === null ?
-            0 : this.heading.angleWithVector(Vect2D.sub(this.detectedMissileOnFOV.pos, this.pos));
+            -100 : this.heading.angleWithVector(Vect2D.sub(this.detectedMissileOnFOV.pos, this.pos));
         this.angleWithShipOnFOV = this.detectedShipOnFOV === null ?
-            0 : this.heading.angleWithVector(Vect2D.sub(this.detectedShipOnFOV.pos, this.pos));
+            -100 : this.heading.angleWithVector(Vect2D.sub(this.detectedShipOnFOV.pos, this.pos));
         this.angleWithHealthOnFOV = this.detectedHealthOnFOV === null ?
-            0 : this.heading.angleWithVector(Vect2D.sub(this.detectedHealthOnFOV.pos, this.pos));
+            -100 : this.heading.angleWithVector(Vect2D.sub(this.detectedHealthOnFOV.pos, this.pos));
         this.angleWithMissileOnRadar = this.detectedMissileOnRadar === null ?
-            0 : this.heading.angleWithVector(Vect2D.sub(this.detectedMissileOnRadar.pos, this.pos));
+            -100 : this.heading.angleWithVector(Vect2D.sub(this.detectedMissileOnRadar.pos, this.pos));
         this.angleWithShipOnRadar = this.detectedShipOnRadar === null ?
-            0 : this.heading.angleWithVector(Vect2D.sub(this.detectedShipOnRadar.pos, this.pos));
+            -100 : this.heading.angleWithVector(Vect2D.sub(this.detectedShipOnRadar.pos, this.pos));
         this.angleWithHealthOnRadar = this.detectedHealthOnRadar === null ?
-            0 : this.heading.angleWithVector(Vect2D.sub(this.detectedHealthOnRadar.pos, this.pos));
+            -100 : this.heading.angleWithVector(Vect2D.sub(this.detectedHealthOnRadar.pos, this.pos));
     }
 
     public behaviors(missiles: GameObject[], healths: GameObject[], ships: GameObject[], wArea: number, hArea: number) {

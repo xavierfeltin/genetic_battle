@@ -8,9 +8,9 @@ import { ModificationType } from './genotype/historic';
 
 export class RTADN extends ADN {
     public static readonly MUTATION_ACTIVATION_RATE: number = 0.01;
-    public static readonly MUTATION_CONNECT_RATE: number = 0.03;
+    public static readonly MUTATION_CONNECT_RATE: number = 0.05; // Links need to be added more often than nodes
     public static readonly MUTATION_ALLOW_RECURRENT: number = 0.01;
-    public static readonly MUTATION_SPLIT_CONNECT_RATE: number = 0.05; // Links need to be added more often than nodes
+    public static readonly MUTATION_SPLIT_CONNECT_RATE: number = 0.02; 
 
     public static readonly DEFAULT_RATES = {
         mutation: ADN.MUTATION_RATE,
@@ -286,14 +286,12 @@ export class RTADN extends ADN {
             && this.g.connectGenes.length > 0) {
             const link = RTADN.selectEnabledLink(this.g.connectGenes);
 
-            // Prevent neural networks to be too deep
-            if (link.inputNode.layer < Genome.MAX_LAYERS) {
-                const sameExistingInnovation = Genome.historic.find(link.inputNode.identifier,
-                    ModificationType.Split, link.outputNode.identifier);
-                const innovationId = sameExistingInnovation === null ? -1 : sameExistingInnovation.innovationId;
-                const nodeId  = sameExistingInnovation === null ? -1 : sameExistingInnovation.newNodeId;
-                this.g.splitConnection(link, innovationId, nodeId);
-            }
+            const sameExistingInnovation = Genome.historic.find(link.inputNode.identifier,
+                ModificationType.Split, link.outputNode.identifier);
+            const innovationId = sameExistingInnovation === null ? -1 : sameExistingInnovation.innovationId;
+            const nodeId  = sameExistingInnovation === null ? -1 : sameExistingInnovation.newNodeId;
+            this.g.splitConnection(link, innovationId, nodeId);
+
         } else {
             // If no structural change was done
 

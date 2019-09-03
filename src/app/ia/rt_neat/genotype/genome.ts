@@ -23,16 +23,16 @@ export class Genome {
      * Create a default genome configuration with deterministic ids for each node
      * the nodeNumber is updated if no other modification has been done
      */
-    public static generate(nbInputs: number, nbOutputs: number): Genome {
+    public static generate(nbInputs: number, nbOutputs: number, labelsInputs: string[], labelsOutputs: string[]): Genome {
         const g = new Genome();
         let nbNodes = 0;
         for (let i = 0; i < nbInputs; i++) {
-            g.addNode(NodeType.Input, -Infinity, nbNodes);
+            g.addNode(NodeType.Input, -Infinity, nbNodes, labelsInputs[i]);
             nbNodes++;
         }
 
         for (let i = 0; i < nbOutputs; i++) {
-            g.addNode(NodeType.Output, Infinity, nbNodes);
+            g.addNode(NodeType.Output, Infinity, nbNodes, labelsOutputs[i]);
             nbNodes++;
         }
 
@@ -116,14 +116,14 @@ export class Genome {
         }
     }
 
-    public addNode(type: NodeType, position: number, id: number = -1) { // node: NodeGene) {
+    public addNode(type: NodeType, position: number, id: number = -1, label: string = '') { // node: NodeGene) {
         let idNode = id;
         if (idNode === -1) {
             idNode = Genome.nextNodeId;
             Genome.incrementNodeId();
         }
 
-        const newNode = new NodeGene(idNode, type, position);
+        const newNode = new NodeGene(idNode, type, position, label);
         this.nodes.push(newNode);
 
         if (newNode.layer > this.maxHiddenLayer && newNode.layer !== Infinity) {
@@ -152,7 +152,7 @@ export class Genome {
             nodeId = Genome.nextNodeId;
             Genome.incrementNodeId();
         }
-        const newNode = new NodeGene(nodeId, NodeType.Hidden, newNodeLayer);
+        const newNode = new NodeGene(nodeId, NodeType.Hidden, newNodeLayer, '');
         this.nodes.push(newNode);
 
         // Update the layer of the node at the end of the new connection and propagate the modification
