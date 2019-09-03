@@ -509,7 +509,7 @@ export class Ship extends GameObject {
     }
 
     private getFlagFromNumber(value: number): boolean {
-        return Math.round(value) === 1;
+        return value > 0;
     }
 
     private convertNNIntoActions(output: number[]): ShipActions {

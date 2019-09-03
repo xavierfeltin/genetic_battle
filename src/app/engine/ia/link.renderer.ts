@@ -25,7 +25,6 @@ export class LinkRenderer {
     private drawArrowhead(from: Vect2D, to: Vect2D) {
         this.ctx.beginPath();
         this.ctx.strokeStyle = this.color;
-        this.ctx.fillStyle = this.color;
 
         let angle = Math.atan2(to.y - from.y, to.x - from.x);
         let x = this.radius * Math.cos(angle) + to.x;
@@ -45,6 +44,10 @@ export class LinkRenderer {
 
         this.ctx.lineTo(x, y);
         this.ctx.closePath();
+
+        this.ctx.save();
+        this.ctx.fillStyle = this.color;
         this.ctx.fill();
+        this.ctx.restore();
     }
 }

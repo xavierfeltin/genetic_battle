@@ -2,6 +2,8 @@ import { NodeRenderer } from './node.renderer';
 import { LinkRenderer } from './link.renderer';
 import { Vect2D } from '../../models/vect2D.model';
 import { RTNeuralNetwork } from 'src/app/ia/rt_neat/phenotype/neural-network';
+import { Node } from '../../ia/rt_neat/phenotype/node';
+import { Connect } from '../../ia/rt_neat/phenotype/connect';
 
 export class NetworkEngine {
     // Rendering variables
@@ -9,8 +11,8 @@ export class NetworkEngine {
     private ctx: CanvasRenderingContext2D;
     private canvasWidth: number;
     private canvasHeight: number;
-    private nodeRenderer: NodeRenderer;
-    private linkRenderer: LinkRenderer;
+    private nodeRenderers: {};
+    private linkRenderers: {};
 
     // Animation variables
     private fps: number;
@@ -24,11 +26,11 @@ export class NetworkEngine {
     private nn: RTNeuralNetwork;
 
     constructor() {
-        this.fps = 0;
-        this.now = 0;
-        this.then = 0;
-        this.interval = 0;
+        this.fps = 30;
+        this.then = Date.now();
+        this.interval = 1000 / this.fps;
         this.delta = 0;
+        this.now = 0;
         this.startTime = 0;
 
         this.nn = null;
@@ -41,8 +43,8 @@ export class NetworkEngine {
         this.ctx = this.canvas.getContext('2d');
         this.ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
 
-        this.nodeRenderer = new NodeRenderer(this.ctx);
-        this.linkRenderer = new LinkRenderer(this.ctx);
+        this.nodeRenderers = {}; // new NodeRenderer(this.ctx);
+        this.linkRenderers = {}; // new LinkRenderer(this.ctx);
     }
 
     public set neuralNetwork(net: RTNeuralNetwork) {
@@ -78,18 +80,63 @@ export class NetworkEngine {
             return;
         }
 
-        const inputs = this.nn.networkInputs;
-        const nodesHeight = inputs.length * this.nodeRenderer.size;
-        const gapHeight = Math.min((this.canvasHeight - nodesHeight) / (inputs.length + 1), 30); // do not want the nodes to afar from each other  
-        const yBegin = this.canvasHeight - (nodesHeight +  (inputs.length + 1) * gapHeight);
-        let y = yBegin + this.nodeRenderer.size + gapHeight;
-        for (const input of inputs) {
-            this.nodeRenderer.draw(new Vect2D(50, y));
-            y += gapHeight + this.nodeRenderer.size;    
+        this.drawNodes();
+        this.drawLinks();
+    }
+
+    private drawNodes() {
+        const inputs: Node[] = this.nn.networkInputs ;
+        const hiddenLayers: Node[][] = this.nn.networkLayers;
+        const outputs: Node[] = this.nn.networkOutputs;
+
+        const nbLayersToDraw = hiddenLayers.length + 2;
+        const nodesWidth = nbLayersToDraw * NodeRenderer.RADIUS;
+
+        // 50px: size allowed to node text
+        // do not want the layers to afar from each other
+        const gapWidth = Math.min(this.canvasWidth - (nbLayersToDraw * NodeRenderer.RADIUS + 2 * 50), 100);
+
+        const xBegin = (this.canvasHeight - (nodesWidth +  (nbLayersToDraw + 1) * gapWidth) + 2 * 50) / 2 ; // centered
+        let xPos = xBegin + 50 + NodeRenderer.RADIUS;
+
+        this.drawLayer(inputs, xPos);
+        xPos += gapWidth + NodeRenderer.RADIUS;
+
+        for (const hidden of hiddenLayers) {
+            this.drawLayer(hidden, xPos);
+            xPos += gapWidth + NodeRenderer.RADIUS;
         }
 
-        // this.nodeRenderer.draw(new Vect2D(50, 400));
-        // this.nodeRenderer.draw(new Vect2D(600, 400));
-        // this.linkRenderer.draw(new Vect2D(50, 400), new Vect2D(600, 400));
+        this.drawLayer(outputs, xPos);
+    }
+
+    private drawLayer(nodes: Node[], xPos: number) {
+        const nodesHeight = nodes.length * NodeRenderer.RADIUS;
+
+        // do not want the nodes to afar from each other
+        const gapHeight = Math.min((this.canvasHeight - nodesHeight) / (nodes.length + 1), 30);
+
+        const yBegin = (this.canvasHeight - (nodesHeight +  (nodes.length + 1) * gapHeight)) / 2 ; // centered
+        let y = yBegin + NodeRenderer.RADIUS + gapHeight;
+        for (const node of nodes) {
+            const renderer = new NodeRenderer(this.ctx, new Vect2D(xPos, y), '', NodeRenderer.LEFT_ALIGNMENT);
+            this.nodeRenderers[node.identifier] = renderer;
+            renderer.draw(new Vect2D(xPos, y));
+            y += gapHeight + NodeRenderer.RADIUS;
+        }
+    }
+
+    private drawLinks() {
+        const links: Connect[] = this.nn.networkConnections;
+        for (const link of links) {
+            const inputId = link.inputNode.identifier;
+            const input: NodeRenderer = this.nodeRenderers[inputId];
+
+            const outputId = link.outputNode.identifier;
+            const output: NodeRenderer = this.nodeRenderers[outputId];
+
+            const renderer = new LinkRenderer(this.ctx);
+            renderer.draw(input.position, output.position);
+        }
     }
 }

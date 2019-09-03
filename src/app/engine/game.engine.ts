@@ -354,7 +354,6 @@ export class GameEngine {
     this.oldestShip = this.ships[0];
     // this._oldestShip$.next(this.oldestShip);
     this._aliveOldestShip$.next(this.oldestShip.getPhenotype());
-    this._selectedShipNN$.next(this.oldestShip.getNeuralNetwork() as RTNeuralNetwork);
 
     for (let i = 0; i < this.nbStartingHealth; i++) {
       this.createHealth(i);
@@ -570,6 +569,7 @@ export class GameEngine {
       }
 
       this._aliveOldestShip$.next(aliveOldestShip.getPhenotype());
+      this._selectedShipNN$.next(aliveOldestShip.getNeuralNetwork() as RTNeuralNetwork);
     }
 
     this._ships$.next(phenotypes);
