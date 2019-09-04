@@ -24,6 +24,7 @@ import { RTADN } from '../ia/rt_neat/adn';
 import { RTNeuralNetwork } from '../ia/rt_neat/phenotype/neural-network';
 
 export class GameEngine {
+  private static readonly SCALE_MULTIPLIER: number = 0.8;
   private static readonly NB_HEALTH_WHEN_DIE: number = 1;
   private static readonly NB_SHIPS: number = 12;
   private static readonly NB_INIT_HEALTH: number = 0; // 20;
@@ -42,6 +43,8 @@ export class GameEngine {
 
   private canvas: HTMLCanvasElement;
   private ctx: CanvasRenderingContext2D;
+  private translatePos: Vect2D;
+  private scale: number;
 
   private fps: number;
   private now: number;
@@ -107,8 +110,6 @@ export class GameEngine {
   public get selectedShipNN$() { return this._selectedShipNN$.asObservable() }
 
   constructor() {
-    // seedrandom('hello.', { global: true });
-
     this.fps = 30;
     this.then = Date.now();
     this.interval = 1000 / this.fps;
@@ -153,6 +154,27 @@ export class GameEngine {
     this.height = this.canvas.height;
     this.ctx = this.canvas.getContext('2d');
     this.ctx.fillStyle = 'rgba(0, 0, 0, 0.9)';
+
+    this.translatePos = new Vect2D(0, 0);
+    this.scale = 1;
+
+    // add event listeners to handle screen zoom
+    // source: https://stackoverflow.com/questions/45528111/javascript-canvas-map-style-point-zooming/45528455#45528455
+    // TODO: make scrollAt work
+    const engine = this;
+    this.canvas.addEventListener('wheel', (evt) => {
+      const x = evt.offsetX;
+      const y = evt.offsetY;
+
+      const delta = evt.deltaY;
+      engine.scale = delta > 0 ? engine.scale * GameEngine.SCALE_MULTIPLIER : engine.scale / GameEngine.SCALE_MULTIPLIER;
+
+      engine.translatePos.x = x - x - (engine.translatePos.x) * delta;
+      engine.translatePos.y = y - y - (engine.translatePos.y) * delta;
+
+      engine.renderGame();
+      evt.preventDefault();
+    });
 
     this.shipRenderer = new ShipRender(this.ctx);
     this.missileRenderer = new MissileRender(this.ctx);
@@ -581,12 +603,22 @@ export class GameEngine {
   }
 
   private renderGame() {
+    this.ctx.save();
+    this.ctx.setTransform(1, 0, 0, 1, 0, 0); // default transform for clear
+    this.ctx.clearRect(0, 0, this.width, this.height);
+    this.ctx.restore();
+
+    this.ctx.save();
+    this.ctx.setTransform(this.scale, 0, 0, this.scale, this.translatePos.x , this.translatePos.y);
+
+
     // Draw the frame after time interval is expired
     this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
     this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
     this.drawShips();
     this.drawMissiles();
     this.drawHealth();
+    this.ctx.restore();
   }
 
   // Evolution performed once the ship is dead

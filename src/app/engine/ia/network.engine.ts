@@ -109,7 +109,8 @@ export class NetworkEngine {
         // do not want the layers to afar from each other
         const gapWidth = Math.min(this.canvasWidth - (nbLayersToDraw * NodeRenderer.RADIUS + 2 * NodeRenderer.TEXT_BOX_SIZE), 75);
 
-        const xBegin = (this.canvasHeight - (nodesWidth +  (nbLayersToDraw + 1) * gapWidth) + 2 * NodeRenderer.TEXT_BOX_SIZE) / 2 ; // centered
+        const xBegin = (this.canvasHeight - (nodesWidth +  (nbLayersToDraw + 1) * gapWidth)
+            + 2 * NodeRenderer.TEXT_BOX_SIZE) / 2 ; // centered
         let xPos = xBegin + NodeRenderer.RADIUS;
 
         this.drawLayer(inputs, xPos);
@@ -141,16 +142,16 @@ export class NetworkEngine {
 
     private getAlignmentFromLayer(layer: number): number {
         let alignment = 0;
-        switch(layer){
-            case -Infinity: 
-                alignment = NodeRenderer.LEFT_ALIGNMENT;     
+        switch (layer) {
+            case -Infinity:
+                alignment = NodeRenderer.LEFT_ALIGNMENT;
                 break;
-            case Infinity: 
-                alignment = NodeRenderer.RIGHT_ALIGNMENT;     
+            case Infinity:
+                alignment = NodeRenderer.RIGHT_ALIGNMENT;
                 break;
             default:
-                alignment = NodeRenderer.NONE_ALIGNMENT;     
-                break; 
+                alignment = NodeRenderer.NONE_ALIGNMENT;
+                break;
         }
         return alignment;
     }

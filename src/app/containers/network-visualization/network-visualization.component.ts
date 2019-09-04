@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { NetworkEngine } from '../../engine/ia/network.engine';
 import { NetworkVisuService } from '../../services/network-visu.service';
 import { SimuInfoService } from 'src/app/services/simu-info.service';
@@ -9,10 +9,10 @@ import { Subscription } from 'rxjs';
   templateUrl: './network-visualization.component.html',
   styleUrls: ['./network-visualization.component.css']
 })
-export class NetworkVisualizationComponent implements OnInit {
+export class NetworkVisualizationComponent implements OnInit, OnDestroy {
     private scene: NetworkEngine;
     private subscription: Subscription;
-    
+
     constructor(private serviceSimu: SimuInfoService,
                 private serviceNetwork: NetworkVisuService) { }
 

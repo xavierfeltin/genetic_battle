@@ -48,7 +48,7 @@ export class RTNeuralNetwork extends NeuralNetwork {
                 if (node.outputs.length > 0) {
                     const newNode = new Node(node.identifier, node.nodeType, node.layer, 'tanh', '', 0);
                     hiddens.push(newNode);
-                }                
+                }
             }
         }
 
@@ -78,7 +78,7 @@ export class RTNeuralNetwork extends NeuralNetwork {
                     inNode.addOutput(newLink);
                     outNode.addInput(newLink);
                     this.links.push(newLink);
-                }                
+                }
             }
         }
 
@@ -128,7 +128,7 @@ export class RTNeuralNetwork extends NeuralNetwork {
             }
         }
 
-        /* 
+        /*
         Apply softmax layer at the end
         const outLayer = Matrix.fromArray( this.outputs.map( out => out.value ), this.outputs.length, 1);
         let solution = [];

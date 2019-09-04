@@ -5,8 +5,8 @@ export class NodeRenderer {
     public static readonly DEFAULT_COLOR = 'rgba(50, 50, 50)';
     public static readonly FONT = '';
     public static readonly FONT_SIZE = 12; // px
-    public static readonly TEXT_BOX_SIZE = 100; //px
-    public static readonly TEXT_MARGIN = 5; //px
+    public static readonly TEXT_BOX_SIZE = 100; // px
+    public static readonly TEXT_MARGIN = 5; // px
     public static readonly LEFT_ALIGNMENT = 0;
     public static readonly RIGHT_ALIGNMENT = 1;
     public static readonly NONE_ALIGNMENT = -1;
@@ -48,24 +48,24 @@ export class NodeRenderer {
 
         if (this.text !== '') {
             switch (this.alignment) {
-                case NodeRenderer.LEFT_ALIGNMENT: 
+                case NodeRenderer.LEFT_ALIGNMENT:
                     xOrigin = pos.x - this.radius - NodeRenderer.TEXT_MARGIN;
-                    textAlign = "right";
+                    textAlign = 'right';
                     break;
-                case NodeRenderer.RIGHT_ALIGNMENT: 
+                case NodeRenderer.RIGHT_ALIGNMENT:
                     xOrigin = pos.x + this.radius + NodeRenderer.TEXT_MARGIN;
-                    textAlign = "left";
+                    textAlign = 'left';
                     break;
-                default: 
+                default:
                     yOrigin = pos.y - this.radius - NodeRenderer.TEXT_MARGIN;
-                    textAlign = "bottom";
+                    textAlign = 'bottom';
                     break;
             }
 
             this.ctx.save();
-            this.ctx.font = "normal " + NodeRenderer.FONT_SIZE + "px Verdana";
+            this.ctx.font = 'normal ' + NodeRenderer.FONT_SIZE + 'px Verdana';
             this.ctx.textAlign = textAlign as CanvasTextAlign;
-            this.ctx.fillStyle = "#000000";
+            this.ctx.fillStyle = '#000000';
             this.ctx.strokeText(this.text, xOrigin, yOrigin + NodeRenderer.FONT_SIZE / 2, NodeRenderer.TEXT_BOX_SIZE);
             this.ctx.restore();
         }
