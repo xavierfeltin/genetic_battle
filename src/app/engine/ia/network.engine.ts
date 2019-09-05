@@ -166,7 +166,8 @@ export class NetworkEngine {
             const output: NodeRenderer = this.nodeRenderers[outputId];
 
             const renderer = new LinkRenderer(this.ctx);
-            renderer.draw(input.position, output.position);
+
+            renderer.draw(input.position, output.position, link.reccurent);
         }
     }
 }
