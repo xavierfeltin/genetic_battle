@@ -429,7 +429,8 @@ describe('RTAdn', () => {
                 modificationType: ModificationType.Add,
                 innovationId: 0,
                 inNodeId: 0,
-                outNodeId: 1
+                outNodeId: 1,
+                age: 0
             });
 
             RTADN.selectInNode = (nodeGenes: NodeGene[]) => {
@@ -483,7 +484,8 @@ describe('RTAdn', () => {
                 innovationId: 0,
                 inNodeId: 0,
                 outNodeId: 1,
-                newNodeId: 2
+                newNodeId: 2,
+                age: 0
             });
 
             const rates: Rates = Common.getRateForSplitting();

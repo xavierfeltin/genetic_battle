@@ -169,8 +169,8 @@ export class GameEngine {
       const delta = evt.deltaY;
       engine.scale = delta > 0 ? engine.scale * GameEngine.SCALE_MULTIPLIER : engine.scale / GameEngine.SCALE_MULTIPLIER;
 
-      engine.translatePos.x = x - x - (engine.translatePos.x) * delta;
-      engine.translatePos.y = y - y - (engine.translatePos.y) * delta;
+      engine.translatePos.x = x - (x * engine.scale);
+      engine.translatePos.y = y - (y * engine.scale);
 
       engine.renderGame();
       evt.preventDefault();
@@ -603,22 +603,22 @@ export class GameEngine {
   }
 
   private renderGame() {
-    this.ctx.save();
+    //this.ctx.save();
     this.ctx.setTransform(1, 0, 0, 1, 0, 0); // default transform for clear
     this.ctx.clearRect(0, 0, this.width, this.height);
-    this.ctx.restore();
+    //this.ctx.restore();
 
-    this.ctx.save();
+    //this.ctx.save();
     this.ctx.setTransform(this.scale, 0, 0, this.scale, this.translatePos.x , this.translatePos.y);
 
 
     // Draw the frame after time interval is expired
-    this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+    //this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
     this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
     this.drawShips();
     this.drawMissiles();
     this.drawHealth();
-    this.ctx.restore();
+    //this.ctx.restore();
   }
 
   // Evolution performed once the ship is dead

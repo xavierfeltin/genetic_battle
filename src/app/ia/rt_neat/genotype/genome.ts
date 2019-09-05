@@ -91,7 +91,8 @@ export class Genome {
             innovationId: innovation, // save the innovation of the splitted connection
             inNodeId: inNode,
             outNodeId: outNode,
-            newNodeId: newNode
+            newNodeId: newNode,
+            age: 0
         });
     }
 

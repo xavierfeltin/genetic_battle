@@ -27,7 +27,8 @@ export class LinkRenderer {
 
         // this.drawArrowhead(from, to);
     }
-
+    
+    /*
     // source: https://gist.github.com/jwir3/d797037d2e1bf78a9b04838d73436197
     private drawArrowhead(from: Vect2D, to: Vect2D) {
         this.ctx.beginPath();
@@ -57,4 +58,5 @@ export class LinkRenderer {
         this.ctx.fill();
         this.ctx.restore();
     }
+    */
 }
