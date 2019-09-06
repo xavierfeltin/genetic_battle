@@ -75,7 +75,6 @@ export class Ship extends GameObject {
     public static readonly MAX_LENGTH_RADAR: number = 120;
     public static readonly MIN_LENGTH_FOV: number = 80;
     public static readonly MAX_LENGTH_FOV: number = 600;
-    public static readonly MAX_DISTANCE: number = 800 * Math.sqrt(2);
 
     public static readonly MIN_ATTRACTION: number = -2;
     public static readonly MAX_ATTRACTION: number = 2;
@@ -317,10 +316,10 @@ export class Ship extends GameObject {
         return false;
     }
 
-    public createADN(nbGenes: number, minimum: number, maximum: number, 
-        nbNNInputs: number, nbNNOutputs: number, inputLabels: string[], outputLabels: string[]) {        
-        
-        this.adn = this.adnFactory.create(nbGenes, minimum, maximum, 
+    public createADN(nbGenes: number, minimum: number, maximum: number,
+                     nbNNInputs: number, nbNNOutputs: number, inputLabels: string[], outputLabels: string[]) {
+
+        this.adn = this.adnFactory.create(nbGenes, minimum, maximum,
             nbNNInputs, nbNNOutputs, inputLabels, outputLabels);
 
         if (!this.isNeuroEvo) {
@@ -428,7 +427,7 @@ export class Ship extends GameObject {
             this.adn.metadata.evaluateFitness(this.score);
 
             // Restart as "new" from the factory
-            this.setPosition(new Vect2D(400, 400));
+            this.setPosition(new Vect2D(this.areaWidth / 2, this.areaHeight / 2));
             const orientation = Math.random() * 360;
             this.setOrientation(orientation);
             this.resetScore();
@@ -684,7 +683,7 @@ export class Ship extends GameObject {
             this.adnFactory, this.isNeuroEvo, this.scoringCoefficients, this.inputsNeuroEvo,
             this.neuronalNetworkStructure, [this.id, this.partner.id]);
         ship.setADN(adn);
-        const pos = new Vect2D(Math.random() * this.width, Math.random() * this.height);
+        const pos = new Vect2D(Math.random() * this.areaWidth, Math.random() * this.areaHeight);
         ship.setPosition(pos);
         ship.setOrientation(orientation);
         ship.setBorders(this.getBorders());
@@ -1048,22 +1047,22 @@ export class Ship extends GameObject {
     }
     private get inputDistanceDetectedMissileFOV(): number {
         // Undetected missile means missile is very far away
-        return this.distanceMissileOnFOV === -1 ? 1 : this.distanceMissileOnFOV / Ship.MAX_DISTANCE;
+        return this.distanceMissileOnFOV === -1 ? 1 : this.distanceMissileOnFOV / this.maxDistance;
     }
     private get inputDistanceDetectedShipFOV(): number {
-        return this.distanceShipOnFOV === -1 ? 1 : this.distanceShipOnFOV / Ship.MAX_DISTANCE;
+        return this.distanceShipOnFOV === -1 ? 1 : this.distanceShipOnFOV / this.maxDistance;
     }
     private get inputDistanceDetectedHealthFOV(): number {
-        return this.distanceHealthOnFOV === -1 ? 1 : this.distanceHealthOnFOV / Ship.MAX_DISTANCE;
+        return this.distanceHealthOnFOV === -1 ? 1 : this.distanceHealthOnFOV / this.maxDistance;
     }
     private get inputDistanceDetectedMissileRadar(): number {
-        return this.distanceMissileOnRadar === -1 ? 1 : this.distanceMissileOnRadar / Ship.MAX_DISTANCE;
+        return this.distanceMissileOnRadar === -1 ? 1 : this.distanceMissileOnRadar / this.maxDistance;
     }
     private get inputDistanceDetectedHealthRadar(): number {
-        return this.distanceHealthOnRadar === -1 ? 1 : this.distanceHealthOnRadar / Ship.MAX_DISTANCE;
+        return this.distanceHealthOnRadar === -1 ? 1 : this.distanceHealthOnRadar / this.maxDistance;
     }
     private get inputDistanceDetectedShipRadar(): number {
-        return this.distanceShipOnRadar === -1 ? 1 : this.distanceShipOnRadar / Ship.MAX_DISTANCE;
+        return this.distanceShipOnRadar === -1 ? 1 : this.distanceShipOnRadar / this.maxDistance;
     }
 
 
@@ -1205,9 +1204,9 @@ export class FactoryShip {
     private neuronalNetworkStructure: number[];
     private borders: number[];
 
-    public constructor(adnFactory: FactoryADN, energyFuel: number = Ship.DEFAULT_ENERGY_FUEL,
+    public constructor(adnFactory: FactoryADN, borders: number[], energyFuel: number = Ship.DEFAULT_ENERGY_FUEL,
                        energyFire: number = Ship.DEFAULT_ENERGY_FIRE, isNeuroEvolution: boolean = false,
-                       nnStruture: number[] = Ship.DEFAULT_NN_HIDDEN_LAYERS, borders: number[] = [0, 800, 0, 800]) {
+                       nnStruture: number[] = Ship.DEFAULT_NN_HIDDEN_LAYERS) {
         this.energyFuel = energyFuel;
         this.energyFire = energyFire;
         this.adnFactory = adnFactory;
@@ -1215,6 +1214,10 @@ export class FactoryShip {
         this.isNeuroEvolution = isNeuroEvolution;
         this.neuronalNetworkStructure = nnStruture;
         this.shipNeuroEvo = new ShipNeurEvo();
+        this.borders = borders;
+    }
+
+    public setBorders(borders: number[]) {
         this.borders = borders;
     }
 

@@ -36,6 +36,7 @@ export class GameObject {
     public xMax: number;
     public yMin: number;
     public yMax: number;
+    public maxDistance: number;
 
     constructor(identifier: number) {
         this.id = identifier;
@@ -130,15 +131,31 @@ export class GameObject {
         this.energyFuel = energy;
     }
 
-    public setBorders(borders: number[]) {
-        this.xMin = borders[0];
-        this.xMax = borders[1];
-        this.yMin = borders[2];
-        this.yMax = borders[3];
+    public setBorders(borders: number[] = []) {
+        if (borders.length === 0) {
+            this.xMin = 0;
+            this.xMax = this.areaWidth;
+            this.yMin = 0;
+            this.yMax = this.areaHeight;
+        } else {
+            this.xMin = borders[0];
+            this.xMax = borders[1];
+            this.yMin = borders[2];
+            this.yMax = borders[3];
+        }
+        this.maxDistance = this.xMax * Math.sqrt(2);
     }
 
     public getBorders(): number[] {
         return [this.xMin, this.xMax, this.yMin, this.yMax];
+    }
+
+    public get areaWidth(): number {
+        return this.xMax - this.xMin;
+    }
+
+    public get areaHeight(): number {
+        return this.yMax - this.yMin;
     }
 
     public setBoundingBox(w: number, h: number) {

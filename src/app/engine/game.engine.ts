@@ -22,29 +22,35 @@ import { ShipScoring } from '../models/shipScoring.model';
 import { RTADNGA } from '../ia/rt_neat/population';
 import { RTADN } from '../ia/rt_neat/adn';
 import { RTNeuralNetwork } from '../ia/rt_neat/phenotype/neural-network';
+import { throwStatement } from '@babel/types';
 
 export class GameEngine {
   private static readonly SCALE_MULTIPLIER: number = 0.8;
-  private static readonly NB_HEALTH_WHEN_DIE: number = 1;
+  private static readonly MIN_SCALE: number = 1.0;
+  private static readonly SHIPS_DENSITY: number = 100; // 10 ships for 1000px
+
   private static readonly NB_SHIPS: number = 12;
+  private static readonly MAX_POPULATION = 12;
+  private static readonly NB_HEALTH_WHEN_DIE: number = 1;
   private static readonly NB_INIT_HEALTH: number = 0; // 20;
   private static readonly RATE_SPAWN_HEALTH: number = 0.03; // 0.01;
   private static readonly RATE_CLONE_SHIP: number = 0.03;
   private static readonly BREEDING_RATE_SHIP: number = 0.001;
-  private static readonly MAX_POPULATION = 12;
   private static readonly MAX_DEAD_POPULATION = 3;
   private static readonly MAX_RANDOM_HEALTH_PACK = GameEngine.MAX_POPULATION;
-  private static readonly GAME_TIMER = 30; // in seconds
   private static readonly NEURO_EVO_MODE = 'neuroevol';
   private static readonly ALGO_EVO_MODE = 'geneticalgo';
   private static readonly EVOLUTION_MODE = GameEngine.NEURO_EVO_MODE;
   private static readonly MINMUM_AGE_BEFORE_REPLACEMENT = 10; // in seconds
   private static readonly LEVEL_OF_INEGIBILITY = 0.5; // pct of population with age < MINMUM_AGE_BEFORE_REPLACEMENT
+  private static readonly GAME_TIMER = 30; // in seconds
 
   private canvas: HTMLCanvasElement;
   private ctx: CanvasRenderingContext2D;
   private translatePos: Vect2D;
   private scale: number;
+  private adjustmentScale: number;
+  private maxScale: number;
 
   private fps: number;
   private now: number;
@@ -121,7 +127,7 @@ export class GameEngine {
     this.nbGenerations = -1;
 
     const adnFactory  = new FactoryADN(RTADN.DEFAULT_RATES, FactoryADN.TYPE_RT_ADN);
-    this.shipFactory = new FactoryShip(adnFactory);
+    this.shipFactory = new FactoryShip(adnFactory, [0, this.width, 0, this.height]);
     this.missileFactory = new FactoryMissile();
     this.healthFactory = new FactoryHealth();
 
@@ -146,17 +152,24 @@ export class GameEngine {
     this.levelOfInegibility = GameEngine.LEVEL_OF_INEGIBILITY;
     this.ticksBeforeReplacement = this.computeFrequencyOfReplacement();
     this.lastEvaluationForReplacement = 0;
+
+    // Update the game area
+    this.maxShips = GameEngine.MAX_POPULATION;
+    this.width = this.maxShips * GameEngine.SHIPS_DENSITY;
+    this.height = this.maxShips * GameEngine.SHIPS_DENSITY;
+    this.scale = 1;
   }
 
   public setCanvas(idCanvas: string) {
     this.canvas = document.getElementById(idCanvas) as HTMLCanvasElement;
-    this.width = this.canvas.width;
-    this.height = this.canvas.height;
     this.ctx = this.canvas.getContext('2d');
     this.ctx.fillStyle = 'rgba(0, 0, 0, 0.9)';
 
     this.translatePos = new Vect2D(0, 0);
     this.scale = 1;
+    this.adjustmentScale = 1;
+    this.adjustmentScale = this.canvas.width / this.width;
+    this.maxScale = 1 / this.adjustmentScale;
 
     // add event listeners to handle screen zoom
     // source: https://stackoverflow.com/questions/45528111/javascript-canvas-map-style-point-zooming/45528455#45528455
@@ -166,8 +179,14 @@ export class GameEngine {
       const x = evt.offsetX;
       const y = evt.offsetY;
 
+      console.log('before scale: ' + engine.scale);
+
       const delta = evt.deltaY;
       engine.scale = delta > 0 ? engine.scale * GameEngine.SCALE_MULTIPLIER : engine.scale / GameEngine.SCALE_MULTIPLIER;
+      engine.scale = Math.max(engine.scale, GameEngine.MIN_SCALE);
+      engine.scale = Math.min(engine.scale, this.maxScale);
+
+      console.log('after scale: ' + engine.scale);
 
       engine.translatePos.x = x - (x * engine.scale);
       engine.translatePos.y = y - (y * engine.scale);
@@ -229,14 +248,28 @@ export class GameEngine {
 
     // Simulation configuration
     this.nbStartingShips = config.nbStartingShips ;
-    this.maxShips = config.maxShips;
+
+    let needToReset = false;
+    if (this.maxShips !== config.maxShips) {
+      this.maxShips = config.maxShips;
+
+      // TODO: to fix !!!
+      // Recompute scales and area width depending of new maxShips
+      this.width = this.maxShips * GameEngine.SHIPS_DENSITY;
+      this.height = this.maxShips * GameEngine.SHIPS_DENSITY;
+      this.shipFactory.setBorders([0, this.width, 0, this.height]);
+      this.adjustmentScale = this.canvas.width / this.width;
+      this.maxScale = 1 / this.adjustmentScale;
+      this.scale = 1;
+      this.renderGame();
+    }
+
     this.nbStartingHealth = config.nbStartingHealth ;
     this.rateHealth = config.rateHealth ;
     this.nbHealthDestroyingShip = config.nbHealthDestroyingShip ;
     this.cloneRate = config.cloneRate ;
     this.breedingRate = config.breedingRate ;
 
-    let needToReset = false;
     const evolutionMode = this.shipFactory.getNeuroEvolution() ? GameEngine.NEURO_EVO_MODE : GameEngine.ALGO_EVO_MODE;
     if (config.evolutionMode !== evolutionMode) {
       this.shipFactory.setNeuroEvolution(config.evolutionMode === GameEngine.NEURO_EVO_MODE);
@@ -341,7 +374,6 @@ export class GameEngine {
   }
 
   public initialize(ships: Ship[] = []) {
-
     const phenotypes = [];
     const scores = [];
     if (ships.length === 0) {
@@ -603,22 +635,17 @@ export class GameEngine {
   }
 
   private renderGame() {
-    //this.ctx.save();
-    this.ctx.setTransform(1, 0, 0, 1, 0, 0); // default transform for clear
-    this.ctx.clearRect(0, 0, this.width, this.height);
-    //this.ctx.restore();
-
-    //this.ctx.save();
-    this.ctx.setTransform(this.scale, 0, 0, this.scale, this.translatePos.x , this.translatePos.y);
-
-
     // Draw the frame after time interval is expired
-    //this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
-    this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+
+    this.ctx.setTransform(1, 0, 0, 1, 0, 0); // default transform for clear
+    this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+
+    const effectiveScale = this.scale * this.adjustmentScale;
+    this.ctx.setTransform(effectiveScale, 0, 0, effectiveScale, this.translatePos.x , this.translatePos.y);
+    this.ctx.fillRect(0, 0, this.width, this.height);
     this.drawShips();
     this.drawMissiles();
     this.drawHealth();
-    //this.ctx.restore();
   }
 
   // Evolution performed once the ship is dead
@@ -754,7 +781,7 @@ export class GameEngine {
       if (newADNs !== null) {
         const newADN = newADNs[0];
         const newShip = this.shipFactory.createFromADN(this.generateId(), newADN);
-        newShip.setPosition(new Vect2D(400, 400));
+        newShip.setPosition(new Vect2D(this.width / 2, this.height / 2));
         const orientation = Math.random() * 360;
         newShip.setOrientation(orientation);
         // TODO set invulnerability
