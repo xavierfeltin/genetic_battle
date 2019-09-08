@@ -556,7 +556,7 @@ export class GameEngine {
       if (ship.fire(this.ships, this.missiles)) {
         const missile = this.missileFactory.create(this.generateId(), ship, ship.getFOVLen());
 
-        missile.setBorders([-50, 850, -50, 850]);
+        missile.setBorders([-50, this.width + 50, -50, this.height + 50]);
         missile.setPosition(ship.pos);
         const accuracy = 0; // MyMath.random(-ship.getFOV() / 2, ship.getFOV() / 2);
         missile.setOrientation(ship.orientation + accuracy);
