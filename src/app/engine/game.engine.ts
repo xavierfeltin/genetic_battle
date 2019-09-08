@@ -37,7 +37,7 @@ export class GameEngine {
   private static readonly RATE_CLONE_SHIP: number = 0.03;
   private static readonly BREEDING_RATE_SHIP: number = 0.001;
   private static readonly MAX_DEAD_POPULATION = 3;
-  private static readonly MAX_RANDOM_HEALTH_PACK = GameEngine.MAX_POPULATION;
+  private static readonly MAX_RANDOM_HEALTH_PACK = GameEngine.MAX_POPULATION * 3;
   private static readonly NEURO_EVO_MODE = 'neuroevol';
   private static readonly ALGO_EVO_MODE = 'geneticalgo';
   private static readonly EVOLUTION_MODE = GameEngine.NEURO_EVO_MODE;
@@ -48,6 +48,8 @@ export class GameEngine {
   private canvas: HTMLCanvasElement;
   private ctx: CanvasRenderingContext2D;
   private translatePos: Vect2D;
+  private panPos: Vect2D;
+  private dragStartPos: Vect2D;
   private scale: number;
   private adjustmentScale: number;
   private maxScale: number;
@@ -166,6 +168,8 @@ export class GameEngine {
     this.ctx.fillStyle = 'rgba(0, 0, 0, 0.9)';
 
     this.translatePos = new Vect2D(0, 0);
+    this.panPos = new Vect2D(0, 0);
+    this.dragStartPos = null;
     this.scale = 1;
     this.adjustmentScale = 1;
     this.adjustmentScale = this.canvas.width / this.width;
@@ -173,27 +177,57 @@ export class GameEngine {
 
     // add event listeners to handle screen zoom
     // source: https://stackoverflow.com/questions/45528111/javascript-canvas-map-style-point-zooming/45528455#45528455
-    // TODO: make scrollAt work
     const engine = this;
     this.canvas.addEventListener('wheel', (evt) => {
       const x = evt.offsetX;
       const y = evt.offsetY;
-
-      console.log('before scale: ' + engine.scale);
 
       const delta = evt.deltaY;
       engine.scale = delta > 0 ? engine.scale * GameEngine.SCALE_MULTIPLIER : engine.scale / GameEngine.SCALE_MULTIPLIER;
       engine.scale = Math.max(engine.scale, GameEngine.MIN_SCALE);
       engine.scale = Math.min(engine.scale, this.maxScale);
 
-      console.log('after scale: ' + engine.scale);
-
       engine.translatePos.x = x - (x * engine.scale);
       engine.translatePos.y = y - (y * engine.scale);
 
       engine.renderGame();
       evt.preventDefault();
-    });
+    }, false);
+
+    const handlerPan = function(evt: MouseEvent): boolean {
+
+      if (engine.dragStartPos) {
+        // Save delta btw start and last move
+        engine.panPos.x = evt.offsetX - engine.dragStartPos.x;
+        engine.panPos.y = evt.offsetY - engine.dragStartPos.y;
+      }
+      
+      engine.renderGame();
+      return true;
+    };
+
+    this.canvas.addEventListener('mousedown', (evt) => {
+        // Save reference position where the mouse has been clicked
+        engine.dragStartPos = new Vect2D(evt.offsetX - this.panPos.x, evt.offsetY - this.panPos.y);
+        engine.canvas.addEventListener('mousemove', handlerPan, false);
+    }, false);
+
+    this.canvas.addEventListener('contextmenu', (evt) => {
+      this.resetView();
+      evt.preventDefault();
+    }, false);
+
+    this.canvas.addEventListener('mouseup', (evt) => {
+      // Reset start position
+      engine.dragStartPos = null;
+      engine.canvas.removeEventListener('mousemove', handlerPan);
+    }, false);
+
+    this.canvas.addEventListener('mouseout', (evt) => {
+      // Reset start position
+      engine.dragStartPos = null;
+      engine.canvas.removeEventListener('mousemove', handlerPan);
+    }, false);
 
     this.shipRenderer = new ShipRender(this.ctx);
     this.missileRenderer = new MissileRender(this.ctx);
@@ -252,16 +286,7 @@ export class GameEngine {
     let needToReset = false;
     if (this.maxShips !== config.maxShips) {
       this.maxShips = config.maxShips;
-
-      // TODO: to fix !!!
-      // Recompute scales and area width depending of new maxShips
-      this.width = this.maxShips * GameEngine.SHIPS_DENSITY;
-      this.height = this.maxShips * GameEngine.SHIPS_DENSITY;
-      this.shipFactory.setBorders([0, this.width, 0, this.height]);
-      this.adjustmentScale = this.canvas.width / this.width;
-      this.maxScale = 1 / this.adjustmentScale;
-      this.scale = 1;
-      this.renderGame();
+      needToReset = true;
     }
 
     this.nbStartingHealth = config.nbStartingHealth ;
@@ -294,8 +319,7 @@ export class GameEngine {
     needToReset = needToReset || isInputNeuroEvoDifferent;
 
     if (config.resetSimulation || needToReset) {
-      this.reset(true);
-      this.initialize();
+      this.reset(true);      
     } else {
         // Change current ships configuration
         if (config.energyFire !== this.shipFactory.getEnergyFire()
@@ -332,6 +356,7 @@ export class GameEngine {
     }
 
     this.shipRenderer.setDebugMode(config.debugMode);
+    this.resetView();
   }
 
   public getDefaultConfiguration(): Configuration {
@@ -371,6 +396,24 @@ export class GameEngine {
     if (isHardReset) {
       this.nbGenerations = 0;
     }
+
+    this.initialize();    
+  }
+
+  public resetView() {
+    // Reset rendering
+    // Recompute scales and area width depending of new maxShips
+    this.width = this.maxShips * GameEngine.SHIPS_DENSITY;
+    this.height = this.maxShips * GameEngine.SHIPS_DENSITY;
+    this.shipFactory.setBorders([0, this.width, 0, this.height]);
+    this.adjustmentScale = this.canvas.width / this.width;
+    this.maxScale = 1 / this.adjustmentScale;
+    this.scale = 1;
+    this.translatePos.x = 0;
+    this.translatePos.y = 0;
+    this.panPos.x = 0;
+    this.panPos.y = 0;
+    this.renderGame();
   }
 
   public initialize(ships: Ship[] = []) {
@@ -641,7 +684,15 @@ export class GameEngine {
     this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
 
     const effectiveScale = this.scale * this.adjustmentScale;
-    this.ctx.setTransform(effectiveScale, 0, 0, effectiveScale, this.translatePos.x , this.translatePos.y);
+    const scaledPan = new Vect2D(
+                        this.panPos.x - (this.panPos.x * effectiveScale),
+                        this.panPos.y - (this.panPos.y * effectiveScale));
+    const effectiveTrans = new Vect2D(this.translatePos.x + scaledPan.x, this.translatePos.y + scaledPan.y);
+
+    this.ctx.setTransform(effectiveScale, 0, 0, effectiveScale, effectiveTrans.x , effectiveTrans.y);
+
+    this.ctx.translate(this.panPos.x, this.panPos.y);
+
     this.ctx.fillRect(0, 0, this.width, this.height);
     this.drawShips();
     this.drawMissiles();
