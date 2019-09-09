@@ -37,7 +37,6 @@ export class GameEngine {
   private static readonly RATE_CLONE_SHIP: number = 0.03;
   private static readonly BREEDING_RATE_SHIP: number = 0.001;
   private static readonly MAX_DEAD_POPULATION = 3;
-  private static readonly MAX_RANDOM_HEALTH_PACK = GameEngine.MAX_POPULATION * 3;
   private static readonly NEURO_EVO_MODE = 'neuroevol';
   private static readonly ALGO_EVO_MODE = 'geneticalgo';
   private static readonly EVOLUTION_MODE = GameEngine.NEURO_EVO_MODE;
@@ -194,14 +193,14 @@ export class GameEngine {
       evt.preventDefault();
     }, false);
 
-    const handlerPan = function(evt: MouseEvent): boolean {
+    const handlerPan = (evt: MouseEvent): boolean => {
 
       if (engine.dragStartPos) {
         // Save delta btw start and last move
         engine.panPos.x = evt.offsetX - engine.dragStartPos.x;
         engine.panPos.y = evt.offsetY - engine.dragStartPos.y;
       }
-      
+
       engine.renderGame();
       return true;
     };
@@ -319,7 +318,7 @@ export class GameEngine {
     needToReset = needToReset || isInputNeuroEvoDifferent;
 
     if (config.resetSimulation || needToReset) {
-      this.reset(true);      
+      this.reset(true);
     } else {
         // Change current ships configuration
         if (config.energyFire !== this.shipFactory.getEnergyFire()
@@ -397,7 +396,7 @@ export class GameEngine {
       this.nbGenerations = 0;
     }
 
-    this.initialize();    
+    this.initialize();
   }
 
   public resetView() {
@@ -533,7 +532,7 @@ export class GameEngine {
 
   public playGame() {
     // Add possible new health
-    if (Math.random() < this.rateHealth && this.health.length < GameEngine.MAX_RANDOM_HEALTH_PACK) {
+    if (Math.random() < this.rateHealth) {
       this.createHealth(this.generateId());
     }
 

@@ -34,13 +34,13 @@ export class Historic {
         if (this.table[inNodeId]) {
             const histories: HistoryEntry[] = this.table[inNodeId];
             const result = histories.find((value) => value.modificationType === type && value.outNodeId === outNodeId);
-            
+
             this.age();
             if (result) {
                 // Entry still used do not forget it yet
                 result.age -= 1;
             }
-            
+
             return result ? result : null;
         }
         return null;
