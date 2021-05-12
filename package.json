@@ -23,7 +23,7 @@
     "@angular/router": "^7.2.15",
     "@ngxs/store": "^3.5.0",
     "@types/seedrandom": "^2.4.28",
-    "chart.js": "^2.8.0",
+    "chart.js": "^2.9.4",
     "core-js": "^2.6.9",
     "jest-preset-angular": "^7.1.1",
     "package.json": "^2.0.1",
